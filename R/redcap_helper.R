@@ -1,6 +1,9 @@
 #' @name Get Chunks
 #'
+#' @include generic_helper
+#'
 #' @title Get chunks of a specific size
+#'
 #'
 #' @description From a vector obtain a list of chunks of a specific size
 #'
