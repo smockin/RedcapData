@@ -1,4 +1,4 @@
-#' @name Get Chunks
+#' @name get_chunks
 #'
 #' @include generic_helper.R
 #'
@@ -46,7 +46,7 @@ get_chunks = function(x, chunksize) {
   value
 }
 
-#' @name Get Chunked REDCap data
+#' @name get_chunked_redcap_data
 #'
 #' @title Perform a chunked REDCap data dowmload
 #'
@@ -71,9 +71,10 @@ get_chunks = function(x, chunksize) {
 #' @param ids_to_pull a character vector of the specific record itentifiers to pull.
 #' @param dataset_name name of the resultant dataset
 #' @param metdataset_name name of the resultant metadata
-#' @seealso \code{\link{get_redcap_data}}, \code{\link{get_chunks}}, \code{\link{redcap}}
+#' @seealso \code{\link{get_chunks}}
 #' @export
-#'
+#'#'
+#' @family get_data_red
 
 get_chunked_redcap_data = function(
   api,
@@ -136,7 +137,7 @@ get_chunked_redcap_data = function(
   })
 }
 
-#' @name Get REDCap data
+#' @name get_redcap_data
 #'
 #' @title Pull data from REDCap
 #'
@@ -161,6 +162,8 @@ get_chunked_redcap_data = function(
 #' @seealso \code{\link{get_chunked_redcap_data}}, \code{\link{redcap}}
 #'
 #' @export
+#'
+#' @family get_data_red
 
 get_redcap_data = function(
   api,
@@ -208,7 +211,7 @@ get_redcap_data = function(
   value
 }
 
-#' @name Is Metadata Valid
+#' @name is_valid_metadata
 #'
 #' @title Check whether metadata is valid
 #'
@@ -244,7 +247,7 @@ is_valid_metadata = function(metadata) {
   value
 }
 
-#' @name Get variables in dataset
+#' @name get_vars_in_data
 #'
 #' @title Get the names of variables in dataset
 #'
@@ -286,7 +289,7 @@ get_vars_in_data = function(metadata) {
   value
 }
 
-#' @name Get data type variables in dataset
+#' @name get_r_types_in_data
 #'
 #' @title Get the r data types of variables in dataset
 #'
@@ -295,8 +298,6 @@ get_vars_in_data = function(metadata) {
 #' @details Using the redcap metadata, code is generated that extracts the data types of the variables in the dataset.
 #'
 #' @param metadata REDCap metadata
-#'
-#' @export
 #'
 #' @return The data types (r) of the variables in the dataset
 #'
@@ -330,7 +331,7 @@ get_r_types_in_data = function(metadata) {
   value
 }
 
-#' @name Generate code to eliminate missing values
+#' @name generate_remove_missing_code
 #'
 #' @title Autogenerate code for cleaning data
 #'
@@ -353,7 +354,7 @@ generate_remove_missing_code = function(metadata, dataset_name = "data") {
   metadata = prepare_metadata_for_code_generation(metadata)
   invalid_vals = c(
     "as.character(seq(as.Date(\"1910-01-01\"), as.Date(\"1950-01-01\"), by = \"year\"))",
-    "\"-1\"", "\"Empty\"", "\"\""
+    "\"-1\"", "\"Empty\"", , "\"empty\"", "\"\""
   )
   invalid_vals = paste0(invalid_vals, collapse = ", ")
   invalid_vals = paste0("c(", invalid_vals, ")")
@@ -372,7 +373,7 @@ generate_remove_missing_code = function(metadata, dataset_name = "data") {
   cmd
 }
 
-#' @name Generate code to eliminate out-of-range values
+#' @name generate_remove_outliers_code
 #'
 #' @title Autogenerate code for cleaning data
 #'
@@ -577,7 +578,7 @@ generate_formatting_code = function(metadata, dataset_name = "data") {
   cmd
 }
 
-#' @name Get Redcap Status
+#' @name get_status
 #'
 #' @title Get Cache status
 #'
