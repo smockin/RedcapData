@@ -1,6 +1,6 @@
 #' @name Get Chunks
 #'
-#' @include generic_helper
+#' @include generic_helper.R
 #'
 #' @title Get chunks of a specific size
 #'
@@ -87,18 +87,18 @@ get_chunked_redcap_data = function(
   metadataset_name = "meta"
 ) {
   if (missing(api))
-    stop("api url not specified")
+    stop("specify api url")
   if (missing(token))
-    stop("token not specified")
+    stop("specifiy token")
   if (is.na(chunksize))
     stop("chunksize missing")
   if (!is.numeric(chunksize))
     stop("chunksize not numeric")
   chunksize = abs(as.integer(chunksize))
   if (chunksize < 1)
-    stop("Invalid chunksize")
+    stop("invalid chunksize")
 
-  outer_env = parent.env(environment())
+  outer_env = parent.frame(1)
   if (!exists(metadataset_name, envir = outer_env))
     assign(metadataset_name, get_redcap_data(api, token, local, content = "metadata"), outer_env)
   id_name = get(metadataset_name, envir = outer_env)[1, 1]
@@ -127,11 +127,12 @@ get_chunked_redcap_data = function(
       ds_chunk
     })
     assign(dataset_name, data.frame(data.table::rbindlist(data_list)), envir = outer_env)
-  }
-  , error = function(e) {
-    stop("Error in downloads: \n\n", sQuote(e$message))
-  }, warning = function(w) {
-    warning("Warning in download: \n\n", sQuote(w$message))
+  },
+  error = function(e) {
+    stop("chunkdownload - ", sQuote(e$message))
+  },
+  warning = function(w) {
+    warning("chunkdownload - ", sQuote(w$message))
   })
 }
 
@@ -172,7 +173,7 @@ get_redcap_data = function(
 ) {
   fun_env = environment()
   if (!RCurl::url.exists(gsub("/api/", "", api)))
-    stop("api url invalid")
+    stop("invalid api url")
   opts = list(
     uri = api,
     token = token,
@@ -200,7 +201,7 @@ get_redcap_data = function(
   if (exists("redcap__err", envir = fun_env)) {
     msg = sQuote(get("redcap__err", envir = fun_env))
     rm("redcap__err", envir = fun_env)
-    stop(paste0("Data could not be downloaded\n\nDetails:\n\n", msg))
+    stop(paste0("data could not be downloaded [details: ", msg, "]"))
   } else {
     value = data.frame(read.csv(textConnection(redcap_conn), stringsAsFactors = FALSE))
   }
@@ -260,27 +261,23 @@ is_valid_metadata = function(metadata) {
 #' @return a character vector of the names of the dataset
 
 get_vars_in_data = function(metadata) {
-  metadata = data.table::data.table(metadata)
-  metadata = metadata[, key := .I]
-  if (!is_valid_metadata(metadata))
-    stop("metadata not valid")
-
+  metadata = prepare_metadata_for_code_generation(metadata)
   get_vars_r = function(r) {
     var = r$field_name
     widget = r$field_type
     if (widget == "checkbox") {
       choices = r$select_choices_or_calculations
-      choices = stringr::str_trim(unlist(strsplit(choices, "\\|")))
+      choices = str_trim(unlist(strsplit(choices, "\\|")))
       choices = sapply(choices, function(ch) {
-        lev = stringr::str_trim(unlist(strsplit(ch, ",")))[1L]
+        lev = str_trim(unlist(strsplit(ch, ",")))[1L]
         lev = gsub("\\-", "\\.", lev)
         lev
       })
-      value = data.table::data.table(var = paste0(var, "___", choices))
+      value = data.table(var = paste0(var, "___", choices))
     } else if (widget == "descripive") {
-      value = data.table::data.table()
+      value = data.table()
     } else {
-      value = data.table::data.table(var = var)
+      value = data.table(var = var)
     }
     value
   }
@@ -306,7 +303,7 @@ get_vars_in_data = function(metadata) {
 #'
 
 get_r_types_in_data = function(metadata) {
-  metadata = data.table::data.table(metadata)
+  metadata = data.table(metadata)
   metadata = metadata[, key := .I]
   if (!is_valid_metadata(metadata))
     stop("metadata not valid")
@@ -316,7 +313,7 @@ get_r_types_in_data = function(metadata) {
     if (widget == "checkbox") {
       choices = r$select_choices_or_calculations
       choices = sapply(strsplit(choices, "\\|"), function(ch) {
-        lev = stringr::str_trim(unlist(strsplit(ch, ",")))[1L]
+        lev = str_trim(unlist(strsplit(ch, ",")))[1L]
         lev = gsub("\\-", "\\.", lev)
         lev
       })
@@ -350,15 +347,10 @@ get_r_types_in_data = function(metadata) {
 #'
 #' @return Code that can be evaluated to clean data
 #'
-#' @seealso \code{\link{generate_date_conversion_code}}, \code{\link{generate_remove_outliers_code}}
+#' @family code_gen
 
 generate_remove_missing_code = function(metadata, dataset_name = "data") {
-  if (!is_valid_metadata(metadata))
-    stop("invalid metadata")
-  metadata = data.table::data.table(metadata)
-  metadata = metadata[, key := .I]
-  data.table::setkey(metadata, key)
-
+  metadata = prepare_metadata_for_code_generation(metadata)
   invalid_vals = c(
     "as.character(seq(as.Date(\"1910-01-01\"), as.Date(\"1950-01-01\"), by = \"year\"))",
     "\"-1\"", "\"Empty\"", "\"\""
@@ -366,13 +358,13 @@ generate_remove_missing_code = function(metadata, dataset_name = "data") {
   invalid_vals = paste0(invalid_vals, collapse = ", ")
   invalid_vals = paste0("c(", invalid_vals, ")")
 
-  cmd = stringr::str_trim(get_vars_in_data(metadata))
+  cmd = str_trim(get_vars_in_data(metadata))
   if (length(cmd) == 0L)
     return("")
-  cmd = paste0(dataset_name, "$", cmd, "[stringr::str_trim(", dataset_name, "$", cmd, ") %in% ", invalid_vals, "] = NA")
+  cmd = paste0(dataset_name, "$", cmd, "[str_trim(", dataset_name, "$", cmd, ") %in% ", invalid_vals, "] = NA")
   cmd = c(
-    "\n# RECODING MISSING DATA TO NA\n",
-    "require(stringr)",
+    "\n\n# RECODING MISSING DATA TO NA\n",
+    "library(stringr)",
     paste0(dataset_name, " = data.frame(", dataset_name, ")"),
     cmd
   )
@@ -395,30 +387,26 @@ generate_remove_missing_code = function(metadata, dataset_name = "data") {
 #'
 #' @return Code that can be evaluated to clean data
 #'
-#' @seealso \code{\link{generate_date_conversion_code}}, \code{\link{generate_remove_missing_code}}
+#' @family code_gen
 
 generate_remove_outliers_code = function(metadata, dataset_name = "data") {
-  metadata = data.table::data.table(metadata)
-  metadata = metadata[, key := .I]
-  data.table::setkey(metadata, key)
+  metadata = prepare_metadata_for_code_generation(metadata)
   check_miss = function(s) {
-    is.na(s) | stringr::str_trim(s) == ""
+    is.na(s) | str_trim(s) == ""
   }
   has_min = !sapply(metadata$text_validation_min, check_miss)
   has_max = !sapply(metadata$text_validation_max, check_miss)
   has_valid = which(apply(cbind(has_min, has_max), 1, any, na.rm = TRUE))
   if (length(has_valid) == 0L)
     return("")
-  metadata = metadata[has_valid, list(field_name, text_validation_min, text_validation_max, text_validation_type_or_show_slider_number)]
-  metadata = metadata[, key := .I]
-  data.table::setkey(metadata, key)
+  metadata = metadata[has_valid]
 
   generate_code_r = function(r) {
-    cmd <- character(0L)
-    var_r = stringr::str_trim(r$field_name)
-    type_r = stringr::str_trim(r$text_validation_type_or_show_slider_number)
-    min_r = stringr::str_trim(r$text_validation_min)
-    max_r = stringr::str_trim(r$text_validation_max)
+    cmd = character(0L)
+    var_r = str_trim(r$field_name)
+    type_r = str_trim(r$text_validation_type_or_show_slider_number)
+    min_r = str_trim(r$text_validation_min)
+    max_r = str_trim(r$text_validation_max)
     if (type_r == "integer") {
       type = "int"
       na_val = "NA_integer_"
@@ -436,8 +424,8 @@ generate_remove_outliers_code = function(metadata, dataset_name = "data") {
       "L"
     else
       ""
-    has_min_r = all(!is.na(min_r), stringr::str_trim(min_r) != "")
-    has_max_r = all(!is.na(max_r), stringr::str_trim(max_r) != "")
+    has_min_r = all(!is.na(min_r), str_trim(min_r) != "")
+    has_max_r = all(!is.na(max_r), str_trim(max_r) != "")
 
     if (any(has_min_r, has_max_r)) {
       if (has_min_r) {
@@ -461,14 +449,14 @@ generate_remove_outliers_code = function(metadata, dataset_name = "data") {
   }
   cmd = metadata[, generate_code_r(.SD), by = key]
   cmd = paste0(cmd[, V1], collapse = "\n")
-  cmd = paste0("\n#RECODING OUT OF RANGE VALUES TO NA\n\n",
-               paste0(dataset_name, " = data.frame(", dataset_name, ")"),
+  cmd = paste0("\n\n#RECODING OUT OF RANGE VALUES TO NA\n\n",
+               paste0(dataset_name, " = data.frame(", dataset_name, ")\n"),
                cmd
   )
   cmd
 }
 
-#' @name Generate code to convert date variables
+#' @name generate_date_conversion_code
 #'
 #' @title Autogenerate code for date conversion
 #'
@@ -483,27 +471,126 @@ generate_remove_outliers_code = function(metadata, dataset_name = "data") {
 #'
 #' @return Code that can be evaluated to recode dates
 #'
-#' @seealso \code{\link{generate_remove_outliers_code}}, \code{\link{generate_remove_missing_code}}
+#' @family code_gen
 
 generate_date_conversion_code = function(metadata, dataset_name = "data") {
-  if (!is_valid_metadata(metadata))
-    stop("invalid metadata")
-  metadata = data.table::data.table(metadata)
-  metadata = metadata[, key := .I]
-  data.table::setkey(metadata, key)
-  metadata = metadata[stringr::str_trim(text_validation_type_or_show_slider_number) == "date_ymd"]
+  metadata = prepare_metadata_for_code_generation(metadata)
+  metadata = metadata[str_trim(text_validation_type_or_show_slider_number) == "date_ymd"]
   if (nrow(metadata) < 1L)
     return("")
   cmd = get_vars_in_data(metadata)
   cmd = paste0(dataset_name, "$", cmd, " = as.Date(", dataset_name, "$", cmd, ")")
   cmd = paste0(cmd, collapse = "\n")
-  cmd = c("\n#DATE CONVERSION\n",
+  cmd = c("\n\n#DATE CONVERSION\n",
           paste0(dataset_name, " = data.frame(", dataset_name, ")"),
           cmd
   )
   cmd = paste(cmd, collapse = "\n")
   cmd
 }
+
+#' @name generate_formatting_code
+#'
+#' @title Autogenerate code for data formatting
+#'
+#' @description This is a utility function that employs code generation to produce r code that formats data.
+#'
+#' @details Using the redcap metadata, code is generated that formats data.
+#'
+#' It assigns HMisc labels to variables and recodes data to factors
+#'
+#' @param metadata REDCap metadata
+#' @param dataset_name Name of the dataset that will be recorded
+#'
+#' @export
+#'
+#' @return Code that can be evaluated to format data
+#'
+#' @family code_gen
+#'
+#' @include branching_logic.R
+
+generate_formatting_code = function(metadata, dataset_name = "data") {
+  metadata = prepare_metadata_for_code_generation(metadata)
+  to_remove = paste0(unique(metadata[, form_name]),"_complete")
+  metadata = metadata[!field_name %in% to_remove]
+  reshape_labels = function(x) {
+    if (tolower(x[, field_type]) %in% c("checkbox", "dropdown", "radio")) {
+      choices =  t(
+        sapply(
+          unlist(strsplit(x[, select_choices_or_calculations], "\\|")),
+          function(ch) {
+            ch_ls = str_trim(unlist(regmatches(ch, regexpr(",", ch), invert = TRUE)))
+            names(ch_ls) = c("level", "label")
+            ch_ls
+          }))
+      if (x[, field_type] == "checkbox") {
+        variable = paste0(x[, field_name], "___", choices[, 1])
+        label = paste0(gsub("\n", "", remove_html_tags(x[, field_label])), "(", choices[, 2], ")")
+        if (length(label) == 0)
+          label = NA_character_
+        levels = rep("c(0, 1)", length(choices[, 2]))
+        labels_levels = rep("c(\"No\", \"Yes\")", length(choices[, 2]))
+      } else {
+        variable = x[, field_name]
+        label = gsub("\n", "", remove_html_tags(x[, field_label]))
+        if (length(label) == 0)
+          label = NA_character_
+        choices[, 2] = sapply(choices[, 2L], function(x) paste0("\"", x, "\""))
+        levels = paste0("c(", paste0(unique(choices[, 1L]), collapse = ", "), ")")
+        labels_levels = paste0("c(", paste0(unique(choices[, 2L]), collapse = ", "), ")")
+      }
+    } else if (tolower(x[, field_type]) == "yesno") {
+      variable = x[, field_name]
+      label = gsub("\n", "", remove_html_tags(x[, field_label]))
+      if (length(label) == 0)
+        label = NA_character_
+      levels = "c(0, 1)"
+      labels_levels = "c(\"No\", \"Yes\")"
+    } else {
+      variable =x[, field_name]
+      label = gsub("\n", "", remove_html_tags(x[, field_label]))
+      if (length(label) == 0)
+        label = NA_character_
+      levels = NA_character_
+      labels_levels = NA_character_
+    }
+    value = data.table(Variable = variable, Label = label, Levels = levels, Label_Levels = labels_levels)
+    value
+  }
+
+  labels_hash_table = metadata[, reshape_labels(.SD), by = key]
+  labels_f_hash_table = labels_hash_table[!is.na(Levels), ]
+
+  cmd = "\n\n# Convert categorical data to factors:\n\n"
+  tmp = paste0(dataset_name, "$", labels_f_hash_table[, Variable], " = factor(",
+               dataset_name, "$", labels_f_hash_table[, Variable], ", levels = ",
+               labels_f_hash_table[, Levels], ", labels = ",
+               labels_f_hash_table[, Label_Levels], ")")
+  cmd = c(cmd, tmp)
+
+  cmd = c(cmd, '\n\n#Assigning Hmisc labels to all variables:\n\nlibrary(Hmisc)\n')
+  tmp = paste0("Hmisc::label(", dataset_name, "$", labels_hash_table[, Variable], ") = \"",
+          labels_hash_table[, Label], "\"")
+  cmd = c(cmd, tmp)
+  cmd = paste0(cmd, collapse = "\n")
+  cmd
+}
+
+#' @name Get Redcap Status
+#'
+#' @title Get Cache status
+#'
+#' @description From the cache in the redcap object, identify the major events that have happened.
+#'
+#' @details This function helps format the cache entries so as to provide a meaningful decmdion of the events that happened during the object' lifecycle.
+#'
+#' This also helps in formatting output in the show command
+#'
+#' @param cache_objects Redcap object's cache
+#' @param pretty Whether to format output for display
+#'
+#' @return Code that can be evaluated to format data
 
 get_status = function(cache_objects, pretty = FALSE) {
   if (length(cache_objects) == 0) {
@@ -518,7 +605,7 @@ get_status = function(cache_objects, pretty = FALSE) {
   if ("raw_meta" %in% cache_objects)
     message = c(message, "metadata loaded (hint:use get_metadata() to get metadata)")
   if ("clean_records" %in% cache_objects)
-    message = c(message, "records cleaned (hint:use get_clean_data() to get data with missing and out of range values set to NA")
+    message = c(message, "records cleaned (hint:use get_clean_data() to get data with missing and out of range values set to NA)")
   if ("clean_meta" %in% cache_objects)
     message = c(message, "metadata munged (for internal use: <metaprogramming>)")
   if ("fmt_records" %in% cache_objects)
@@ -529,4 +616,27 @@ get_status = function(cache_objects, pretty = FALSE) {
     message = paste0(" \n", message, "\n")
   }
   message
+}
+
+#' @name prepare_metadata_for_code_generation
+#'
+#' @title Prepare metadata for code generation
+#'
+#' @description Take metadata and make sure it conforms to the project's meta programming.
+#'
+#' @details This is a utility function that aids in preparing the metadata for cmd generation.
+#' It converts the iput to a data table and assigns a key to it.
+#'
+#' @param metadata Redcap metadata
+#'
+#' @return transformed metadata
+#'
+
+prepare_metadata_for_code_generation = function(metadata) {
+  if (!is_valid_metadata(metadata))
+    stop("invalid metadata")
+  metadata = data.table(metadata)
+  metadata = metadata[, key := .I]
+  setkey(metadata, key)
+  metadata
 }

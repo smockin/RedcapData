@@ -72,6 +72,8 @@ redcap_class = setRefClass(
 
     load_data = function(chunked = FALSE, chunksize = NULL, forms = NULL, fields = NULL, ids_to_pull = NULL) {
       "Stream data from REDCap if not in cache"
+
+      rm(list = ls(.self$.__cache), envir = .self$.__cache)
       if (chunked) {
         if (!is.numeric(chunksize))
           .self$log("chunksize not specified yet chunked=TRUE", 2, function_name = "load_data")
@@ -130,7 +132,6 @@ redcap_class = setRefClass(
         .self$.__cache$raw_meta = meta
         message("records and metadata loaded")
       }
-      rm(list = ls(), envir = .self$.__cache)
       .self$log("records and metadata loaded", 0, function_name = "load_data")
     },
 
@@ -159,13 +160,14 @@ redcap_class = setRefClass(
       "Clean rceords removing out of range and empty values"
 
       if (!"clean_records" %in% names(as.list(.self$.__cache))) {
-        message("cleaning data...")
-        if (!"raw_records" %in% names(as.list(.self$.__cache))) {
-          .self$load_data()
+        if (!"fmt_records" %in% names(as.list(.self$.__cache))) {
+          message("formatted data not in cache, attempting to format raw data...")
+          .self$format_records()
         }
-        dataset = data.frame(.self$.__cache$raw_records)
-        if (!"clean_code" %in% names(as.list(.self$.__cache))) {
-          .self$.__cache$clean_code = paste0(
+        message("cleaning data...")
+        dataset = data.frame(.self$.__cache$fmt_records)
+        if (!"clean_cmd" %in% names(as.list(.self$.__cache))) {
+          .self$.__cache$clean_cmd = paste0(
             generate_remove_missing_code(.self$get_metadata(), "dataset"),
             generate_date_conversion_code(.self$get_metadata(), "dataset"),
             generate_remove_outliers_code(.self$get_metadata(), "dataset"),
@@ -173,7 +175,7 @@ redcap_class = setRefClass(
           )
         }
         tryCatch({
-          eval(parse(text=.self$.__cache$clean_code))
+          eval(parse(text=.self$.__cache$clean_cmd))
         },
         warning = function(w) {
           .self$log(w$message, 1, function_name = "clean_records")
@@ -194,6 +196,7 @@ redcap_class = setRefClass(
       if (!"clean_meta" %in% names(as.list(.self$.__cache))) {
         message("cleaning metadata...")
         if (!"raw_meta" %in% names(as.list(.self$.__cache))) {
+          message("metadata not in cache, attempting download...")
           .self$load_metadata()
         }
         cln_mt = .self$get_metadata()
@@ -217,20 +220,21 @@ redcap_class = setRefClass(
       "format records to add Hmisc labels and create factors"
 
       if (!"fmt_records" %in% names(as.list(.self$.__cache))) {
-        if (!"clean_records" %in% names(as.list(.self$.__cache)))
-          .self$clean_records()
-        dataset = .self$.__cache$clean_records
+        if (!"raw_records" %in% names(as.list(.self$.__cache))) {
+          message("data not in cache, attempting a chunked download (chunksize=500)...")
+          .self$load_data(chunked = TRUE, chunksize = 500)
+        }
+        dataset = .self$.__cache$raw_records
         message("formatting data..")
         if (!"fmt_cmd" %in% names(as.list(.self$.__cache)))
-          code = generate_formatting_code(.self$get_metadata(), dataset_name = "dataset")
+          .self$.__cache$fmt_cmd = generate_formatting_code(.self$get_metadata(), dataset_name = "dataset")
         tryCatch({
-          eval(parse(text=fmt_cmd))
+          eval(parse(text=.self$.__cache$fmt_cmd))
         }, warning = function(w) {
           .self$log(w$message, 1, function_name = "format_records")
         }, error = function(e) {
           .self$log(e$message, 2, function_name = "format_records")
         })
-        .self$.__cache$fmt_code = code
         .self$.__cache$fmt_records = dataset
         message("formatting done")
         .self$log("data formatted", 0, function_name = "format_records")
@@ -265,7 +269,7 @@ redcap_class = setRefClass(
       "Get saved records from cache"
 
       if (!"fmt_records" %in% names(as.list(.self$.__cache)))
-        .self$format_data()
+        .self$format_records()
       .self$log("formatted data accessed", 0, function_name = "get_formatted_data")
       .self$.__cache$fmt_records
     },
@@ -324,7 +328,7 @@ redcap_class = setRefClass(
 #' It then calls the new method of the underlying reference class.
 #'
 #' @param api_url REDCap project's api url. Just append /api/ to the project's url.
-#' @param ttoken The secret token for the project. Check the API page in REDCap. Must have api rights to access this.
+#' @param token The secret token for the project. Check the API page in REDCap. Must have api rights to access this.
 #' @param local Whether REDCap instance is local.
 #' @param exclusion_pattern regex for variables to exclude from autogeneration of code
 #' @param custom_code Custom error report code
