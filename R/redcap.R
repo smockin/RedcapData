@@ -1,4 +1,8 @@
-#' @name REDCap Class
+#' @include redcap_helper.R
+NULL
+
+
+#' @name redcap_class
 #'
 #' @title Redcap Wrapper Class
 #'
@@ -27,8 +31,6 @@
 #' @field local Whether REDCap instance is local
 #' @field exclusion_pattern regex for variables to exclude from autogeneration of code
 #' @field custom_code Custom error report code
-#'
-#' @include redcap_helper.R
 #'
 #' @return A redcap class with an array of functionality
 #'
@@ -70,13 +72,13 @@ redcap_class = setRefClass(
 
     load_data = function(chunked = FALSE, chunksize = NULL, forms = NULL, fields = NULL, ids_to_pull = NULL) {
       "Stream data from REDCap if not in cache"
-
       if (chunked) {
         if (!is.numeric(chunksize))
           .self$log("chunksize not specified yet chunked=TRUE", 2, function_name = "load_data")
         chunksize = abs(as.integer(chunksize))
         if (chunksize < 1)
           .self$log("specify a valid chunksize", 2, function_name = "load_data")
+        message("loading chunked data...")
         tryCatch({
           get_chunked_redcap_data(
             api = .self$api,
@@ -98,7 +100,9 @@ redcap_class = setRefClass(
         })
         .self$.__cache$raw_records = records
         .self$.__cache$raw_meta = meta
+        message("records and metadata loaded")
       } else {
+        message("loading data in bulk...")
         tryCatch({
           meta = get_redcap_data(
             api = .self$api,
@@ -124,8 +128,10 @@ redcap_class = setRefClass(
         })
         .self$.__cache$raw_records = records
         .self$.__cache$raw_meta = meta
+        message("records and metadata loaded")
       }
-      .self$log("data loaded into memory", 0, function_name = "load_data")
+      rm(list = ls(), envir = .self$.__cache)
+      .self$log("records and metadata loaded", 0, function_name = "load_data")
     },
 
     load_metadata = function() {
@@ -159,15 +165,23 @@ redcap_class = setRefClass(
         }
         dataset = data.frame(.self$.__cache$raw_records)
         if (!"clean_code" %in% names(as.list(.self$.__cache))) {
-          self$.__cache$clean_code = paste0(
-            generate_date_conversion_code(.self$.__cache$raw_meta, "dataset"),
-            generate_remove_missing_code(.self$.__cache$raw_meta, "dataset"),
-            generate_remove_outliers_code(.self$.__cache$raw_meta, "dataset"),
+          .self$.__cache$clean_code = paste0(
+            generate_remove_missing_code(.self$get_metadata(), "dataset"),
+            generate_date_conversion_code(.self$get_metadata(), "dataset"),
+            generate_remove_outliers_code(.self$get_metadata(), "dataset"),
             sep = "\n"
           )
         }
-        eval(parse(text=.self$.__cache$clean_code))
-        .self$.__cache.$clean_records = dataset
+        tryCatch({
+          eval(parse(text=.self$.__cache$clean_code))
+        },
+        warning = function(w) {
+          .self$log(w$message, 1, function_name = "clean_records")
+        },
+        error = function(e) {
+          .self$log(e$message, 2, function_name = "clean_records")
+        })
+        .self$.__cache$clean_records = dataset
         message("data cleaned")
         .self$log("data cleaned", 0, function_name = "clean_records")
       } else {
@@ -200,9 +214,29 @@ redcap_class = setRefClass(
     },
 
     format_records = function() {
-      if (!"meta" %in% names(as.list(.self$.__cache)))
-        .self$clean_meta()
-      .self$log("data formatted", 0, function_name = "format_records")
+      "format records to add Hmisc labels and create factors"
+
+      if (!"fmt_records" %in% names(as.list(.self$.__cache))) {
+        if (!"clean_records" %in% names(as.list(.self$.__cache)))
+          .self$clean_records()
+        dataset = .self$.__cache$clean_records
+        message("formatting data..")
+        if (!"fmt_cmd" %in% names(as.list(.self$.__cache)))
+          code = generate_formatting_code(.self$get_metadata(), dataset_name = "dataset")
+        tryCatch({
+          eval(parse(text=fmt_cmd))
+        }, warning = function(w) {
+          .self$log(w$message, 1, function_name = "format_records")
+        }, error = function(e) {
+          .self$log(e$message, 2, function_name = "format_records")
+        })
+        .self$.__cache$fmt_code = code
+        .self$.__cache$fmt_records = dataset
+        message("formatting done")
+        .self$log("data formatted", 0, function_name = "format_records")
+      } else {
+        message("data already formatted")
+      }
     },
 
     get_error_report = function() {
@@ -264,7 +298,7 @@ redcap_class = setRefClass(
                        "Level", paste0(rep("\t", 10), collapse = ""), "Message\n")
       }
       tolog = paste0(tolog,
-                     timestamp, "\t\t***", tmp, "***\t\t", paste0("{", function_name, "}:-> ", message)
+                     timestamp, "\t\t***", tmp, "***\t\t", paste0("{", function_name, "} ", message)
       )
       .__log <<- paste0(.__log, tolog)
       if (level == 1)
@@ -275,7 +309,7 @@ redcap_class = setRefClass(
   )
 )
 
-#' @name Create REDCap Instance
+#' @name redcap
 #'
 #' @title Wrapper for creating REDCap objects
 #'
@@ -316,7 +350,7 @@ redcap = function(
   local = TRUE,
   exclusion_pattern = NA_character_,
   custom_error_file = NA_character_
-  ) {
+) {
   if (is.na(local))
     stop("specify whether redcap is local instance")
   if (!is.logical(local))
