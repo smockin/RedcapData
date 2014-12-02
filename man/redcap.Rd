@@ -32,10 +32,6 @@ It performs the necessary checks for instantiation hence avoids messy objects.
 
 It then calls the new method of the underlying reference class.
 }
-\section{Info}{
-
-Use redcap function to instantiate this class. This avoids many pitfalls during the lifetime of this object.
-}
 \examples{
 \dontrun{cin = redcap("<some-token>", api_url = "http://<some-dns>/redcap/api/", local = F)}
 

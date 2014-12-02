@@ -22,11 +22,8 @@ Using the redcap metadata, code is generated that formats data.
 It assigns HMisc labels to variables and recodes data to factors
 }
 \seealso{
-Other code_gen: \code{\link{Generate code to eliminate
-  missing values}},
+Other code_gen: \code{\link{generate_date_conversion_code}};
   \code{\link{generate_remove_missing_code}};
-  \code{\link{Generate code to eliminate out-of-range
-  values}}, \code{\link{generate_remove_outliers_code}};
-  \code{\link{generate_date_conversion_code}}
+  \code{\link{generate_remove_outliers_code}}
 }
 

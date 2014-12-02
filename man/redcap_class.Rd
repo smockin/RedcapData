@@ -62,6 +62,10 @@ Show the object to view status
 
 \item{\code{log(message, level = 0, function_name = "")}}{Log events <internal>}
 }}
+\section{Info}{
+
+Use redcap function to instantiate this class. This avoids many pitfalls during the lifetime of this object.
+}
 \seealso{
 \code{\link{redcap}}
 }

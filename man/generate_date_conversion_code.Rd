@@ -20,11 +20,8 @@ This is a utility function that employs code generation to produce r code that r
 Using the redcap metadata, code is generated that converts character dates to R Date variables.
 }
 \seealso{
-Other code_gen: \code{\link{Generate code to eliminate
-  missing values}},
+Other code_gen: \code{\link{generate_formatting_code}};
   \code{\link{generate_remove_missing_code}};
-  \code{\link{Generate code to eliminate out-of-range
-  values}}, \code{\link{generate_remove_outliers_code}};
-  \code{\link{generate_formatting_code}}
+  \code{\link{generate_remove_outliers_code}}
 }
 

@@ -21,8 +21,10 @@ URL: http://www.kemri-wellcome.org
 Collate:
     'script.R'
     'branching_logic.R'
+    'config.R'
     'data_types.R'
     'generic_helper.R'
     'redcap_update.R'
     'redcap_helper.R'
     'redcap.R'
+    'redcap_update_helper.R'
