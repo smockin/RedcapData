@@ -4,7 +4,6 @@
 #'
 #' @title Get chunks of a specific size
 #'
-#'
 #' @description From a vector obtain a list of chunks of a specific size
 #'
 #' @return A list of objects of the same data type as input, each of size equal to the chunk size.
@@ -71,9 +70,11 @@ get_chunks = function(x, chunksize) {
 #' @param ids_to_pull a character vector of the specific record itentifiers to pull.
 #' @param dataset_name name of the resultant dataset
 #' @param metdataset_name name of the resultant metadata
+#'
 #' @seealso \code{\link{get_chunks}}
+#'
 #' @export
-#'#'
+#'
 #' @family get_data_red
 
 get_chunked_redcap_data = function(
@@ -258,8 +259,6 @@ is_valid_metadata = function(metadata) {
 #' Checkboxes are also munged to reflect what is in the repository.
 #'
 #' @param metadata REDCap metadata
-#'
-#' @export
 #'
 #' @return a character vector of the names of the dataset
 

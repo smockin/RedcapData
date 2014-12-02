@@ -36,9 +36,13 @@ NULL
 #'
 #' @seealso \code{\link{redcap}}
 #'
+#' @include redcap_update.R
+#'
+#' @section Info:
+#' Use redcap function to instantiate this class. This avoids many pitfalls during the lifetime of this object.
 
 redcap_class = setRefClass(
-  "redcap",
+  "Redcap",
   fields = list(
     .__cache = "environment",
     .__log = "character",
@@ -344,9 +348,7 @@ redcap_class = setRefClass(
 #' @examples \dontrun{cin = redcap("<some-token>", api_url = "http://<some-dns>/redcap/api/", local = F)}
 #'
 #' \dontrun{cin}
-#'
-#' @section Info:
-#' Use redcap function to instantiate this class. This avoids many pitfalls during the lifetime of this object.
+
 
 redcap = function(
   token,
