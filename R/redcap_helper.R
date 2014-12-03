@@ -577,6 +577,42 @@ generate_formatting_code = function(metadata, dataset_name = "data") {
   cmd
 }
 
+generate_error_report_code = function(metadata, date_var, hosp_var, custom_code = NA, updates = NA, dataset_name = "dataset") {
+  metadata = prepare_metadata_for_code_generation(metadata)
+  reset_tab()
+  cmd = character()
+  tmp = "\n"
+  tmp = c(tmp, "validate_data_entry = function(data_row) {")
+  add_tab()
+  tmp = c(tmp, "if (!\"data.table\" %in% class(data_row))")
+  add_tab()
+  tmp = c(tmp, "stop(\"input not data table\"))")
+  remove_tab()
+  add_tab()
+  tmp = c(tmp, "if (!(nrow(data_row) == 1))")
+  add_tab()
+  tmp = c(tmp, "stop(\"input must have one row\"))")
+  remove_tab()
+  tmp = c(tmp, "while (\"data_row\" %in% search())")
+  add_tab()
+  tmp = c(tmp, "detach(data_row)")
+  remove_tab()
+  tmp = c(tmp, "attach(dataRow)")
+  tmp = c(tmp, "form__x2014cin = character()")
+  tmp = c(tmp, "sect__x2014cin = character()")
+  tmp = c(tmp, "msg__x2014cin = character()")
+  tmp = c(tmp, "")
+  tmp = paste0(tmp, collapse = "\n")
+  cmd = c(cmd, tmp)
+  rolling_fn_x2014cin = ''
+  rolling_sc_x2014cin = ''
+  remove_tab()
+  gen_code_r = function(meta_r) {
+    if (!exists("rolling_fn_x2014cin", envir = ))
+  }
+
+}
+
 #' @name get_status
 #'
 #' @title Get Cache status

@@ -13,7 +13,6 @@ LazyData: true
 Imports:
     data.table,
     RCurl,
-    ReporteRs,
     stringr,
     Rcpp,
     reshape2

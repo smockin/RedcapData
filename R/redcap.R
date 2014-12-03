@@ -247,7 +247,36 @@ redcap_class = setRefClass(
       }
     },
 
-    get_error_report = function() {
+    report_errors = function() {
+      "Create error report"
+
+      if (!"raw_records" %in% names(as.list(.self$.__cache)))
+        .self$get_raw_records()
+      dataset = .self$.__cache$raw_records
+
+    },
+
+    get_error_report = function(save_to = NULL, pop = TRUE) {
+      "Get error report"
+
+      if (!"error_rpt" %in% names(as.list(.self$.__cache)))
+        .self$report_errors()
+      errors = .self$.__cache$error_rpt
+      if (is.null(save_to))
+        save_to = tempfile(pattern = "0000xfjhgggsqiu", fileext = ".R")
+      tryCatch({
+        write.csv(errors, save_to, row.names = FALSE)
+        if (pop)
+          open_using_default_app(save_to)
+        else
+          message(paste0("Error report saved to ", sQuote(save_to)))
+      },
+      warning = function(w) {
+        .self$log(w$message, 1, function_name = "get_error_report")
+      },
+      error = function(e) {
+        .self$log(e$message, 2, function_name = "get_error_report")
+      })
       .self$log("error report accessed", 0, function_name = "get_error_report")
     },
 

@@ -189,3 +189,17 @@ toproper = function(x, all = FALSE) {
   }
   x
 }
+
+convert_redcap2r = function(x) {
+  if (!is.na(x)) {
+    x = convert_dates_red2r(x)
+    x = gsub("\\[|\\]", "", x)
+    x = gsub("[ \t]+((AND)|(and))[ \t]+", " & ", x)
+    x = gsub("[ \t]+((OR)|(or))[ \t]+", " | ", x)
+    x = gsub("={1}[ \t]*'", " == '", x)
+    x = gsub("(<>)[ \t]*'", " != '", x)
+    x = logical_xpressions_red2r(xtend_chb_names(x))
+    x = gsub("[ \t]{2, }", " ", x)
+  }
+  x
+}
