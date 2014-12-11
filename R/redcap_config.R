@@ -1,23 +1,26 @@
-#' @name redcap_update_list
+#' @include data_types.R
+NULL
+
+#' @name redcap_config
 #'
-#' @title Redcap Updates Collection
+#' @title Redcap Configuration
 #'
-#' @concept update redcap
+#' @concept configuration
 #'
-#' @description This class holds a collection of update info objects that control the error reporting process.
+#' @description This class holds redcap configurations that control the interaction with the data repository.
 #'
+#' @details This configurations affect various processes encapsulated by the REDCap class from data input to error reporting.
 #'
-#' @details It holds the collection of objects that control the error reporing code generation.
-#'
-#' It also has collection-based operations.
+#' This allows the configurations to be loosely coupled from the REDCap interaction for both flexibility and maintainability.
 #'
 #' @export
 #'
 #' @field updates a list of update objects.
+#' @field configs an internal environment for holding configurations.
 #'
-#' @return A redcap update collection class
+#' @return A RedcapConfig class
 #'
-#' @family update objects
+#' @family config_objects
 #'
 
 redcap_config = setRefClass(
@@ -30,53 +33,76 @@ redcap_config = setRefClass(
   methods = list(
 
     show = function() {
-      msg = character()
-      cnt = length(.self$updates)
-      if (cnt == 0) {
-        msg = c(msg, "Redcap configurations with no update info(s) <class:RedcapConfig>\n")
-      } else {
-        msg = c(msg, paste0("Redcap configurations with ", cnt, " updates info(s) <class:RedcapConfig>"))
-        get_summary_update = function(upd) {
-          msg = character()
-          if (upd$is_valid()) {
-            msg = c(msg, paste0(upd$name, ": ", length(upd$new_vars), " new variables (", nrow(upd$site_info), " site(s))"))
-          } else {
-            msg = c(msg, paste0(upd$name, ": ", " invalid!"))
-          }
-          msg = paste0(msg, collapse = "\n")
-          msg
-        }
-        if (cnt <= 8) {
-          tmp = sapply(.self$updates, get_summary_update)
+      if (.self$is_valid()) {
+        msg = character()
+        cnt = length(.self$updates)
+        if (cnt == 0) {
+          msg = c(msg, "Redcap configurations with no update info(s) <class:RedcapConfig>\n")
         } else {
-          tmp = c(
-            sapply(.self$updates[1:4], get_summary_update),
-            "...",
-            sapply(.self$updates[(cnt)-3, cnt], get_summary_update)
-          )
+          msg = c(msg, paste0("Redcap configurations with ", cnt, " updates info(s) <class:RedcapConfig>"))
+          get_summary_update = function(upd) {
+            msg = character()
+            if (upd$is_valid()) {
+              msg = c(msg, paste0(upd$name, ": ", length(upd$new_vars), " new variables (", nrow(upd$site_info), " site(s))"))
+            } else {
+              msg = c(msg, paste0(upd$name, ": ", " invalid!"))
+            }
+            msg = paste0(msg, collapse = "\n")
+            msg
+          }
+          if (cnt <= 8) {
+            tmp = sapply(.self$updates, get_summary_update)
+          } else {
+            tmp = c(
+              sapply(.self$updates[1:4], get_summary_update),
+              "...",
+              sapply(.self$updates[(cnt)-3, cnt], get_summary_update)
+            )
+          }
+          tmp = paste0(tmp, collapse = "\n")
+          msg = paste0(msg, "\nUpdates:\n", tmp)
         }
-        tmp = paste0(tmp, collapse = "\n")
-        msg = paste0(msg, "\nUpdates:\n", tmp)
+        cat(msg)
+      } else {
+        cat("Invalid configurations!\n")
       }
-      cat(msg)
     },
 
     configs = function() {
-      out = as.list(.self$config)
-      out$custom_code = if(!is.na(out$custom_code)) {
-        "Has custom code"
+      "Displays the configurations for the REDCap session/object"
+
+      if (.self$is_valid()) {
+        out = as.list(.self$config)
+        out$custom_code = if(!is.na(out$custom_code)) {
+          "Has custom code"
+        } else {
+          "No cutsom code specified"
+        }
+        out$exclusion_pattern = if(!is.na(out$exclusion)) {
+          "No exclusion pattern"
+        } else {
+          "Has exclusion pattern(s)"
+        }
+        msg = "REDCap Configurations:\n{"
+        invisible({
+          sapply(1 : length(out), function(idx) {
+            nameCnf = names(out)[idx]
+            cnf = out[idx]
+            msg = c(msg, paste0("\t", nameCnf, " : ", cnf))
+          })
+        })
+        msg = c(msg, "}")
+        msg = paste0(msg, collapse = "\n")
+        msg = paste0(msg, "\n")
+        cat(msg)
       } else {
-        "No cutsom code specified"
-      }
-      out$exclusion_pattern = if(!is.na(out$exclusion)) {
-        "No exclusion pattern"
-      } else {
-        "Has exclusion pattern(s)"
+        cat("Invalid configurations!\n")
       }
     },
 
     is_valid = function() {
       "Checks the validity of the object"
+
       valid = TRUE
       msg = character()
       if (!all(
@@ -84,6 +110,7 @@ redcap_config = setRefClass(
         "local",
         "token",
         "exlusion_pattern",
+        "updates",
         "custom_code",
         "chunksize",
         "chunked",
@@ -91,84 +118,96 @@ redcap_config = setRefClass(
         "hosp_var"
       ) %in% ls(all = TRUE, envir = .self$config)) {
         msg = c(msg, "Some required configurations are not set")
+        valid = FALSE
       }
-      if (is.na(.self$configs$local))
+      if (is.na(.self$configs$local)) {
         msg = c(msg, "specify whether redcap is local instance")
-      if (!is.logical(.self$configs$local))
-        msg = c(msg, "invalid local configuration")
-      if (length(.self$configs$local) == 0L)
-        .self$configs$local <<- TRUE
+        valid = FALSE
+      }
+      if (!is.logical(.self$configs$local)) {
+        msg = c(msg, "invalid local configuration (must be logical)")
+        valid = FALSE
+      }
+      if (length(.self$configs$local) == 0L) {
+        warning("local not specified, reseting to TRUE")
+        .self$configs$local = TRUE
+      }
       if (length(.self$configs$local) > 1L) {
         warning("local is of length > 1, taking first element")
-        .self$configs$local <<- .self$configs$local[1L]
+        .self$configs$local = .self$configs$local[1L]
       }
       tmp = "http://localhost/redcap/api/"
       if (.self$configs$local) {
-        if (isTRUE(.self$configs$api_url != tmp))
-          message("local=T, resetting api_url=", tmp)
-        .self$configs$api_url = tmp
-      } else {
-        if (is.na(.self$configs$api_url))
-          message("specify api url")
-        if (str_trim(.self$configs$api_url) %in% c("", "NA"))
-          stop("specifiy a valid api url")
-        .self$configs$api_url <<- str_trim(.self$configs$api_url)
-        if (api_url==tmp) {
-          message("api_url=", tmp ,", resetting local=TRUE")
-          .self$configs$local <<- TRUE
+        if (isTRUE(.self$configs$api_url != tmp)) {
+          warning("local=T, resetting api_url = ", sQuote(tmp))
+          .self$configs$api_url = tmp
         }
-        if (!grepl("/api/$", .self$configs$api_url)) {
-          stop("api_url invalid. ???<must end with \"/api/\">???")
+      } else {
+        if (is.na(.self$configs$api_url)) {
+          msg = c(msg, "specify api url")
+          valid = FALSE
+        }
+        if (str_trim(.self$configs$api_url) %in% c("", "NA")) {
+          msg = c(msg, "specifiy a valid api url")
+          valid = FALSE
+        }
+        .self$configs$api_url = str_trim(.self$configs$api_url)
+        if (api_url == tmp) {
+          warning("api_url = ", tmp ,", resetting local=TRUE")
+          .self$configs$local = TRUE
         }
       }
-      if (is.na(token))
-        stop("specify token")
-      if (str_trim(token) == "")
-        stop("specifiy a valid api token")
-      if (!is.character(.self$configs$custom_code))
-        stop("invalid custom code")
+      if (!grepl("/api/$", .self$configs$api_url)) {
+        msg = c(msg, "api_url invalid. ???<must end with \"/api/\">???")
+        valid = FALSE
+      }
+      if (length(.self$configs$api_url) > 1L) {
+        warning("api_url is of length > 1, taking first element")
+        .self$configs$api_url = .self$configs$api_url[1L]
+      }
+      if (is.na(.self$configs$token)) {
+        msg = c(msg, "specify token")
+        valid = FALSE
+      } else if (str_trim(.self$configs$token) == "") {
+        msg = c(msg, "specifiy a valid api token")
+        valid = FALSE
+      } else if (length(.self$configs$token) > 1L) {
+        warning("token is of length > 1, taking first element")
+        .self$configs$token = .self$configs$token[1L]
+      }
+      if (!is.na(!is.character(.self$configs$custom_code))) {
+        if (!is.character(.self$configs$custom_code)) {
+          msg = c(msg, "invalid custom code")
+          valid = FALSE
+        }
+      }
       if (!is.na(exclusion_pattern))
-        if (!is.character(exclusion_pattern))
-          stop("invalid exclusion pattern")
+        if (!is.character(exclusion_pattern)) {
+          msg = c(msg, "invalid exclusion pattern")
+          valid = FALSE
+        }
       if (length(.self$updates) != 0L) {
         if (!all("RedcapUpdate" %in% sapply(.self$updates, class))) {
           idx = which("RedcapUpdate" %in% sapply(.self$updates, class))
           upds = .self$updates[idx]
-
-        }
-        stop("invalid updates")
-      }
-      config = redcap_config$new(updates = updates)
-      config$configs$api_url = api_url
-      config$configs$token = token
-      config$configs$local = local
-      config$configs$exclusion_pattern = exclusion_pattern
-      config$configs$api_url = custom_code
-      if (!is.valid(config))
-        stop("invalid config")
-      obj = redcap_class$new(opts = configs)
-      obj
-      msg = character()
-      value = TRUE
-      if (length(.self$updates) > 0) {
-        if (!all("RedcapUpdate" %in% sapply(.self$updates, class))) {
-          invalid = which(!"RedcapUpdate" %in% sapply(.self$updates, class))
-          invalid = paste0(valid, collapse = ", ")
-          mgs = c(msg, paste0("items [", invalid, "] not redcap updates!"))
-          value = FALSE
-        }
-        if (!all(sapply(.self$updates, function(up) up$is_valid()))) {
-          invalid = which(!(sapply(.self$updates, function(up) up$is_valid())))
-          invalid = paste0(valid, collapse = ", ")
-          mgs = c(msg, paste0("items [", invalid, "] invalid!"))
-          value = FALSE
-        }
-        if (length(msg) > 0) {
-          msg = paste0(msg, collapse = "\n")
-          message(msg)
+          upds = sQuote(sapply(upds, function(up) up$name))
+          upds = paste0(upds, collapse = ", ")
+          msg = c(msg, paste0("invalid updates <", upds, ">"))
+          valid = FALSE
+        } else if (!all(sapply(.self$updates, function(x) x$is_valid()))) {
+          idx = which(!sapply(.self$updates, function(x) x$is_valid()))
+          upds = .self$updates[idx]
+          upds = sQuote(sapply(upds, function(up) up$name))
+          upds = paste0(upds, collapse = ", ")
+          msg = c(msg, paste0("invalid updates <", upds, ">"))
+          valid = FALSE
         }
       }
-      value
+      if (!valid) {
+        msg = paste0(msg, collapse = "\n")
+        cat(msg)
+      }
+      return(valid)
     },
 
     get_update_date = function(var_name, hospital_id) {
@@ -176,8 +215,8 @@ redcap_config = setRefClass(
 
       value = as.Date(NA)
       if (length(.self$updates) > 0) {
-        if (!.self$is_valid())
-          stop("invalid updates")
+        if (!all(sapply(.self$updates, function(x) x$is_valid())))
+          stop("Some updates not valid")
         idx = which(sapply(.self$updates, function(x) {
           var_name %in% x$new_vars
         }))
@@ -189,15 +228,14 @@ redcap_config = setRefClass(
         }
       }
       value
-    }
-    )
+    })
 )
 
 #' @name redcap_update
 #'
-#' @title Redcap Updates Object
+#' @title Redcap Update Object
 #'
-#' @concept update redcap
+#' @concept updates configuration
 #'
 #' @description This class holds the update information that affects the error reporting process.
 #'
@@ -209,14 +247,12 @@ redcap_config = setRefClass(
 #' @export
 #'
 #' @field name Name of the update.
-#' @field site_info A dataset of site information. It has variables site and date matching the date of the update for each site.
+#' @field site_info A dataset of site information. It has variables `site` and `date` matching the date of the update for each site.
 #' @field new_vars New variables added during the update.
 #'
 #' @return A redcap update class
 #'
-#' @family update objects
-#'
-#' @include data_types.R
+#' @family config_objects
 #'
 
 redcap_update = setRefClass(
@@ -244,11 +280,14 @@ redcap_update = setRefClass(
 
     is_valid = function() {
       msgs = character()
-      value = TRUE
+      valid = TRUE
       if (!is.data.frame(.self$site_info))
         c(msgs, "invalid site info [must be data frame]")
       site_info <<- as.data.frame(.self$site_info)
-      if (!length(.self$))
+      if (!length(.self$name > 1)) {
+        warning("update name is of length > 1")
+        name <<- .self$name[1L]
+      }
     },
 
     get_update_date = function(var_name, hospital_id) {

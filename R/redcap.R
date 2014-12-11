@@ -1,6 +1,11 @@
 #' @include redcap_helper.R
 NULL
 
+#' @include redcap_config.R
+NULL
+
+#' @include redcap_config_helper.R
+NULL
 
 #' @name redcap_class
 #'
@@ -20,9 +25,9 @@ NULL
 #'
 #' It also provides other data allied tasks such as data cleaning, error reporting and formatting.
 #'
-#' It uses a cache system and logs major events
+#' It uses a cache system and logs major events.
 #'
-#' Show the object to view status
+#' Show the object to view status.
 #'
 #' @export
 #'
@@ -36,10 +41,11 @@ NULL
 #'
 #' @seealso \code{\link{redcap}}
 #'
-#' @include redcap_update.R
-#'
 #' @section Info:
 #' Use redcap function to instantiate this class. This avoids many pitfalls during the lifetime of this object.
+#'
+#' @include redcap_config.R
+#'
 
 redcap_class = setRefClass(
   "Redcap",
@@ -377,9 +383,6 @@ redcap_class = setRefClass(
 #'
 #' @seealso \code{\link{redcap_class}}
 #'
-#' @include redcap_config.R
-#' @include redcap_config_helper.R
-#'
 #' @return A redcap class instance that can be used to interact with the data repository
 #'
 #' @examples \dontrun{cin = redcap("<some-token>", api_url = "http://<some-dns>/redcap/api/", local = F)}
@@ -415,12 +418,16 @@ redcap = function(
     if (!is.character(exclusion_pattern))
       stop("invalid exclusion pattern")
   opts$exclusion_pattern = exclusion_pattern
+  tryCatch({ configs = do.call(load_configs, opts) },
+           warning = function(w) warning(w$message),
+           error = function(e) stop("Could not load configs\nDetails:\n", e$message)
+           )
   configs = do.call(load_configs, opts)
   if (!is.na(updates_location)) {
     if (!file.exists(updates_location))
       stop("updates file not found")
     updates = read.csv(updates_location, as.is = TRUE)
-    updates = load_updates(updates)
+    tryCatch({ updates = load_updates(updates) }, warning = function(w) warning(w$message), error = function(e) updates = list())
   } else {
     updates = list()
   }

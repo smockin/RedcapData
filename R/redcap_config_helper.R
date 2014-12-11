@@ -131,9 +131,9 @@ load_configs = function(config_data = NULL, custom_code = NA, exclusion_pattern 
     if (any(duplicated(config_data$key)))
       stop("duplicate keys in config data")
     config_data = config_data[config_data$key %in% names(config_keys),]
-    config_data = data.frame(sapply(config_data) function(x) {
+    config_data = data.frame(sapply(config_data, function(x) {
       str_trim(x)
-    })
+    }))
     if (nrow(config_data) > 0) {
       invisible(sapply(config_data$key, function(k) {
         cnf = config_data[config_data$key == k,]
@@ -142,29 +142,29 @@ load_configs = function(config_data = NULL, custom_code = NA, exclusion_pattern 
         val = cnf$value
         val = if (typ == "date") {
           if (str_trim(val) %in% c("NA", "")) {
-            val = as.Date(NA)
-          } else (!is_date(val)) {
+            as.Date(NA)
+          } else if (!is_date(val)) {
             stop(paste0(sQuote(ky), " must be a date (format:yyyy-mm-dd)"))
           }
           as.Date(val)
         } else if (typ == "float") {
           if (str_trim(val) %in% c("NA", "")) {
             val = NA_real_
-          } else (!is_number(val)) {
+          } else if (!is_number(val)) {
             stop(paste0(sQuote(ky), " must be a float"))
           }
           as.numeric(val)
         } else if (type == "integer") {
           if (str_trim(val) %in% c("NA", "")) {
             val = NA_integer_
-          } else (!is_integer(val)) {
+          } else if (!is_integer(val)) {
             stop(paste0(sQuote(ky), " must be an integer"))
           }
           as.integer(val)
         } else if (type == "boolean") {
           if (str_trim(val) %in% c("NA", "")) {
             val = NA
-          } else (!is_boolean(val)) {
+          } else if (!is_boolean(val)) {
             stop(paste0(sQuote(ky), " must be a boolean"))
           }
           as.logical(val)
