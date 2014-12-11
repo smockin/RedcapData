@@ -49,6 +49,8 @@ Show the object to view status
 
 \item{\code{get_clean_data()}}{Get saved records from cache}
 
+\item{\code{get_error_report(save_to = NULL, pop = TRUE)}}{Get error report}
+
 \item{\code{get_formatted_data()}}{Get saved records from cache}
 
 \item{\code{get_metadata()}}{Get saved metadata from cache}
@@ -61,6 +63,8 @@ Show the object to view status
 \item{\code{load_metadata()}}{Stream metadata only from REDCap if not in cache}
 
 \item{\code{log(message, level = 0, function_name = "")}}{Log events <internal>}
+
+\item{\code{report_errors()}}{Create error report}
 }}
 \section{Info}{
 
