@@ -1,11 +1,11 @@
 Package: Cin
-Title: Data utility support for CIN
+Title: Data management utility support for CIN
 Version: 1.0
 Authors@R: "Boniface Makone <bonifacemakone@gmail.com> [aut, cre]"
 Description: This package contains utility and helper functions that support
     data management and analysis tasks of the Clinical Information Network.
-    This includes error reports, data quality assurance, statistical data
-    analysis and reporting.
+    These tasks include data quality assurance, statistical data analysis and
+    reporting.
 Depends:
     R (>= 3.0.0)
 License: MIT
@@ -13,17 +13,14 @@ LazyData: true
 Imports:
     data.table,
     RCurl,
-    stringr,
-    Rcpp,
-    reshape2
+    stringr
 URL: http://www.kemri-wellcome.org
 Collate:
     'script.R'
     'branching_logic.R'
-    'config.R'
     'data_types.R'
     'generic_helper.R'
-    'redcap_update.R'
     'redcap_helper.R'
+    'redcap_config.R'
+    'redcap_config_helper.R'
     'redcap.R'
-    'redcap_update_helper.R'

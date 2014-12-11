@@ -2,7 +2,7 @@
 \docType{class}
 \name{redcap_update}
 \alias{redcap_update}
-\title{Redcap Updates Object}
+\title{Redcap Update Object}
 \value{
 A redcap update class
 }
@@ -19,7 +19,7 @@ The dates can be accessed to allow for conditional generation of the error repor
 \describe{
 \item{\code{name}}{Name of the update.}
 
-\item{\code{site_info}}{A dataset of site information. It has variables site and date matching the date of the update for each site.}
+\item{\code{site_info}}{A dataset of site information. It has variables `site` and `date` matching the date of the update for each site.}
 
 \item{\code{new_vars}}{New variables added during the update.}
 }}
@@ -27,13 +27,11 @@ The dates can be accessed to allow for conditional generation of the error repor
 
 \describe{
 \item{\code{get_update_date(var_name, hospital_id)}}{Get the date a specific variable was updated for a specific site}
-
-\item{\code{is_valid()}}{Checks whether the info is valid}
 }}
 \seealso{
-Other update objects: \code{\link{redcap_update_list}}
+Other config_objects: \code{\link{redcap_config}}
 }
 \concept{
-update redcap
+updates configuration
 }
 

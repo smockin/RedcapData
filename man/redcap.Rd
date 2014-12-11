@@ -3,17 +3,17 @@
 \alias{redcap}
 \title{Wrapper for creating REDCap objects}
 \usage{
-redcap(token, api_url = "http://localhost/redcap/api/", local = TRUE,
-  exclusion_pattern = NA_character_, custom_error_file = NA_character_)
+redcap(configs_location = NA, custom_code_location = NA,
+  updates_location = NA, exclusion_pattern = NA)
 }
 \arguments{
-\item{token}{The secret token for the project. Check the API page in REDCap. Must have api rights to access this.}
+\item{exclusion_pattern}{regex for variables to exclude from autogeneration of code}
 
 \item{api_url}{REDCap project's api url. Just append /api/ to the project's url.}
 
-\item{local}{Whether REDCap instance is local.}
+\item{token}{The secret token for the project. Check the API page in REDCap. Must have api rights to access this.}
 
-\item{exclusion_pattern}{regex for variables to exclude from autogeneration of code}
+\item{local}{Whether REDCap instance is local.}
 
 \item{custom_code}{Custom error report code}
 }

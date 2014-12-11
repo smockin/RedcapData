@@ -21,9 +21,9 @@ Currently only metadata and records can be pulled.
 
 It also provides other data allied tasks such as data cleaning, error reporting and formatting.
 
-It uses a cache system and logs major events
+It uses a cache system and logs major events.
 
-Show the object to view status
+Show the object to view status.
 }
 \section{Fields}{
 
@@ -41,13 +41,13 @@ Show the object to view status
 \section{Methods}{
 
 \describe{
-\item{\code{clean_meta(is_error = FALSE)}}{Clean meta data for autogeneration of cleaning code}
-
 \item{\code{clean_records()}}{Clean rceords removing out of range and empty values}
 
 \item{\code{format_records()}}{format records to add Hmisc labels and create factors}
 
 \item{\code{get_clean_data()}}{Get saved records from cache}
+
+\item{\code{get_clean_meta(is_error = FALSE)}}{Clean meta data for autogeneration of error report code}
 
 \item{\code{get_error_report(save_to = NULL, pop = TRUE)}}{Get error report}
 
@@ -57,8 +57,8 @@ Show the object to view status
 
 \item{\code{get_raw_data()}}{Get saved records from cache}
 
-\item{\code{load_data(chunked = FALSE, chunksize = NULL, forms = NULL,
-  fields = NULL, ids_to_pull = NULL)}}{Stream data from REDCap if not in cache}
+\item{\code{load_data(chunked = .self$opts$configs$chunked,
+  chunksize = .self$opts$configs$chunksize)}}{Stream data from REDCap if not in cache}
 
 \item{\code{load_metadata()}}{Stream metadata only from REDCap if not in cache}
 
