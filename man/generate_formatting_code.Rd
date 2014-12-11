@@ -3,7 +3,8 @@
 \alias{generate_formatting_code}
 \title{Autogenerate code for data formatting}
 \usage{
-generate_formatting_code(metadata, dataset_name = "data")
+generate_formatting_code(metadata, dataset_name = "data",
+  updates = "updates")
 }
 \arguments{
 \item{metadata}{REDCap metadata}
