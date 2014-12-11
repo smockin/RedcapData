@@ -46,18 +46,14 @@ redcap_class = setRefClass(
   fields = list(
     .__cache = "environment",
     .__log = "character",
-    api = "character",
-    token = "character",
-    local = "logical",
-    exclusion_pattern = "character",
-    custom_code = "character"
+    opts = "RedcapConfig"
   ),
 
   methods = list(
 
     show = function() {
-      www = gsub("/api/", "", .self$api)
-      if (.self$local)
+      www = gsub("/api/", "", .self$opts$configs$api_url)
+      if (.self$opts$configs$api_url)
         msg = "redcap:\nA local redcap instance <class:redcap>\n"
       else
         msg = paste0("redcap:\nA remote redcap instance running at ", sQuote(www), " <class:redcap>\n")
@@ -74,7 +70,9 @@ redcap_class = setRefClass(
       cat(msg)
     },
 
-    load_data = function(chunked = FALSE, chunksize = NULL, forms = NULL, fields = NULL, ids_to_pull = NULL) {
+    load_data = function(chunked = .self$opts$configs$chunked,
+                         chunksize = .self$opts$configs$chunksize
+    ) {
       "Stream data from REDCap if not in cache"
 
       rm(list = ls(.self$.__cache), envir = .self$.__cache)
@@ -87,9 +85,9 @@ redcap_class = setRefClass(
         message("loading chunked data...")
         tryCatch({
           get_chunked_redcap_data(
-            api = .self$api,
-            token = .self$token,
-            local = .self$local,
+            api = .self$opts$configs$api_url,
+            token = .self$opts$configs$token,
+            local = .self$opts$configs$local,
             chunksize = chunksize,
             forms = NULL,
             fields = NULL,
@@ -111,19 +109,16 @@ redcap_class = setRefClass(
         message("loading data in bulk...")
         tryCatch({
           meta = get_redcap_data(
-            api = .self$api,
-            token = .self$token,
+            api = .self$opts$configs$api_url,
+            token = .self$opts$configs$token,
             content = "metadata",
-            local = .self$local,
-            forms = forms,
-            fields = fields,
-            ids_to_pull = ids_to_pull
+            local = .self$opts$configs$local
           )
           records = get_redcap_data(
-            api = .self$api,
-            token = .self$token,
+            api = .self$opts$configs$api_url,
+            token = .self$opts$configs$token,
             content = "record",
-            local = .self$local
+            local = .self$opts$configs$local
           )
         },
         warning = function(w) {
@@ -144,10 +139,10 @@ redcap_class = setRefClass(
 
       tryCatch({
         meta = get_redcap_data(
-          api = .self$api,
-          token = .self$token,
+          api = .self$opts$configs$api_url,
+          token = .self$opts$configs$token,
           content = "metadata",
-          local = .self$local
+          local = .self$opts$configs$local
         )
       },
       warning = function(w) {
@@ -163,14 +158,14 @@ redcap_class = setRefClass(
     clean_records = function() {
       "Clean rceords removing out of range and empty values"
 
-      if (!"clean_records" %in% names(as.list(.self$.__cache))) {
-        if (!"fmt_records" %in% names(as.list(.self$.__cache))) {
+      if (!"clean_records" %in% ls(all = T, envir = .self$.__cache)) {
+        if (!"fmt_records" %in% ls(all = T, envir = .self$.__cache)) {
           message("formatted data not in cache, attempting to format raw data...")
           .self$format_records()
         }
         message("cleaning data...")
         dataset = data.frame(.self$.__cache$fmt_records)
-        if (!"clean_cmd" %in% names(as.list(.self$.__cache))) {
+        if (!"clean_cmd" %in% ls(all = T, envir = .self$.__cache)) {
           .self$.__cache$clean_cmd = paste0(
             generate_remove_missing_code(.self$get_metadata(), "dataset"),
             generate_date_conversion_code(.self$get_metadata(), "dataset"),
@@ -195,42 +190,40 @@ redcap_class = setRefClass(
       }
     },
 
-    clean_meta = function(is_error = FALSE) {
-      "Clean meta data for autogeneration of cleaning code"
-      if (!"clean_meta" %in% names(as.list(.self$.__cache))) {
+    get_clean_meta = function(is_error = FALSE) {
+      "Clean meta data for autogeneration of error report code"
+
+      if (!"clean_meta" %in% ls(all = T, envir = .self$.__cache)) {
         message("cleaning metadata...")
-        if (!"raw_meta" %in% names(as.list(.self$.__cache))) {
-          message("metadata not in cache, attempting download...")
-          .self$load_metadata()
-        }
         cln_mt = .self$get_metadata()
-        cln_mt = data.table::data.table(cln_mt)
+        cln_mt = data.table(cln_mt)
         cln_mt = cln_mt[, key = .I]
-        data.table::setkey(cln_mt, key)
+        setkey(cln_mt, key)
         cln_mt = cln_mt[!field_type %in% c("descriptive", "calc")]
         if (is_error) {
-          if (!is.null(vars_to_exclude))
-            print("not implemented")
+          if (!is.na(vars_to_exclude)) {
+            to_exclude = sapply(.self$opts$configs$exclusion_pattern, function(pt) {
+              grepl(pt, cln_mt[, field_name])
+            })
+            to_exclude = apply(to_exclude, 1, any)
+            cln_mt = cln_mt[!to_exclude]
+          }
         }
-        .self$.__cache$clean_meta = cln_mt
-        .self$log("metadata cleaned", 0, function_name = "clean_meta")
+        .self$.__cache$clean_meta = data.frame(cln_mt)
+        .self$log("metadata cleaned", 0, function_name = "get_clean_meta")
         message("metadata cleaned")
-      } else {
-        message("metadata already cleaned")
       }
+      .self$log("clean metadata accessed", 0, function_name = "get_clean_meta")
+      .self$.__cache$clean_meta
     },
 
     format_records = function() {
       "format records to add Hmisc labels and create factors"
 
-      if (!"fmt_records" %in% names(as.list(.self$.__cache))) {
-        if (!"raw_records" %in% names(as.list(.self$.__cache))) {
-          message("data not in cache, attempting a chunked download (chunksize=500)...")
-          .self$load_data(chunked = TRUE, chunksize = 500)
-        }
-        dataset = .self$.__cache$raw_records
+      if (!"fmt_records" %in% ls(all = T, envir = .self$.__cache)) {
+        dataset = .self$get_raw_data()
         message("formatting data..")
-        if (!"fmt_cmd" %in% names(as.list(.self$.__cache)))
+        if (!"fmt_cmd" %in% ls(all = T, envir = .self$.__cache))
           .self$.__cache$fmt_cmd = generate_formatting_code(.self$get_metadata(), dataset_name = "dataset")
         tryCatch({
           eval(parse(text=.self$.__cache$fmt_cmd))
@@ -250,18 +243,32 @@ redcap_class = setRefClass(
     report_errors = function() {
       "Create error report"
 
-      if (!"raw_records" %in% names(as.list(.self$.__cache)))
-        .self$get_raw_records()
-      dataset = .self$.__cache$raw_records
-
+      dataset = .self$get_raw_data()
+      if (!"data.table" %in% class(dataset))
+        dataset = data.table(dataset)
+      if (!haskey(dataset)) {
+        dataset = dataset[, key_x2014cin := .I]
+        setkey(dataset, key_x2014cin)
+      }
+      if (!"err_cmd" %in% ls(all.names = T, envir = .self$.__cache))
+        .self$.__cache$err_cmd = generate_error_report_code(
+          .self$get_clean_metadata(),
+          dataset_name = "dataset",
+          date_var = .self$opts$configs$date_var,
+          hosp_var = .self$opts$configs$hosp_var,
+          custom_code = .self$opts$configs$custom_code,
+          updates = .self$opts$updates
+        )
+      eval(parse(text = .self$.__cache))
+      .self$.__cache$err_rpt = dataset[, validate_data_entry(.SD), by = key_x2014cin]
     },
 
     get_error_report = function(save_to = NULL, pop = TRUE) {
       "Get error report"
 
-      if (!"error_rpt" %in% names(as.list(.self$.__cache)))
+      if (!"err_rpt" %in% ls(all = T, envir = .self$.__cache))
         .self$report_errors()
-      errors = .self$.__cache$error_rpt
+      errors = .self$.__cache$err_rpt
       if (is.null(save_to))
         save_to = tempfile(pattern = "0000xfjhgggsqiu", fileext = ".R")
       tryCatch({
@@ -283,7 +290,7 @@ redcap_class = setRefClass(
     get_raw_data = function() {
       "Get saved records from cache"
 
-      if (!"raw_records" %in% names(as.list(.self$.__cache)))
+      if (!"raw_records" %in% ls(all = T, envir = .self$.__cache))
         stop("no data in memory. use load_data to load cache")
       .self$log("raw data accessed", 0, function_name = "get_raw_data")
       .self$.__cache$raw_records
@@ -292,7 +299,7 @@ redcap_class = setRefClass(
     get_clean_data = function() {
       "Get saved records from cache"
 
-      if (!"clean_records" %in% names(as.list(.self$.__cache)))
+      if (!"clean_records" %in% ls(all = T, envir = .self$.__cache))
         .self$clean_records()
       .self$log("clean data accessed", 0, function_name = "get_clean_data")
       .self$.__cache$clean_records
@@ -301,7 +308,7 @@ redcap_class = setRefClass(
     get_formatted_data = function() {
       "Get saved records from cache"
 
-      if (!"fmt_records" %in% names(as.list(.self$.__cache)))
+      if (!"fmt_records" %in% ls(all = T, envir = .self$.__cache))
         .self$format_records()
       .self$log("formatted data accessed", 0, function_name = "get_formatted_data")
       .self$.__cache$fmt_records
@@ -310,7 +317,7 @@ redcap_class = setRefClass(
     get_metadata = function() {
       "Get saved metadata from cache"
 
-      if (!"raw_meta" %in% names(as.list(.self$.__cache)))
+      if (!"raw_meta" %in% ls(all = T, envir = .self$.__cache))
         .self$load_metadata()
       .self$log("metadata accessed", 0, function_name = "get_metadata")
       .self$.__cache$raw_meta
@@ -370,7 +377,8 @@ redcap_class = setRefClass(
 #'
 #' @seealso \code{\link{redcap_class}}
 #'
-#' @include redcap_update.R
+#' @include redcap_config.R
+#' @include redcap_config_helper.R
 #'
 #' @return A redcap class instance that can be used to interact with the data repository
 #'
@@ -380,52 +388,45 @@ redcap_class = setRefClass(
 
 
 redcap = function(
-  token,
-  api_url = "http://localhost/redcap/api/",
-  local = TRUE,
-  exclusion_pattern = NA_character_,
-  custom_error_file = NA_character_
+  configs_location = NA,
+  custom_code_location = NA,
+  updates_location = NA,
+  exclusion_pattern = NA
 ) {
-  if (is.na(local))
-    stop("specify whether redcap is local instance")
-  if (!is.logical(local))
-    stop("invalid local")
-  if (length(local) == 0L)
-    local = TRUE
-  if (length(local) > 1L) {
-    warning("local is of length > 1, taking first element")
-    local = local[1L]
-  }
-  tmp = "http://localhost/redcap/api/"
-  if (local) {
-    if (!missing(api_url) & api_url != tmp)
-      message("local=T, resetting api_url=", tmp)
-    api_url = tmp
+  opts = list()
+  if (!is.na(configs_file_location)) {
+    if (!file.exists(configs_file_location))
+      stop("configs file not found")
+    configs_data = read.csv(configs_file_location, as.is = TRUE)
   } else {
-    if (missing(api_url))
-      stop("specify api url")
-    if (stringr::str_trim(api_url) == "" | is.na(api_url))
-      stop("specifiy a valid api url")
-    if (api_url==tmp) {
-      message("api_url=", tmp ,", resetting local=TRUE")
-      local = TRUE
-    }
-    if (!grepl("/api/$", api_url)) {
-      stop("api_url invalid. ???<must end with \"/api/\">???")
-    }
+    configs_data = NULL
   }
-  if (missing(token))
-    stop("specify token")
-  if (stringr::str_trim(token) == "" | is.na(token))
-    stop("specifiy a valid api token")
-  if (!is.na(custom_error_file)) {
-    if (!file.exists(custom_error_file))
-      stop("custom code not found")
-    custom_error_file = readLines(custom_error_file, warn = FALSE)
-    custom_error_file = cat(custom_error_file, collapse = "\n")
+  opts$config_data = configs_data
+  if (!is.na(custom_code_location)) {
+    if (!file.exists(custom_code_location))
+      stop("custom code file not found")
+    custom_code = readLines(custom_code_location, warn = F)
+  } else {
+    custom_code = NA
   }
+  opts$custom_code = custom_code
+
   if (!is.na(exclusion_pattern))
     if (!is.character(exclusion_pattern))
       stop("invalid exclusion pattern")
-  redcap_class$new(api = api_url, token = token, local = local, exclusion_pattern = exclusion_pattern, custom_code = custom_error_file)
+  opts$exclusion_pattern = exclusion_pattern
+  configs = do.call(load_configs, opts)
+  if (!is.na(updates_location)) {
+    if (!file.exists(updates_location))
+      stop("updates file not found")
+    updates = read.csv(updates_location, as.is = TRUE)
+    updates = load_updates(updates)
+  } else {
+    updates = list()
+  }
+  configs$updates <<- updates
+  if (!is.valid(configs))
+    stop("invalid configs")
+  obj = redcap_class$new(opts = configs)
+  obj
 }
