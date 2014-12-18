@@ -1,6 +1,8 @@
 #' @import data.table
 #' @import stringr
 #' @import RCurl
+#' @import Hmisc
+#' @import methods
 NULL
 
 #' @name open_using_default_app
