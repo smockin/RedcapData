@@ -1,13 +1,13 @@
 #' @include data_types.R
 NULL
 
-#' @name redcap_config
+#' @name RedcapConfig
 #'
-#' @title Redcap Configuration
+#' @title Redcap Configuration Wrapper Class
 #'
-#' @concept configuration
+#' @concept configuration cin redcap
 #'
-#' @description This class holds redcap configurations that control the interaction with the data repository.
+#' @description This class holds redcap configurations that control the mode of interaction with the data repository.
 #'
 #' @details This configurations affect various processes encapsulated by the REDCap class from data input to error reporting.
 #'
@@ -15,15 +15,15 @@ NULL
 #'
 #' @export
 #'
-#' @field updates a list of update objects.
+#' @field updates a list of RedcapUpdate object(s).
 #' @field configs an internal environment for holding configurations.
 #'
-#' @return A RedcapConfig class
+#' @return A Redcap configuration class
 #'
-#' @family config_objects
+#' @family Configuration Objects
 #'
 
-redcap_config = setRefClass(
+RedcapConfig = setRefClass(
   "RedcapConfig",
   fields = list(
     updates = "list",
@@ -68,27 +68,29 @@ redcap_config = setRefClass(
       }
     },
 
-    configs = function() {
-      "Displays the configurations for the REDCap session/object"
+    list_configs = function() {
+      "Display the configurations for the REDCap session/object"
 
       if (.self$is_valid()) {
-        out = as.list(.self$config)
+        out = as.list(.self$configs)
         out$custom_code = if(!is.na(out$custom_code)) {
-          "Has custom code"
+          "Has custom error reporting code specified"
         } else {
-          "No cutsom code specified"
+          "No custom error reporting code specified"
         }
         out$exclusion_pattern = if(!is.na(out$exclusion)) {
-          "No exclusion pattern"
+          "Has exclusion pattern(s) specified"
         } else {
-          "Has exclusion pattern(s)"
+          "No exclusion pattern specified"
         }
         msg = "REDCap Configurations:\n{"
         invisible({
           sapply(1 : length(out), function(idx) {
             nameCnf = names(out)[idx]
             cnf = out[idx]
+            msg = get("msg", envir = parent.frame(3))
             msg = c(msg, paste0("\t", nameCnf, " : ", cnf))
+            assign("msg", msg, envir = parent.frame(3))
           })
         })
         msg = c(msg, "}")
@@ -105,18 +107,17 @@ redcap_config = setRefClass(
 
       valid = TRUE
       msg = character()
-      if (!all(
+      if (!all(c(
         "api_url",
         "local",
         "token",
-        "exlusion_pattern",
-        "updates",
+        "exclusion_pattern",
         "custom_code",
         "chunksize",
         "chunked",
         "date_var",
         "hosp_var"
-      ) %in% ls(all = TRUE, envir = .self$config)) {
+      ) %in% ls(all = TRUE, envir = .self$configs))) {
         msg = c(msg, "Some required configurations are not set")
         valid = FALSE
       }
@@ -152,7 +153,7 @@ redcap_config = setRefClass(
           valid = FALSE
         }
         .self$configs$api_url = str_trim(.self$configs$api_url)
-        if (api_url == tmp) {
+        if (.self$configs$api_url == tmp) {
           warning("api_url = ", tmp ,", resetting local=TRUE")
           .self$configs$local = TRUE
         }
@@ -181,8 +182,8 @@ redcap_config = setRefClass(
           valid = FALSE
         }
       }
-      if (!is.na(exclusion_pattern))
-        if (!is.character(exclusion_pattern)) {
+      if (!is.na(.self$configs$exclusion_pattern))
+        if (!is.character(.self$configs$exclusion_pattern)) {
           msg = c(msg, "invalid exclusion pattern")
           valid = FALSE
         }
@@ -205,6 +206,7 @@ redcap_config = setRefClass(
       }
       if (!valid) {
         msg = paste0(msg, collapse = "\n")
+        msg = paste0(msg, "\n")
         cat(msg)
       }
       return(valid)
@@ -231,14 +233,13 @@ redcap_config = setRefClass(
     })
 )
 
-#' @name redcap_update
+#' @name RedcapUpdate
 #'
-#' @title Redcap Update Object
+#' @title Redcap Update Wrapper Class
 #'
-#' @concept updates configuration
+#' @concept updates configuration cin redcap
 #'
 #' @description This class holds the update information that affects the error reporting process.
-#'
 #'
 #' @details It holds the site information and the date of updates hence it is possible to do site-based operations.
 #'
@@ -247,15 +248,15 @@ redcap_config = setRefClass(
 #' @export
 #'
 #' @field name Name of the update.
-#' @field site_info A dataset of site information. It has variables `site` and `date` matching the date of the update for each site.
-#' @field new_vars New variables added during the update.
+#' @field site_info A dataset of site information. It has variables `site` and `date` matching the site identifier and date of the update for each site.
+#' @field new_vars New variables introduced during the update.
 #'
 #' @return A redcap update class
 #'
-#' @family config_objects
+#' @family Configuration Objects
 #'
 
-redcap_update = setRefClass(
+RedcapUpdate = setRefClass(
   "RedcapUpdate",
   fields = list(
     name = "character",
