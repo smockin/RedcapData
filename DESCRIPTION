@@ -13,7 +13,9 @@ LazyData: true
 Imports:
     data.table,
     RCurl,
-    stringr
+    stringr,
+    Hmisc,
+    methods
 URL: http://www.kemri-wellcome.org
 Collate:
     'script.R'
