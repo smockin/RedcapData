@@ -6,7 +6,7 @@
 #'
 #' @details This is a utility function for refining text.
 #'
-#' This is useful in cases such as autogeneration of code.
+#' This is useful in generic tasks such as autogeneration of code.
 #'
 #' @param x string to refine
 #'
@@ -26,9 +26,9 @@ remove_html_tags = function(x) {
 
 #' @name logical_xpressions_red2r
 #'
-#' @title Reshape REDCap logic to R logical code
+#' @title Reshape REDCap logical expresssions to R logical code.
 #'
-#' @description Convert REDCap code to R syntax.
+#' @description Convert REDCap logical expressions to valid R syntax representations.
 #'
 #' @details For code generation, code has to be translated from one DSL or syntax to another.
 #'
@@ -90,7 +90,7 @@ logical_xpressions_red2r = function(x) {
 #'
 #' In this case, conversion from REDCap logic to the appropriate R syntax.
 #'
-#' This function helps map logical expressions from REDCap to R
+#' This function helps map mssingness expressions from REDCap to R
 #'
 #' @param x string with REDCap logic
 #'
@@ -102,7 +102,7 @@ logical_xpressions_red2r = function(x) {
 convert_missing_red2r = function(x) {
   reshape_na_red2r = function(x) {
     ._i = as.integer(regexpr("[a-z]", tolower(x)))
-    start_part = substr(x, 1, pattern_start_pos - 1)
+    start_part = substr(x, 1, ._i - 1)
     name_part = substr(x, ._i, nchar(x))
     ._i = as.integer(regexpr("[^a-zA-Z0-9_]", name_part) - 1)
     name_part = substr(name_part, 1, ._i)
@@ -148,7 +148,7 @@ convert_missing_red2r = function(x) {
 
 #' @name xtend_chb_names
 #'
-#' @title Reshape REDCap checkbox logic to appropriate R code
+#' @title Reshape REDCap checkbox logic in REDCap to the appropriate R code
 #'
 #' @description Expand REDCap branching logic and other code that include checkboxes to match indexing format used in underlying repository.
 #'
@@ -156,7 +156,7 @@ convert_missing_red2r = function(x) {
 #'
 #' In this case, conversion from REDCap logic to the appropriate R syntax.
 #'
-#' This function helps map logical expressions from REDCap to R
+#' This function helps expand REDCap checkbox syntax eg chk(1) to the underlysing data format expected in R eg chk___1
 #'
 #' @param x checkbox name in REDCap logic
 #'
@@ -185,7 +185,7 @@ xtend_chb_names = function(x) {
 
 #' @name convert_space2tab
 #'
-#' @title Replace space with tabs
+#' @title Replace space with tabs in code files (IDE indentation)
 #'
 #' @description Format code by replacing spaces with tabs to allow for indentation
 #'
@@ -248,6 +248,7 @@ convert_dates_red2r = function(x) {
 #' @description Convert strings to proper case.
 #'
 #' @param x a string.
+#' @param all Whether to convert all words. Default is only the first word is converted to proper case, the rest is lower case.
 #'
 #' @return a string formatted to proper case
 #'
@@ -286,7 +287,7 @@ toproper = function(x, all = FALSE) {
 #'
 #' For this, spaces have to be tabbed as required by RStudio, our editor of choice.
 #'
-#' @param x a string containing R source code
+#' @param x A string containing R source code
 #'
 #' @return Properly indented R code
 
@@ -301,11 +302,11 @@ convert_space2tab = function(x) {
 
 #' @name convert_redcap2r
 #'
-#' @title Convert REDCap string dates to valid R code.
+#' @title Convert REDCap logic to R code.
 #'
 #' @export
 #'
-#' @description Convert REDCap string dates to valid R code for proper code generation.
+#' @description Wrapper for converting REDCap branching logic to valid R code (metaprogramming purposes).
 #'
 #' @details REDCap data dictionaries contain logic encapsulated in the branching logic that affects data capture and hence analysis.
 #'
