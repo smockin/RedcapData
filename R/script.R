@@ -1,4 +1,4 @@
-#' @name tab_utils
+#' @name Tab_Utils
 #'
 #' @title Manage Tabbing in script creation
 #'
@@ -10,22 +10,30 @@
 #'
 NULL
 
-#' @rdname tab_utils
+#' @rdname Tab_Utils
+#' @param n Number of tabs to add
+
+add_tab = function(n = 1) {
+  tabs = get(".__TAB__no", envir = globalenv())
+  tabs = tabs + n
+  assign(".__TAB__no", tabs, envir = globalenv())
+}
+
+#' @rdname Tab_Utils
+#' @param n Number of tabs to remove
+
+remove_tab = function(n = 1) {
+  tabs = get(".__TAB__no", envir = globalenv())
+  tabs = max(0, tabs - n, na.rm = TRUE)
+  assign(".__TAB__no", tabs, envir = globalenv())
+}
+
+#' @rdname Tab_Utils
 #'
 
-add_tab = function(n = 1) .__TAB__no <<- .__TAB__no + n
+reset_tab = function() assign(".__TAB__no", 0, envir = globalenv())
 
-#' @rdname tab_utils
+#' @rdname Tab_Utils
 #'
 
-remove_tab = function(n = 1) .__TAB__no <<- max(0, .__TAB__no - n)
-
-#' @rdname tab_utils
-#'
-
-reset_tab = function() .__TAB__no <<- 0
-
-#' @rdname tab_utils
-#'
-
-get_tab = function() paste0(rep("\t", .__TAB__no), collapse = "")
+get_tab = function() paste0(rep("\t", get(".__TAB__no", envir = globalenv())), collapse = "")
