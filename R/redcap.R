@@ -7,11 +7,11 @@ NULL
 #' @include redcap_config_helper.R
 NULL
 
-#' @name redcap_class
+#' @name Redcap
 #'
 #' @title Redcap Wrapper Class
 #'
-#' @aliases redcap_wrapper redcap_project cin_project
+#' @aliases redcap_wrapper redcap_class
 #'
 #' @concept cin
 #'
@@ -31,23 +31,19 @@ NULL
 #'
 #' @export
 #'
-#' @field api The url to the project's web based api. Just append /api/ to the project's url.
-#' @field token The secret token for the project. Check the API page in REDCap. Must have api rights to access this.
-#' @field local Whether REDCap instance is local
-#' @field exclusion_pattern regex for variables to exclude from autogeneration of code
-#' @field custom_code Custom error report code
+#' @field opts RedcapConfig object that controls the mode of interaction with the data repoistory during this objects lifecycle
 #'
-#' @return A redcap class with an array of functionality
+#' @return A redcap class with an array of data-allied functionality
 #'
-#' @seealso \code{\link{redcap}}
+#' @seealso \code{\link{redcap_project}}
 #'
 #' @section Info:
-#' Use redcap function to instantiate this class. This avoids many pitfalls during the lifetime of this object.
+#' Use `redcap_project` function to instantiate this class. This avoids many pitfalls during the lifetime of this object.
 #'
 #' @include redcap_config.R
 #'
 
-redcap_class = setRefClass(
+Redcap = setRefClass(
   "Redcap",
   fields = list(
     .__cache = "environment",
@@ -59,10 +55,10 @@ redcap_class = setRefClass(
 
     show = function() {
       www = gsub("/api/", "", .self$opts$configs$api_url)
-      if (.self$opts$configs$api_url)
-        msg = "redcap:\nA local redcap instance <class:redcap>\n"
+      if (.self$opts$configs$local)
+        msg = "redcap:\nA local redcap instance <class:Redcap>\n"
       else
-        msg = paste0("redcap:\nA remote redcap instance running at ", sQuote(www), " <class:redcap>\n")
+        msg = paste0("redcap:\nA remote redcap instance running at ", sQuote(www), " <class:Redcap>\n")
       if (length(ls(.self$.__cache)) == 0) {
         msg = c(msg, "memory: cache empty\n")
       }
@@ -76,17 +72,17 @@ redcap_class = setRefClass(
       cat(msg)
     },
 
-    load_data = function(chunked = .self$opts$configs$chunked,
-                         chunksize = .self$opts$configs$chunksize
-    ) {
-      "Stream data from REDCap if not in cache"
+    load_data = function() {
+      "Stream data from REDCap.
+      Clears the cache and loads data.
+      < NOTE: Do this only for initial loading or when you are sure there are changes in the data repo.
+      "
 
       rm(list = ls(.self$.__cache), envir = .self$.__cache)
-      if (chunked) {
-        if (!is.numeric(chunksize))
+      if (.self$opts$chunked) {
+        if (!is.numeric(.self$opts$chunksize))
           .self$log("chunksize not specified yet chunked=TRUE", 2, function_name = "load_data")
-        chunksize = abs(as.integer(chunksize))
-        if (chunksize < 1)
+        if (.self$opts$chunksize < 1)
           .self$log("specify a valid chunksize", 2, function_name = "load_data")
         message("loading chunked data...")
         tryCatch({
@@ -94,7 +90,7 @@ redcap_class = setRefClass(
             api = .self$opts$configs$api_url,
             token = .self$opts$configs$token,
             local = .self$opts$configs$local,
-            chunksize = chunksize,
+            chunksize = .self$opts$chunksize,
             forms = NULL,
             fields = NULL,
             ids_to_pull = NULL,
@@ -141,7 +137,7 @@ redcap_class = setRefClass(
     },
 
     load_metadata = function() {
-      "Stream metadata only from REDCap if not in cache"
+      "Stream metadata only from REDCap"
 
       tryCatch({
         meta = get_redcap_data(
@@ -162,7 +158,7 @@ redcap_class = setRefClass(
     },
 
     clean_records = function() {
-      "Clean rceords removing out of range and empty values"
+      "Clean records removing out of range and coded missing values"
 
       if (!"clean_records" %in% ls(all = T, envir = .self$.__cache)) {
         if (!"fmt_records" %in% ls(all = T, envir = .self$.__cache)) {
@@ -173,6 +169,7 @@ redcap_class = setRefClass(
         dataset = data.frame(.self$.__cache$fmt_records)
         if (!"clean_cmd" %in% ls(all = T, envir = .self$.__cache)) {
           .self$.__cache$clean_cmd = paste0(
+            "\n# <Note: !! Do not edit this code as it may change in future code regenerations. !!>",
             generate_remove_missing_code(.self$get_metadata(), "dataset"),
             generate_date_conversion_code(.self$get_metadata(), "dataset"),
             generate_remove_outliers_code(.self$get_metadata(), "dataset"),
@@ -196,14 +193,14 @@ redcap_class = setRefClass(
       }
     },
 
-    get_clean_meta = function(is_error = FALSE) {
+    get_clean_metadata = function(is_error = FALSE) {
       "Clean meta data for autogeneration of error report code"
 
       if (!"clean_meta" %in% ls(all = T, envir = .self$.__cache)) {
         message("cleaning metadata...")
         cln_mt = .self$get_metadata()
         cln_mt = data.table(cln_mt)
-        cln_mt = cln_mt[, key = .I]
+        cln_mt = cln_mt[, key := .I]
         setkey(cln_mt, key)
         cln_mt = cln_mt[!field_type %in% c("descriptive", "calc")]
         if (is_error) {
@@ -216,21 +213,23 @@ redcap_class = setRefClass(
           }
         }
         .self$.__cache$clean_meta = data.frame(cln_mt)
-        .self$log("metadata cleaned", 0, function_name = "get_clean_meta")
+        .self$log("metadata cleaned", 0, function_name = "get_clean_metadata")
         message("metadata cleaned")
       }
-      .self$log("clean metadata accessed", 0, function_name = "get_clean_meta")
+      .self$log("clean metadata accessed", 0, function_name = "get_clean_metadata")
       .self$.__cache$clean_meta
     },
 
     format_records = function() {
-      "format records to add Hmisc labels and create factors"
+      "Format records to add Hmisc labels and create factors"
 
       if (!"fmt_records" %in% ls(all = T, envir = .self$.__cache)) {
         dataset = .self$get_raw_data()
         message("formatting data..")
         if (!"fmt_cmd" %in% ls(all = T, envir = .self$.__cache))
-          .self$.__cache$fmt_cmd = generate_formatting_code(.self$get_metadata(), dataset_name = "dataset")
+          .self$.__cache$fmt_cmd = paste0(
+            "\n# <Note: !! Do not edit this code as it may change in future code regenerations. !!>",
+            generate_formatting_code(.self$get_metadata(), dataset_name = "dataset"), sep = "\n")
         tryCatch({
           eval(parse(text=.self$.__cache$fmt_cmd))
         }, warning = function(w) {
@@ -294,7 +293,10 @@ redcap_class = setRefClass(
     },
 
     get_raw_data = function() {
-      "Get saved records from cache"
+      "Get raw records from memory.
+      If there is not data in memory, an error is raised.
+      Use load_data() to refresh the cache.
+      "
 
       if (!"raw_records" %in% ls(all = T, envir = .self$.__cache))
         stop("no data in memory. use load_data to load cache")
@@ -303,7 +305,7 @@ redcap_class = setRefClass(
     },
 
     get_clean_data = function() {
-      "Get saved records from cache"
+      "Get cleaned records from memory"
 
       if (!"clean_records" %in% ls(all = T, envir = .self$.__cache))
         .self$clean_records()
@@ -312,7 +314,7 @@ redcap_class = setRefClass(
     },
 
     get_formatted_data = function() {
-      "Get saved records from cache"
+      "Get formatted records from memory"
 
       if (!"fmt_records" %in% ls(all = T, envir = .self$.__cache))
         .self$format_records()
@@ -321,7 +323,7 @@ redcap_class = setRefClass(
     },
 
     get_metadata = function() {
-      "Get saved metadata from cache"
+      "Get raw metadata from memory"
 
       if (!"raw_meta" %in% ls(all = T, envir = .self$.__cache))
         .self$load_metadata()
@@ -330,7 +332,7 @@ redcap_class = setRefClass(
     },
 
     log = function(message, level = 0, function_name = "") {
-      "Log events <internal>"
+      "Log events <internal use>"
 
       tmp = if (level == 0) {
         "info"
@@ -348,7 +350,7 @@ redcap_class = setRefClass(
                        "Level", paste0(rep("\t", 10), collapse = ""), "Message\n")
       }
       tolog = paste0(tolog,
-                     timestamp, "\t\t***", tmp, "***\t\t", paste0("{", function_name, "} ", message)
+                     timestamp, "\t\t***", tmp, "***\t\t", paste0("[fun: ", function_name, "] ", message)
       )
       .__log <<- paste0(.__log, tolog)
       if (level == 1)
@@ -359,9 +361,11 @@ redcap_class = setRefClass(
   )
 )
 
-#' @name redcap
+#' @name redcap_project
 #'
 #' @title Wrapper for creating REDCap objects
+#'
+#' @aliases cin_project
 #'
 #' @description Cleaner way for instantiating REDCap objects.
 #'
@@ -373,44 +377,49 @@ redcap_class = setRefClass(
 #'
 #' It then calls the new method of the underlying reference class.
 #'
-#' @param api_url REDCap project's api url. Just append /api/ to the project's url.
-#' @param token The secret token for the project. Check the API page in REDCap. Must have api rights to access this.
-#' @param local Whether REDCap instance is local.
-#' @param exclusion_pattern regex for variables to exclude from autogeneration of code
-#' @param custom_code Custom error report code
+#' The configs and update files must be csv files. See \code{\link{load_configs}}, \code{\link{load_updates}}
+#'
+#' The custom code must hold valid R code. Knowledge of the data.table package is necessary for writing this code snippets.
+#'
+#' The exclusion patterns must hold valid R regex expressions. Can be full variable names or a set of patterns.
+#'
+#' @param configs_location Location of the configs file (csv). See details...
+#' @param custom_code_location Location of any custom code for error reporting (.R | .txt). See details...
+#' @param updates_location Location of a file containing any updates to redcap metadata. See details...
+#' @param exclusion_pattern A character vector of regex patterns for variables to exclude from autogeneration of error reporting code.
 #'
 #' @export
 #'
-#' @seealso \code{\link{redcap_class}}
+#' @seealso \code{\link{Redcap}}
 #'
 #' @return A redcap class instance that can be used to interact with the data repository
 #'
-#' @examples \dontrun{cin = redcap("<some-token>", api_url = "http://<some-dns>/redcap/api/", local = F)}
+#' @examples \dontrun{cin = redcap_project()}
 #'
 #' \dontrun{cin}
 
-
-redcap = function(
-  configs_location = NA,
+redcap_project = function(
+  configs_location,
   custom_code_location = NA,
   updates_location = NA,
-  exclusion_pattern = NA
+  exclusion_pattern = NA_character_
 ) {
   opts = list()
-  if (!is.na(configs_file_location)) {
-    if (!file.exists(configs_file_location))
-      stop("configs file not found")
-    configs_data = read.csv(configs_file_location, as.is = TRUE)
-  } else {
-    configs_data = NULL
-  }
+  if (is.na(configs_location))
+    stop("Specify configuration file location")
+  if (!file.exists(configs_location))
+    stop("configurations file not found")
+  configs_data = read.csv(configs_location, as.is = TRUE)
+  if (!all(c("key", "value", "type") %in% names(configs_data)))
+    stop("invalid configurations data [must have `key`, `value` and `type` entries. See help details.")
+  configs_data = configs_data[, c("key", "value", "type")]
   opts$config_data = configs_data
   if (!is.na(custom_code_location)) {
     if (!file.exists(custom_code_location))
       stop("custom code file not found")
     custom_code = readLines(custom_code_location, warn = F)
   } else {
-    custom_code = NA
+    custom_code = NA_character_
   }
   opts$custom_code = custom_code
 
@@ -418,22 +427,18 @@ redcap = function(
     if (!is.character(exclusion_pattern))
       stop("invalid exclusion pattern")
   opts$exclusion_pattern = exclusion_pattern
-  tryCatch({ configs = do.call(load_configs, opts) },
-           warning = function(w) warning(w$message),
-           error = function(e) stop("Could not load configs\nDetails:\n", e$message)
-           )
   configs = do.call(load_configs, opts)
   if (!is.na(updates_location)) {
     if (!file.exists(updates_location))
       stop("updates file not found")
     updates = read.csv(updates_location, as.is = TRUE)
-    tryCatch({ updates = load_updates(updates) }, warning = function(w) warning(w$message), error = function(e) updates = list())
+    updates = load_updates(updates)
   } else {
     updates = list()
   }
-  configs$updates <<- updates
-  if (!is.valid(configs))
+  configs$updates = updates
+  if (!configs$is_valid())
     stop("invalid configs")
-  obj = redcap_class$new(opts = configs)
+  obj = Redcap$new(opts = configs)
   obj
 }
