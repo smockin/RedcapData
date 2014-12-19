@@ -10,6 +10,7 @@ NULL
 #'
 #' @rdname DataType_Checks
 #' @param x a character vector of length one
+#' @export
 
 is_date = function(x) {
   x = as.character(x)
@@ -21,6 +22,7 @@ is_date = function(x) {
 #'
 #' @rdname DataType_Checks
 #' @param x a character vector of length one
+#' @export
 
 is_int = function(x) {
   x = as.character(x)
@@ -32,6 +34,7 @@ is_int = function(x) {
 #'
 #' @rdname DataType_Checks
 #' @param x a character vector of length one
+#' @export
 
 is_number = function(x) {
   x = as.character(x)
@@ -43,6 +46,7 @@ is_number = function(x) {
 #'
 #' @rdname DataType_Checks
 #' @param x a character vector of length one
+#' @export
 
 is_boolean = function(x) {
   x = as.character(x)

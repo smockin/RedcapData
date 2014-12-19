@@ -32,7 +32,7 @@ NULL
 #'  }
 #' }
 #'
-#' @param updates_data A dataset containing the updates info. For the column specifications, see details.
+#' @param updates_data A dataset containing the updates info. For the column specifications, see Details.
 #'
 #' @seealso \code{\link{RedcapUpdate}} \code{\link{Redcap}}, \code{\link{redcap_project}}
 #'
@@ -151,7 +151,7 @@ load_updates = function(updates_data) {
 #'  }
 #' }
 #'
-#' @param config_data A dataset containing the configurations. For the column specifications and some common entries, see details.
+#' @param config_data A dataset containing the configurations. For the column specifications and some common entries, see Details.
 #' @param custom_code A character vector containing custom code for error reporting. If located in a file use readLines to load the contents to a character vector
 #' @param exclusion_pattern A character vector containing regex patterns for variables to be excluded from error reporting.
 #'
@@ -225,10 +225,10 @@ load_configs = function(config_data = NULL, custom_code = NA, exclusion_pattern 
       }))
     }
   }
-  if (!is.na(custom_code))
+  if (!all(sapply(custom_code, is.na)))
     if (!is.character(custom_code))
       stop("invalid custom code")
-  if (!is.na(exclusion_pattern))
+  if (!all(sapply(exclusion_pattern, is.na)))
     if (!is.character(exclusion_pattern))
       stop("invalid exclusion pattern")
   tmp$custom_code = custom_code

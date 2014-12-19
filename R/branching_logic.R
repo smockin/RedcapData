@@ -2,7 +2,7 @@
 #'
 #' @title Remove html tags from string
 #'
-#' @description Removes html from string which can be used as html-free text.
+#' @description Removes html tags from string which can later be used as html-free text eg labels.
 #'
 #' @details This is a utility function for refining text.
 #'

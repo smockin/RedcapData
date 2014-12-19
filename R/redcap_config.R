@@ -73,12 +73,12 @@ RedcapConfig = setRefClass(
 
       if (.self$is_valid()) {
         out = as.list(.self$configs)
-        out$custom_code = if(!is.na(out$custom_code)) {
+        out$custom_code = if(!all(sapply(out$custom_code, is.na))) {
           "Has custom error reporting code specified"
         } else {
           "No custom error reporting code specified"
         }
-        out$exclusion_pattern = if(!is.na(out$exclusion)) {
+        out$exclusion_pattern = if(!all(sapply(out$exclusion, is.na))) {
           "Has exclusion pattern(s) specified"
         } else {
           "No exclusion pattern specified"
@@ -176,13 +176,34 @@ RedcapConfig = setRefClass(
         warning("token is of length > 1, taking first element")
         .self$configs$token = .self$configs$token[1L]
       }
-      if (!is.na(!is.character(.self$configs$custom_code))) {
+      if (!all(sapply(.self$configs$custom_code, is.na))) {
         if (!is.character(.self$configs$custom_code)) {
           msg = c(msg, "invalid custom code")
           valid = FALSE
         }
       }
-      if (!is.na(.self$configs$exclusion_pattern))
+      if (is.na(.self$configs$chunked)) {
+        msg = c(msg, "specify chunked")
+        valid = FALSE
+      } else if (!is.logical(.self$configs$chunked))  {
+        msg = c(msg, "invalid chunked")
+        valid = FALSE
+      }
+      if (.self$configs$chunked) {
+        if (is.na(.self$configs$chunksize)) {
+          msg = c(msg, "specify chunksize")
+          valid = FALSE
+        }
+        else if (!is.numeric(.self$configs$chunksize)) {
+          msg = c(msg, "chunksize invalid")
+          valid = FALSE
+        }
+        else if (.self$configs$chunksize < 0) {
+          msg = c(msg, "chunksize invalid")
+          valid = FALSE
+        }
+      }
+      if (!all(sapply(.self$configs$exclusion_pattern, is.na)))
         if (!is.character(.self$configs$exclusion_pattern)) {
           msg = c(msg, "invalid exclusion pattern")
           valid = FALSE
@@ -196,7 +217,7 @@ RedcapConfig = setRefClass(
           msg = c(msg, paste0("invalid updates <", upds, ">"))
           valid = FALSE
         } else if (!all(sapply(.self$updates, function(x) x$is_valid()))) {
-          idx = which(!sapply(.self$updates, function(x) x$is_valid()))
+          idx = which(all(!sapply(.self$updates, function(x) x$is_valid())))
           upds = .self$updates[idx]
           upds = sQuote(sapply(upds, function(up) up$name))
           upds = paste0(upds, collapse = ", ")
@@ -280,15 +301,20 @@ RedcapUpdate = setRefClass(
     },
 
     is_valid = function() {
+      "Check validity of object"
+
       msgs = character()
       valid = TRUE
-      if (!is.data.frame(.self$site_info))
+      if (!is.data.frame(.self$site_info)) {
         c(msgs, "invalid site info [must be data frame]")
-      site_info <<- as.data.frame(.self$site_info)
+        valid = FALSE
+      }
+      .self$site_info = as.data.frame(.self$site_info)
       if (!length(.self$name > 1)) {
         warning("update name is of length > 1")
-        name <<- .self$name[1L]
+        .self$name = .self$name[1L]
       }
+      valid
     },
 
     get_update_date = function(var_name, hospital_id) {
