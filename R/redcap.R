@@ -37,10 +37,9 @@ NULL
 #'
 #' @seealso \code{\link{redcap_project}}
 #'
-#' @section Info:
-#' Use `redcap_project` function to instantiate this class. This avoids many pitfalls during the lifetime of this object.
-#'
 #' @include redcap_config.R
+#'
+#'
 #'
 
 Redcap = setRefClass(
@@ -193,7 +192,7 @@ Redcap = setRefClass(
       }
     },
 
-    get_clean_metadata = function(is_error = FALSE) {
+    get_clean_metadata = function() {
       "Clean meta data for autogeneration of error report code"
 
       if (!"clean_meta" %in% ls(all = T, envir = .self$.__cache)) {
@@ -203,14 +202,13 @@ Redcap = setRefClass(
         cln_mt = cln_mt[, key := .I]
         setkey(cln_mt, key)
         cln_mt = cln_mt[!field_type %in% c("descriptive", "calc")]
-        if (is_error) {
-          if (!is.na(vars_to_exclude)) {
-            to_exclude = sapply(.self$opts$configs$exclusion_pattern, function(pt) {
-              grepl(pt, cln_mt[, field_name])
-            })
-            to_exclude = apply(to_exclude, 1, any)
-            cln_mt = cln_mt[!to_exclude]
-          }
+        if (length(na.omit(.self$opts$configs$exclusion_pattern)) != 0) {
+          to_exclude = as.character(.self$opts$configs$exclusion_pattern)
+          to_exclude = sapply(to_exclude, function(pt) {
+            grepl(pt, cln_mt[, field_name])
+          })
+          to_exclude = apply(to_exclude, 1, any, na.rm = TRUE)
+          cln_mt = cln_mt[!to_exclude]
         }
         .self$.__cache$clean_meta = data.frame(cln_mt)
         .self$log("metadata cleaned", 0, function_name = "get_clean_metadata")
@@ -225,7 +223,7 @@ Redcap = setRefClass(
 
       if (!"fmt_records" %in% ls(all = T, envir = .self$.__cache)) {
         dataset = .self$get_raw_data()
-        message("formatting data..")
+        message("formatting data...")
         if (!"fmt_cmd" %in% ls(all = T, envir = .self$.__cache))
           .self$.__cache$fmt_cmd = paste0(
             "\n# <Note: !! Do not edit this code as it may change in future code regenerations. !!>",
@@ -255,33 +253,77 @@ Redcap = setRefClass(
         dataset = dataset[, key_x2014cin := .I]
         setkey(dataset, key_x2014cin)
       }
-      if (!"err_cmd" %in% ls(all.names = T, envir = .self$.__cache))
-        .self$.__cache$err_cmd = generate_error_report_code(
+      upds = .self$opts$updates
+      if (length(upds) == 0)
+        upds = NULL
+      message("generating error report code...")
+      tryCatch({
+        if (!"validate_data_entry" %in% ls(all.names = T, envir = .self$.__cache)) {
+          browser()
+          tmp = generate_error_report_code(
+            .self$get_clean_metadata(),
+            date_var = .self$opts$configs$date_var,
+            hosp_var = .self$opts$configs$hosp_var,
+            custom_code = .self$opts$configs$custom_code,
+            updates = "upds",
+            updates_envir_depth = 2
+          )
+          message("error report code generated")
+          .self$log("error report code generated", 0, function_name = "report_errors")
+          eval(parse(text = tmp), envir = .self$.__cache)
+          .self$log("error report function in memory", 0, function_name = "report_errors")
+        }
+        message("generating report. This might take a while...")
+        if (.self$opts$configs$chunked) {
+          .counter = .self$opts$configs$chunksize
+          rpt = lapply(get_chunks(1 : nrow(dataset), .self$opts$configs$chunksize), function(chunk) {
+            ds_chunk = dataset[chunk, .__cache$validate_data_entry(.SD), by = key_x2014cin]
+            message(paste0("validated ", min(100, round((.counter * 100) / nrow(dataset), 2)), "%", ifelse(.counter >= nrow(dataset), "", "...")))
+            assign(".counter", (.counter + .self$opts$configs$chunksize), envir = parent.frame(2))
+            ds_chunk
+          })
+          rpt = data.table::rbindlist(rpt)
+        } else {
+          rpt = dataset[, .__cache$validate_data_entry(.SD), by = key_x2014cin]
+        }
+        rpt = rpt[, key_x2014cin := NULL]
+        if (nrow(rpt) == 0) {
+          rpt = data.table(Message == "No errors in data capture!")
+        }
+        message("report generated")
+        .self$log("error report created", 0, function_name = "report_errors")
+      }, warning = function(w) {
+        .self$log(w$message, 1, function_name = "report_errors")
+        generate_error_report_code(
           .self$get_clean_metadata(),
-          dataset_name = "dataset",
           date_var = .self$opts$configs$date_var,
           hosp_var = .self$opts$configs$hosp_var,
           custom_code = .self$opts$configs$custom_code,
-          updates = .self$opts$updates
+          updates = upds
         )
-      eval(parse(text = .self$.__cache))
-      .self$.__cache$err_rpt = dataset[, validate_data_entry(.SD), by = key_x2014cin]
+      }, error = function(e) {
+        .self$log(e$message, 2, function_name = "report_errors")
+      })
+      .self$.__cache$err_rpt = rpt
     },
 
-    get_error_report = function(save_to = NULL, pop = TRUE) {
+    get_error_report = function(pop = TRUE) {
       "Get error report"
 
       if (!"err_rpt" %in% ls(all = T, envir = .self$.__cache))
         .self$report_errors()
       errors = .self$.__cache$err_rpt
-      if (is.null(save_to))
-        save_to = tempfile(pattern = "0000xfjhgggsqiu", fileext = ".R")
       tryCatch({
-        write.csv(errors, save_to, row.names = FALSE)
+        tmp = gsub("\\\\", "/", .self$opts$configs$report_location)
+        tmpdir = unlist(strsplit(tmp, "/"))
+        tmpdir = paste0(tmpdir[-length(tmpdir)], collapse = "/")
+        if (!file.exists(tmpdir))
+          dir.create(tmpdir, recursive = TRUE)
+        write.csv(errors, .self$opts$configs$report_location, row.names = FALSE)
         if (pop)
-          open_using_default_app(save_to)
+          open_using_default_app(.self$opts$configs$report_location)
         else
-          message(paste0("Error report saved to ", sQuote(save_to)))
+          message(paste0("Error report saved to ", sQuote(.self$opts$configs$report_location)))
       },
       warning = function(w) {
         .self$log(w$message, 1, function_name = "get_error_report")
@@ -422,10 +464,9 @@ redcap_project = function(
     custom_code = NA_character_
   }
   opts$custom_code = custom_code
-
-  if (!is.na(exclusion_pattern))
-    if (!is.character(exclusion_pattern))
-      stop("invalid exclusion pattern")
+  exclusion_pattern = as.character(na.omit(exclusion_pattern))
+  if (length(exclusion_pattern) == 0)
+    exclusion_pattern = NA_character_
   opts$exclusion_pattern = exclusion_pattern
   configs = do.call(load_configs, opts)
   if (!is.na(updates_location)) {
