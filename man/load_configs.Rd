@@ -7,7 +7,7 @@
 load_configs(config_data = NULL, custom_code = NA, exclusion_pattern = NA)
 }
 \arguments{
-\item{config_data}{A dataset containing the configurations. For the column specifications and some common entries, see details.}
+\item{config_data}{A dataset containing the configurations. For the column specifications and some common entries, see Details.}
 
 \item{custom_code}{A character vector containing custom code for error reporting. If located in a file use readLines to load the contents to a character vector}
 

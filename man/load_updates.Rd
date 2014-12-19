@@ -7,7 +7,7 @@
 load_updates(updates_data)
 }
 \arguments{
-\item{updates_data}{A dataset containing the updates info. For the column specifications, see details.}
+\item{updates_data}{A dataset containing the updates info. For the column specifications, see Details.}
 }
 \value{
 A list of redcap update class objects.

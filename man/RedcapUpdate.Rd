@@ -28,6 +28,8 @@ The dates can be accessed to allow for conditional generation of the error repor
 
 \describe{
 \item{\code{get_update_date(var_name, hospital_id)}}{Get the date a specific variable was updated for a specific site}
+
+\item{\code{is_valid()}}{Check validity of object}
 }}
 \seealso{
 Other Configuration Objects: \code{\link{RedcapConfig}}

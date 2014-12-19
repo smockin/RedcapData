@@ -39,9 +39,9 @@ Show the object to view status.
 
 \item{\code{get_clean_data()}}{Get cleaned records from memory}
 
-\item{\code{get_clean_metadata(is_error = FALSE)}}{Clean meta data for autogeneration of error report code}
+\item{\code{get_clean_metadata()}}{Clean meta data for autogeneration of error report code}
 
-\item{\code{get_error_report(save_to = NULL, pop = TRUE)}}{Get error report}
+\item{\code{get_error_report(pop = TRUE)}}{Get error report}
 
 \item{\code{get_formatted_data()}}{Get formatted records from memory}
 
@@ -61,10 +61,6 @@ Clears the cache and loads data.
 
 \item{\code{report_errors()}}{Create error report}
 }}
-\section{Info}{
-
-Use `redcap_project` function to instantiate this class. This avoids many pitfalls during the lifetime of this object.
-}
 \seealso{
 \code{\link{redcap_project}}
 }

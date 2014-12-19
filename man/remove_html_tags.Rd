@@ -13,7 +13,7 @@ remove_html_tags(x)
 Code that can be evaluated to format data
 }
 \description{
-Removes html from string which can be used as html-free text.
+Removes html tags from string which can later be used as html-free text eg labels.
 }
 \details{
 This is a utility function for refining text.

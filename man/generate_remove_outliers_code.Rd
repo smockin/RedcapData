@@ -21,7 +21,8 @@ This is a utility function that employs code generation to produce r code for cl
 Using the redcap metadata, code is generated that removes out-of-range data from repo.
 }
 \seealso{
-Other code_gen: \code{\link{generate_date_conversion_code}};
+Other Code Generators: \code{\link{generate_date_conversion_code}};
+  \code{\link{generate_error_report_code}};
   \code{\link{generate_formatting_code}};
   \code{\link{generate_remove_missing_code}}
 }
