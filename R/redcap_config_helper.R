@@ -38,6 +38,7 @@ NULL
 #'
 #' @return A list of redcap update class objects.
 #'
+#' @family Configuration Objects
 
 
 load_updates = function(updates_data) {
@@ -85,7 +86,7 @@ load_updates = function(updates_data) {
 #'
 #' It uses an R data frame and character vectors to instantiate REDCap configuration objects.
 #'
-#' This avoids messing up instantiation in R6 classes which is more complex and error prone.
+#' This abstracts instantiation in R6 classes which is more complex and error prone.
 #'
 #' @details This function acts as a wrapper for instantiating an object that abstracts the REDCap configurations.
 #'
@@ -145,22 +146,23 @@ load_updates = function(updates_data) {
 #'  }
 #'  \item{hosp_to_validate}{The id of the hospital to generate an error report on. [type: `integer`].
 #'
-#'  If entry does not match this code an error is raised.
+#'  During error reporting, if an entry's hospital id does not match this code a data entry error is raised.
 #'
 #'  This defaults to NA if not specified.
 #'  }
 #' }
 #'
 #' @param config_data A dataset containing the configurations. For the column specifications and some common entries, see Details.
-#' @param custom_code A character vector containing custom code for error reporting. If located in a file use readLines to load the contents to a character vector
+#' @param custom_code A character vector containing custom code for error reporting. If located in a file use \code{readLines} to load the contents to a character vector
 #' @param exclusion_pattern A character vector containing regex patterns for variables to be excluded from error reporting.
 #'
-#' This may be because they are handled specially in the custom code or do not add value to the error reporting process.
+#' The exclusion may be because these variables are handled specially in the custom code or do not add value to the error reporting process.
 #'
 #' @seealso \code{\link{RedcapUpdate}}, \code{\link{Redcap}}, \code{\link{redcap_project}}
 #'
 #' @return A RedcapConfig object.
 #'
+#' @family Configuration Objects
 
 load_configs = function(config_data = NULL, custom_code = NA, exclusion_pattern = NA) {
   tmp = config_keys

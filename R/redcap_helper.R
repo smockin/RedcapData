@@ -51,7 +51,7 @@ get_chunks = function(x, chunksize) {
 #'
 #' @description Download data in chunks from a REDCap repository using the REDCap api.
 #'
-#' If not specified, data and metadata are stored in the current environment.
+#' Data and metadata are stored in the calling environment.
 #'
 #' @details The record identifiers are chunked and then data is is pulled for those specific records.
 #'
@@ -61,23 +61,23 @@ get_chunks = function(x, chunksize) {
 #'
 #' This is just a convenient wrapper round the \code{\link{get_redcap_data}} function.
 #'
-#' In cases of proper bandwidth and small data sizes, just use \code{\link{get_redcap_data}}.
+#' In cases of strong bandwidth or small data sizes, just use \code{\link{get_redcap_data}}.
 #'
 #' @param api the REDCap instance's api location. Just append /api/ to the instance's url.
 #' @param token The secret token for the project. Check the API page in REDCap. Must have api rights to access this.
 #' @param local Whether the REDCap instance is local.
 #' @param chunksize The size of the chunks to be pulled at a time.
-#' @param forms a character vector of the list of form data to pull.
-#' @param fields a character vector of the specific fields to pull.
-#' @param ids_to_pull a character vector of the specific record itentifiers to pull.
-#' @param dataset_name name of the resultant dataset
-#' @param metadataset_name name of the resultant metadata
+#' @param forms A character vector of the list of forms to pull data from.
+#' @param fields A character vector of the specific fields to pull data from.
+#' @param ids_to_pull A character vector of the specific record itentifiers to pull from.
+#' @param dataset_name Name of the resultant dataset
+#' @param metadataset_name Name of the resultant metadata
 #'
-#' @seealso \code{\link{get_chunks}}
+#' @seealso \code{\link{get_chunks}}, \code{\link{redcap}}
 #'
 #' @export
 #'
-#' @family get_data_red
+#' @family Data Input
 
 get_chunked_redcap_data = function(
   api,
@@ -150,22 +150,22 @@ get_chunked_redcap_data = function(
 #'
 #' @details A simulation of the posting of a form to the api is done and a connection is obtained.
 #'
-#' The connection is then used to read the data into REDCap.
+#' This connection is then used to read the data from REDCap into R.
 #'
-#' This is done in bulk. In the case  of network latency or big data \code{\link{get_chunked_redcap_data}} would be a better alternative.
+#' This is done in bulk. In the case  of network latency or big data \code{\link{get_chunked_redcap_data}} would be a better alternative for more responsiveness.
 #'
-#' @param api the REDCap instance's api location. Just append /api/ to the instance's url.
+#' @param api The REDCap instance's api location. Just append /api/ to the instance's url.
 #' @param token The secret token for the project. Check the API page in REDCap. Must have api rights to access this.
-#' @param content What to pull. Currently only "record" and "metadata" are supported.
+#' @param content What to pull. Currently only `record` and `metadata` are supported.
 #' @param local Whether the REDCap instance is local.
-#' @param forms a character vector of the list of form data to pull.
-#' @param fields a character vector of the specific fields to pull.
-#' @param ids_to_pull a character vector of the specific record itentifiers to pull.
-#' @seealso \code{\link{get_chunked_redcap_data}}, \code{\link{redcap}}
+#' @param forms A character vector of the list of forms to pull data from.
+#' @param fields A character vector of the specific fields to pull data from.
+#' @param ids_to_pull A character vector of the specific record itentifiers to pull data from.
+#' @seealso \code{\link{redcap}}
 #'
 #' @export
 #'
-#' @family get_data_red
+#' @family Data Input
 
 get_redcap_data = function(
   api,
@@ -251,17 +251,19 @@ is_valid_metadata = function(metadata) {
 
 #' @name get_vars_in_data
 #'
-#' @title Get the names of variables in dataset from REDCap metadata
+#' @title Get the names of variables in a dataset based on REDCap metadata
 #'
 #' @description Utility function that gets the name(s) of the variables in a redcap project.
 #'
-#' @details Using the redcap metadata, code is generated that extracts the names of the dataset.
+#' @details Using the redcap metadata, code is generated that extracts the names of the variables in the dataset.
 #'
 #' Checkboxes are also munged to reflect what is in the repository.
 #'
+#' Useful for metaprogramming.
+#'
 #' @param metadata REDCap metadata
 #'
-#' @return a character vector of the names of the dataset
+#' @return a character vector of the variable names in the dataset
 
 get_vars_in_data = function(metadata) {
   metadata = prepare_metadata_for_code_generation(metadata)
@@ -297,9 +299,11 @@ get_vars_in_data = function(metadata) {
 #'
 #' @details Using the redcap metadata, code is generated that extracts the data types of the variables in the dataset.
 #'
+#' Useful for metaprogramming.
+#'
 #' @param metadata REDCap metadata
 #'
-#' @return The data types (r) of the variables in the dataset
+#' @return The R data types of the variables in the dataset
 #'
 #'
 
@@ -337,12 +341,12 @@ get_r_types_in_data = function(metadata) {
 #'
 #' @description This is a utility function that employs code generation to produce r code for cleaning data.
 #'
-#' @details Using the redcap metadata, code is generated that removes missing data from repo.
+#' @details Using the redcap metadata, code is generated that removes coded missing data from repo.
 #'
-#' This is useful as missing data is coded and has to be recoded as NA.
+#' This is useful as missing data is coded in a variety of ways and this has to be reset to  missing for accurate data analysis especially in frequency counts, contingency tabling and modelling.
 #'
 #' @param metadata REDCap metadata
-#' @param dataset_name Name of the dataset that will be recorded
+#' @param dataset_name Name of the dataset that will be recorded in place
 #'
 #' @export
 #'
@@ -380,6 +384,8 @@ generate_remove_missing_code = function(metadata, dataset_name = "data") {
 #' @description This is a utility function that employs code generation to produce r code for cleaning data.
 #'
 #' @details Using the redcap metadata, code is generated that removes out-of-range data from repo.
+#'
+#' This is necessary to avoid over or undeestimation during data analysis which often distorts the results.
 #'
 #' @param metadata REDCap metadata
 #' @param dataset_name Name of the dataset that will be recorded
@@ -459,18 +465,20 @@ generate_remove_outliers_code = function(metadata, dataset_name = "data") {
 
 #' @name generate_date_conversion_code
 #'
-#' @title Autogenerate code for date conversion for valid REDCap string dates
+#' @title Autogenerate code for date conversion from valid string date representations
 #'
-#' @description This is a utility function that employs code generation to produce r code that recodes data.
+#' @description This is a utility function that employs code generation to produce R code for data recoding purposes.
 #'
 #' @details Using the redcap metadata, code is generated that converts character dates to R Date variables.
 #'
+#' This can come in handy when using the data for date-based operations such as subsetting or panel data analysis.
+#'
 #' @param metadata REDCap metadata
-#' @param dataset_name Name of the dataset that will be recorded
+#' @param dataset_name Name of the dataset that will be recorded in place.
 #'
 #' @export
 #'
-#' @return Code that can be evaluated to recode dates
+#' @return Code that can be evaluated to recode apppropriate strings to R dates
 #'
 #' @family Code Generators
 
@@ -498,14 +506,16 @@ generate_date_conversion_code = function(metadata, dataset_name = "data") {
 #'
 #' @details Using the redcap metadata, code is generated that formats data.
 #'
-#' It assigns HMisc labels to variables and recodes data to factors
+#' It assigns HMisc labels to variables and recodes data to factors.
+#'
+#' This makes it easier to perform traditional statistical analysis which often expects coded categorical variables as input.
 #'
 #' @param metadata REDCap metadata
-#' @param dataset_name Name of the dataset that will be recorded
+#' @param dataset_name Name of the dataset that will be recorded in place.
 #'
 #' @export
 #'
-#' @return Code that can be evaluated to format data
+#' @return Code that can be evaluated to format data.
 #'
 #' @family Code Generators
 #'
@@ -583,9 +593,9 @@ generate_formatting_code = function(metadata, dataset_name = "data") {
 #'
 #' @title Autogenerate code for error reporting
 #'
-#' @description This is a utility function that employs code generation to produce R code that validates data entry workflow for errors ofomission and commision.
+#' @description This is a utility function that employs code generation to produce R code that validates data entry workflow for errors of omission and commision.
 #'
-#' @details Using the redcap metadata, code is generated that validates data entry.
+#' @details Using the redcap metadata, code is generated that validates data entry during the data capture process.
 #'
 #' This code is then evaluated into a function that is then iterated through the records to check for errors during data capture.
 #'
@@ -595,8 +605,8 @@ generate_formatting_code = function(metadata, dataset_name = "data") {
 #' @param date_var Name of variable that captures the date of entry
 #' @param hosp_var Name of variable that holds the hospital code
 #' @param custom code Any code that is appended for custom plugin of special validation checks.
-#' @param updates name of RedcapUpdates list to be used for plugging in the new variables introduced during updates. See \code{\link{RedcapUpdate}}
-#' @param updates_envir_depth Integer of what parent frame contains updates. Default is immediate parent of calling environment.
+#' @param updates Name of a list of RedcapUpdate(s) to be used for plugging functionality that abstracts the introduction of new variables during the projects lifecycle. See \code{\link{RedcapUpdate}}
+#' @param updates_envir_depth Integer of what parent frame contains updates. Default is immediate parent of calling environment (1) ie one level deep.
 #'
 #' @export
 #'
@@ -637,13 +647,12 @@ generate_error_report_code = function(metadata, date_var, hosp_var, custom_code 
     add_tab()
     tmp = c(tmp, paste0(get_tab(), "get(\"", updates, "\", envir = sys.frame(", updates_envir_depth, "))"))
     tmp = c(tmp, paste0(get_tab(), "}, warning = function(w) {"))
-    tmp = c(tmp, paste0(get_tab(), "stop(w$e)"))
+    tmp = c(tmp, paste0(get_tab(), "stop(w$message)"))
     tmp = c(tmp, paste0(get_tab(), "}, error = function(e) {"))
     tmp = c(tmp, paste0(get_tab(), "get(\"", updates, "\", envir = globalenv())"))
     tmp = c(tmp, paste0(get_tab(), "}"))
     remove_tab()
     tmp = c(tmp, paste0(get_tab(), ")"))
-    add_tab()
   }
   tmp = paste0(tmp, collapse = "\n")
   cmd = c(cmd, tmp)
@@ -895,6 +904,17 @@ generate_error_report_code = function(metadata, date_var, hosp_var, custom_code 
   }
   tmp = metadata[, gen_code_r(.SD), by = key]
   tmp = tmp[!is.na(V1), V1]
+  add_tab()
+  tmp = paste0(get_tab(), tmp)
+  remove_tab()
+  tmp = c(
+    paste0(get_tab(), ""),
+    paste0(get_tab(), "# <Autogenerated code starts here>"),
+    paste0(get_tab(), "{"),
+    tmp,
+    paste0(get_tab(), "}"),
+    paste0(get_tab(), "# <Autogenerated code ends here>")
+  )
   tmp = paste0(tmp, collapse = "\n")
   cmd = c(cmd, tmp)
   custom_code = custom_code[!is.na(custom_code) | stringr::str_trim(custom_code) == ""]
@@ -906,7 +926,7 @@ generate_error_report_code = function(metadata, date_var, hosp_var, custom_code 
       custom_code = paste0(get_tab(), custom_code)
       remove_tab()
       custom_code = c(
-        paste0(get_tab(), "\n"),
+        paste0(get_tab(), ""),
         paste0(get_tab(), "# <Custom code starts here>"),
         paste0(get_tab(), "{"),
         custom_code,
@@ -947,16 +967,16 @@ generate_error_report_code = function(metadata, date_var, hosp_var, custom_code 
 #'
 #' @title Get Cache status
 #'
-#' @description From the cache in the redcap object, identify the major events that have happened.
+#' @description From the cache in the redcap object, identify the major events that have ocurred during the lifetime of a Redcap object
 #'
-#' @details This function helps format the cache entries so as to provide a meaningful decmdion of the events that happened during the object' lifecycle.
+#' @details This function helps format the cache entries so as to provide a meaningful description of the events that happened during the object' lifecycle.
 #'
-#' This also helps in formatting output in the show command
+#' This also helps in formatting output in the show command.
 #'
 #' @param cache_objects Redcap object's cache
 #' @param pretty Whether to format output for display
 #'
-#' @return Code that can be evaluated to format data
+#' @return Code that can be evaluated to format cache status
 
 get_status = function(cache_objects, pretty = FALSE) {
   if (length(cache_objects) == 0) {
@@ -976,6 +996,10 @@ get_status = function(cache_objects, pretty = FALSE) {
     message = c(message, "records cleaned\t\t\t[hint:use <redcap-object>$get_clean_data() to get formatted data with missing and out of range values set to NA]")
   if ("clean_meta" %in% cache_objects)
     message = c(message, "metadata munged\t\t\t[for internal use: <metaprogramming>]")
+  if ("validate_data_entry" %in% cache_objects)
+    message = c(message, "error-code loaded\t\t\t[hint:use <redcap-object>$get_error_report() to get error report]")
+  if ("err_rpt" %in% cache_objects)
+    message = c(message, "error-report created\t\t\t[hint:use <redcap-object>$get_error_report() to get error report]")
   if (pretty) {
     message = paste0("\t* ", message)
   }
@@ -991,6 +1015,7 @@ get_status = function(cache_objects, pretty = FALSE) {
 #' @description Take metadata and make sure it conforms to the project's metaprogramming expected format.
 #'
 #' @details This is a utility function that aids in preparing the metadata for cmd generation.
+#'
 #' It converts the input to a data table and assigns a key to it and also removes unnecessary fields.
 #'
 #' @param metadata REDCap metadata
@@ -1004,5 +1029,6 @@ prepare_metadata_for_code_generation = function(metadata) {
   metadata = data.table::data.table(metadata)
   metadata = metadata[, key := .I]
   setkey(metadata, key)
+  metadata = metadata[field_type != "descriptive"]
   metadata
 }

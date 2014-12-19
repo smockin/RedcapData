@@ -259,7 +259,6 @@ Redcap = setRefClass(
       message("generating error report code...")
       tryCatch({
         if (!"validate_data_entry" %in% ls(all.names = T, envir = .self$.__cache)) {
-          browser()
           tmp = generate_error_report_code(
             .self$get_clean_metadata(),
             date_var = .self$opts$configs$date_var,
@@ -427,7 +426,7 @@ Redcap = setRefClass(
 #'
 #' @param configs_location Location of the configs file (csv). See details...
 #' @param custom_code_location Location of any custom code for error reporting (.R | .txt). See details...
-#' @param updates_location Location of a file containing any updates to redcap metadata. See details...
+#' @param updates_location Location of a file containing any updates to redcap metadata. (csv) See details...
 #' @param exclusion_pattern A character vector of regex patterns for variables to exclude from autogeneration of error reporting code.
 #'
 #' @export
