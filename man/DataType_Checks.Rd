@@ -17,16 +17,10 @@ is_number(x)
 is_boolean(x)
 }
 \arguments{
-\item{x}{a character vector of length one}
-
-\item{x}{a character vector of length one}
-
-\item{x}{a character vector of length one}
-
-\item{x}{a character vector of length one}
+\item{x}{a character vector of unit length}
 }
 \description{
-Identify valid data tpes from strings for proper casting
+Identify valid R data types from strings for proper type casting during data nanalysis and munging
 
 
 
@@ -37,6 +31,8 @@ Identify valid data tpes from strings for proper casting
 
 }
 \details{
-This functions assist in many generic tasks such as configuration type casting and data type checking in error reports.
+This functions assist in many generic tasks such as configuration type casting, branching logic syntax conversion and data type checking during error reporting.
+
+They are simply regular expressions that are evaluated to boolean outputs depending on whether the predicate meets the requirement.
 }
 

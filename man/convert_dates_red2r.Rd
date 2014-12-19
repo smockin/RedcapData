@@ -10,7 +10,7 @@ convert_dates_red2r(x)
 \item{x}{a string containing R / REDCap source code.}
 }
 \value{
-a string with R/ REDCap source code that has raw string dates replaced with formatted dates.
+Intermediate code with R date syntax that can be evaluated after further modifications into R expression trees
 }
 \description{
 Date conversion from REDCap to R.
@@ -20,6 +20,6 @@ In REDCap logic, dates are represented as raw strings.
 
 This is unlike R which requires objects to be of class `Date` for date-like operations to be carried out on the object.
 
-This is why conversion to date-operations compatible code is necessary.
+This requires conversion to facilitate date-based operations.
 }
 

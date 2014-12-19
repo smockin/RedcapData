@@ -9,7 +9,7 @@ generate_remove_missing_code(metadata, dataset_name = "data")
 \arguments{
 \item{metadata}{REDCap metadata}
 
-\item{dataset_name}{Name of the dataset that will be recorded}
+\item{dataset_name}{Name of the dataset that will be recorded in place}
 }
 \value{
 Code that can be evaluated to clean data
@@ -18,9 +18,9 @@ Code that can be evaluated to clean data
 This is a utility function that employs code generation to produce r code for cleaning data.
 }
 \details{
-Using the redcap metadata, code is generated that removes missing data from repo.
+Using the redcap metadata, code is generated that removes coded missing data from repo.
 
-This is useful as missing data is coded and has to be recoded as NA.
+This is useful as missing data is coded in a variety of ways and this has to be reset to  missing for accurate data analysis especially in frequency counts, contingency tabling and modelling.
 }
 \seealso{
 Other Code Generators: \code{\link{generate_date_conversion_code}};

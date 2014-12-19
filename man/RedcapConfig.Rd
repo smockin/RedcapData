@@ -32,7 +32,8 @@ This allows the configurations to be loosely coupled from the REDCap interaction
 \item{\code{list_configs()}}{Display the configurations for the REDCap session/object}
 }}
 \seealso{
-Other Configuration Objects: \code{\link{RedcapUpdate}}
+Other Configuration Objects: \code{\link{RedcapUpdate}};
+  \code{\link{load_configs}}; \code{\link{load_updates}}
 }
 \concept{
 configuration cin redcap

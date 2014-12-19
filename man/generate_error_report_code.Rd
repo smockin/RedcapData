@@ -14,9 +14,9 @@ generate_error_report_code(metadata, date_var, hosp_var, custom_code = NA,
 
 \item{hosp_var}{Name of variable that holds the hospital code}
 
-\item{updates}{name of RedcapUpdates list to be used for plugging in the new variables introduced during updates. See \code{\link{RedcapUpdate}}}
+\item{updates}{Name of a list of RedcapUpdate(s) to be used for plugging functionality that abstracts the introduction of new variables during the projects lifecycle. See \code{\link{RedcapUpdate}}}
 
-\item{updates_envir_depth}{Integer of what parent frame contains updates. Default is immediate parent of calling environment.}
+\item{updates_envir_depth}{Integer of what parent frame contains updates. Default is immediate parent of calling environment (1) ie one level deep.}
 
 \item{custom}{code Any code that is appended for custom plugin of special validation checks.}
 }
@@ -24,10 +24,10 @@ generate_error_report_code(metadata, date_var, hosp_var, custom_code = NA,
 A function that can be evaluated to validate data entry workflow for a single record.
 }
 \description{
-This is a utility function that employs code generation to produce R code that validates data entry workflow for errors ofomission and commision.
+This is a utility function that employs code generation to produce R code that validates data entry workflow for errors of omission and commision.
 }
 \details{
-Using the redcap metadata, code is generated that validates data entry.
+Using the redcap metadata, code is generated that validates data entry during the data capture process.
 
 This code is then evaluated into a function that is then iterated through the records to check for errors during data capture.
 

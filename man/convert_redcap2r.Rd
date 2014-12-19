@@ -10,18 +10,18 @@ convert_redcap2r(x)
 \item{x}{a string containing REDCap logic.}
 }
 \value{
-a string with containing R code that can be evaluated in its current context
+a string with containing R code (token) that can be parsed in it's current context into an R expression tree.
 }
 \description{
-Wrapper for converting REDCap branching logic to valid R code (metaprogramming purposes).
+Wrapper for converting REDCap branching logic to valid R code (for metaprogramming purposes).
 }
 \details{
-REDCap data dictionaries contain logic encapsulated in the branching logic that affects data capture and hence analysis.
+REDCap data dictionaries contain logic encapsulated in the branching logic that affects data capture and hence data management and analysis.
 
-These logic has to be transformed into the appropriate analytical tool's DSL for consistent data analysis.
+These logic has to be transformed into the appropriate analytical tool's DSL for consistent data munging and analysis.
 
-In our case, conversion of REDCap logic to R code.
+In our case, this involves conversion from REDCap logic to R code.
 
-This is a composite of many smaller internal functions.
+This is a composite function made up of an aggregation of many smaller internal functions.
 }
 

@@ -9,11 +9,11 @@ load_configs(config_data = NULL, custom_code = NA, exclusion_pattern = NA)
 \arguments{
 \item{config_data}{A dataset containing the configurations. For the column specifications and some common entries, see Details.}
 
-\item{custom_code}{A character vector containing custom code for error reporting. If located in a file use readLines to load the contents to a character vector}
+\item{custom_code}{A character vector containing custom code for error reporting. If located in a file use \code{readLines} to load the contents to a character vector}
 
 \item{exclusion_pattern}{A character vector containing regex patterns for variables to be excluded from error reporting.
 
-This may be because they are handled specially in the custom code or do not add value to the error reporting process.}
+The exclusion may be because these variables are handled specially in the custom code or do not add value to the error reporting process.}
 }
 \value{
 A RedcapConfig object.
@@ -23,7 +23,7 @@ Cleaner way for instantiating REDCap configuration objects.
 
 It uses an R data frame and character vectors to instantiate REDCap configuration objects.
 
-This avoids messing up instantiation in R6 classes which is more complex and error prone.
+This abstracts instantiation in R6 classes which is more complex and error prone.
 }
 \details{
 This function acts as a wrapper for instantiating an object that abstracts the REDCap configurations.
@@ -84,7 +84,7 @@ Some common configuations include:
  }
  \item{hosp_to_validate}{The id of the hospital to generate an error report on. [type: `integer`].
 
- If entry does not match this code an error is raised.
+ During error reporting, if an entry's hospital id does not match this code a data entry error is raised.
 
  This defaults to NA if not specified.
  }
@@ -92,5 +92,8 @@ Some common configuations include:
 }
 \seealso{
 \code{\link{RedcapUpdate}}, \code{\link{Redcap}}, \code{\link{redcap_project}}
+
+Other Configuration Objects: \code{\link{RedcapConfig}};
+  \code{\link{RedcapUpdate}}; \code{\link{load_updates}}
 }
 

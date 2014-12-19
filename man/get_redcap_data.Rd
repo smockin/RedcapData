@@ -8,19 +8,19 @@ get_redcap_data(api, token, content = "record", local = TRUE,
   forms = NULL, fields = NULL, ids_to_pull = NULL)
 }
 \arguments{
-\item{api}{the REDCap instance's api location. Just append /api/ to the instance's url.}
+\item{api}{The REDCap instance's api location. Just append /api/ to the instance's url.}
 
 \item{token}{The secret token for the project. Check the API page in REDCap. Must have api rights to access this.}
 
-\item{content}{What to pull. Currently only "record" and "metadata" are supported.}
+\item{content}{What to pull. Currently only `record` and `metadata` are supported.}
 
 \item{local}{Whether the REDCap instance is local.}
 
-\item{forms}{a character vector of the list of form data to pull.}
+\item{forms}{A character vector of the list of forms to pull data from.}
 
-\item{fields}{a character vector of the specific fields to pull.}
+\item{fields}{A character vector of the specific fields to pull data from.}
 
-\item{ids_to_pull}{a character vector of the specific record itentifiers to pull.}
+\item{ids_to_pull}{A character vector of the specific record itentifiers to pull data from.}
 }
 \value{
 A data frame with the REDCap repo's data.
@@ -31,13 +31,13 @@ Download data from a REDCap repository using the REDCap api in bulk.
 \details{
 A simulation of the posting of a form to the api is done and a connection is obtained.
 
-The connection is then used to read the data into REDCap.
+This connection is then used to read the data from REDCap into R.
 
-This is done in bulk. In the case  of network latency or big data \code{\link{get_chunked_redcap_data}} would be a better alternative.
+This is done in bulk. In the case  of network latency or big data \code{\link{get_chunked_redcap_data}} would be a better alternative for more responsiveness.
 }
 \seealso{
-\code{\link{get_chunked_redcap_data}}, \code{\link{redcap}}
+\code{\link{redcap}}
 
-Other get_data_red: \code{\link{get_chunked_redcap_data}}
+Other Data Input: \code{\link{get_chunked_redcap_data}}
 }
 

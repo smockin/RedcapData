@@ -17,20 +17,20 @@ get_chunked_redcap_data(api, token, local = TRUE, chunksize = 100,
 
 \item{chunksize}{The size of the chunks to be pulled at a time.}
 
-\item{forms}{a character vector of the list of form data to pull.}
+\item{forms}{A character vector of the list of forms to pull data from.}
 
-\item{fields}{a character vector of the specific fields to pull.}
+\item{fields}{A character vector of the specific fields to pull data from.}
 
-\item{ids_to_pull}{a character vector of the specific record itentifiers to pull.}
+\item{ids_to_pull}{A character vector of the specific record itentifiers to pull from.}
 
-\item{dataset_name}{name of the resultant dataset}
+\item{dataset_name}{Name of the resultant dataset}
 
-\item{metadataset_name}{name of the resultant metadata}
+\item{metadataset_name}{Name of the resultant metadata}
 }
 \description{
 Download data in chunks from a REDCap repository using the REDCap api.
 
-If not specified, data and metadata are stored in the current environment.
+Data and metadata are stored in the calling environment.
 }
 \details{
 The record identifiers are chunked and then data is is pulled for those specific records.
@@ -41,11 +41,11 @@ This might be handy in the case of network latency or when the data is large.
 
 This is just a convenient wrapper round the \code{\link{get_redcap_data}} function.
 
-In cases of proper bandwidth and small data sizes, just use \code{\link{get_redcap_data}}.
+In cases of strong bandwidth or small data sizes, just use \code{\link{get_redcap_data}}.
 }
 \seealso{
-\code{\link{get_chunks}}
+\code{\link{get_chunks}}, \code{\link{redcap}}
 
-Other get_data_red: \code{\link{get_redcap_data}}
+Other Data Input: \code{\link{get_redcap_data}}
 }
 

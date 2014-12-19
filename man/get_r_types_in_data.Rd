@@ -10,12 +10,14 @@ get_r_types_in_data(metadata)
 \item{metadata}{REDCap metadata}
 }
 \value{
-The data types (r) of the variables in the dataset
+The R data types of the variables in the dataset
 }
 \description{
 Utility function that gets the data type(s) of the variables in a redcap project
 }
 \details{
 Using the redcap metadata, code is generated that extracts the data types of the variables in the dataset.
+
+Useful for metaprogramming.
 }
 

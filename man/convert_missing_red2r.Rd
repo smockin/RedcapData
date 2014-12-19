@@ -10,10 +10,10 @@ convert_missing_red2r(x)
 \item{x}{string with REDCap logic}
 }
 \value{
-R code that can be evaluated after further modifications
+Intermediate code with R missingness syntax that can be evaluated after further modifications into R expression trees
 }
 \description{
-Convert REDCap missing code to corresponding R syntax.
+Convert REDCap missingness representations to corresponding R syntax.
 }
 \details{
 For code generation, code has to be translated from one DSL or syntax to another.

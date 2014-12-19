@@ -32,7 +32,8 @@ The dates can be accessed to allow for conditional generation of the error repor
 \item{\code{is_valid()}}{Check validity of object}
 }}
 \seealso{
-Other Configuration Objects: \code{\link{RedcapConfig}}
+Other Configuration Objects: \code{\link{RedcapConfig}};
+  \code{\link{load_configs}}; \code{\link{load_updates}}
 }
 \concept{
 updates configuration cin redcap

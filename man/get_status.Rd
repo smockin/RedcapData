@@ -12,14 +12,14 @@ get_status(cache_objects, pretty = FALSE)
 \item{pretty}{Whether to format output for display}
 }
 \value{
-Code that can be evaluated to format data
+Code that can be evaluated to format cache status
 }
 \description{
-From the cache in the redcap object, identify the major events that have happened.
+From the cache in the redcap object, identify the major events that have ocurred during the lifetime of a Redcap object
 }
 \details{
-This function helps format the cache entries so as to provide a meaningful decmdion of the events that happened during the object' lifecycle.
+This function helps format the cache entries so as to provide a meaningful description of the events that happened during the object' lifecycle.
 
-This also helps in formatting output in the show command
+This also helps in formatting output in the show command.
 }
 

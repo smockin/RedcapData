@@ -43,5 +43,8 @@ The update dataset must contain the following variables:
 }
 \seealso{
 \code{\link{RedcapUpdate}} \code{\link{Redcap}}, \code{\link{redcap_project}}
+
+Other Configuration Objects: \code{\link{RedcapConfig}};
+  \code{\link{RedcapUpdate}}; \code{\link{load_configs}}
 }
 

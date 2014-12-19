@@ -2,7 +2,7 @@
 % Please edit documentation in R/redcap_helper.R
 \name{get_vars_in_data}
 \alias{get_vars_in_data}
-\title{Get the names of variables in dataset from REDCap metadata}
+\title{Get the names of variables in a dataset based on REDCap metadata}
 \usage{
 get_vars_in_data(metadata)
 }
@@ -10,14 +10,16 @@ get_vars_in_data(metadata)
 \item{metadata}{REDCap metadata}
 }
 \value{
-a character vector of the names of the dataset
+a character vector of the variable names in the dataset
 }
 \description{
 Utility function that gets the name(s) of the variables in a redcap project.
 }
 \details{
-Using the redcap metadata, code is generated that extracts the names of the dataset.
+Using the redcap metadata, code is generated that extracts the names of the variables in the dataset.
 
 Checkboxes are also munged to reflect what is in the repository.
+
+Useful for metaprogramming.
 }
 

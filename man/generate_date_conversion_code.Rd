@@ -2,23 +2,25 @@
 % Please edit documentation in R/redcap_helper.R
 \name{generate_date_conversion_code}
 \alias{generate_date_conversion_code}
-\title{Autogenerate code for date conversion for valid REDCap string dates}
+\title{Autogenerate code for date conversion from valid string date representations}
 \usage{
 generate_date_conversion_code(metadata, dataset_name = "data")
 }
 \arguments{
 \item{metadata}{REDCap metadata}
 
-\item{dataset_name}{Name of the dataset that will be recorded}
+\item{dataset_name}{Name of the dataset that will be recorded in place.}
 }
 \value{
-Code that can be evaluated to recode dates
+Code that can be evaluated to recode apppropriate strings to R dates
 }
 \description{
-This is a utility function that employs code generation to produce r code that recodes data.
+This is a utility function that employs code generation to produce R code for data recoding purposes.
 }
 \details{
 Using the redcap metadata, code is generated that converts character dates to R Date variables.
+
+This can come in handy when using the data for date-based operations such as subsetting or panel data analysis.
 }
 \seealso{
 Other Code Generators: \code{\link{generate_error_report_code}};

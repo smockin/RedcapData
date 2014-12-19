@@ -9,10 +9,10 @@ generate_formatting_code(metadata, dataset_name = "data")
 \arguments{
 \item{metadata}{REDCap metadata}
 
-\item{dataset_name}{Name of the dataset that will be recorded}
+\item{dataset_name}{Name of the dataset that will be recorded in place.}
 }
 \value{
-Code that can be evaluated to format data
+Code that can be evaluated to format data.
 }
 \description{
 This is a utility function that employs code generation to produce R code that formats data.
@@ -20,7 +20,9 @@ This is a utility function that employs code generation to produce R code that f
 \details{
 Using the redcap metadata, code is generated that formats data.
 
-It assigns HMisc labels to variables and recodes data to factors
+It assigns HMisc labels to variables and recodes data to factors.
+
+This makes it easier to perform traditional statistical analysis which often expects coded categorical variables as input.
 }
 \seealso{
 Other Code Generators: \code{\link{generate_date_conversion_code}};

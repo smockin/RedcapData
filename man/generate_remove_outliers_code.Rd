@@ -19,6 +19,8 @@ This is a utility function that employs code generation to produce r code for cl
 }
 \details{
 Using the redcap metadata, code is generated that removes out-of-range data from repo.
+
+This is necessary to avoid over or undeestimation during data analysis which often distorts the results.
 }
 \seealso{
 Other Code Generators: \code{\link{generate_date_conversion_code}};

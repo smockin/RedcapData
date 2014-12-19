@@ -10,7 +10,7 @@ remove_html_tags(x)
 \item{x}{string to refine}
 }
 \value{
-Code that can be evaluated to format data
+A html free string
 }
 \description{
 Removes html tags from string which can later be used as html-free text eg labels.

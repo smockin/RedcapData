@@ -17,6 +17,7 @@ Take metadata and make sure it conforms to the project's metaprogramming expecte
 }
 \details{
 This is a utility function that aids in preparing the metadata for cmd generation.
+
 It converts the input to a data table and assigns a key to it and also removes unnecessary fields.
 }
 

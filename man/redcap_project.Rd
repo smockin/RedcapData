@@ -13,7 +13,7 @@ redcap_project(configs_location, custom_code_location = NA,
 
 \item{custom_code_location}{Location of any custom code for error reporting (.R | .txt). See details...}
 
-\item{updates_location}{Location of a file containing any updates to redcap metadata. See details...}
+\item{updates_location}{Location of a file containing any updates to redcap metadata. (csv) See details...}
 
 \item{exclusion_pattern}{A character vector of regex patterns for variables to exclude from autogeneration of error reporting code.}
 }
