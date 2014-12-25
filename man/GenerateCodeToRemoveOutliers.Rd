@@ -2,7 +2,7 @@
 % Please edit documentation in R/redcap_helper.R
 \name{generate_remove_outliers_code}
 \alias{generate_remove_outliers_code}
-\title{Autogenerate code for removing out of range values (Set to NA) in REDCap data}
+\title{Autogenerate code for removing out of range values (set to NA) in REDCap data}
 \usage{
 generate_remove_outliers_code(metadata, dataset_name = "data")
 }

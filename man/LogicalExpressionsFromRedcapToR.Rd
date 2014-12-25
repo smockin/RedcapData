@@ -7,10 +7,10 @@
 logical_xpressions_red2r(x)
 }
 \arguments{
-\item{x}{string with REDCap logic}
+\item{x}{A string with REDCap logic, either raw or preprocessed.}
 }
 \value{
-R code that can be evaluated after further modifications
+Preprocessed R code that can be refined further or valid R syntax that can be parsed into an expression tree for evaluation.
 }
 \description{
 Convert REDCap logical expressions to valid R syntax representations.
@@ -21,5 +21,10 @@ For code generation, code has to be translated from one DSL or syntax to another
 In this case, conversion from REDCap logic to the appropriate R syntax.
 
 This function helps map logical expressions from REDCap to R
+}
+\seealso{
+Other RedcapToR: \code{\link{convert_dates_red2r}};
+  \code{\link{convert_missing_red2r}};
+  \code{\link{xtend_chb_names}}
 }
 

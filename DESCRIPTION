@@ -1,6 +1,6 @@
 Package: Cin
 Title: Data management utility support for CIN
-Version: 1.0
+Version: 1.0.1
 Authors@R: "Boniface Makone <bonifacemakone@gmail.com> [aut, cre]"
 Description: This package contains utility and helper functions that support
     data management and analysis tasks of the Clinical Information Network.
@@ -18,10 +18,10 @@ Imports:
     methods
 URL: http://www.kemri-wellcome.org
 Collate:
-    'script.R'
-    'branching_logic.R'
     'data_types.R'
+    'branching_logic.R'
     'generic_helper.R'
+    'script.R'
     'redcap_helper.R'
     'redcap_config.R'
     'redcap_config_helper.R'

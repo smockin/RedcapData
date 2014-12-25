@@ -32,16 +32,11 @@ It performs the necessary checks for instantiation hence avoids messy objects.
 
 It then calls the new method of the underlying reference class.
 
-The configs and update files must be csv files. See \code{\link{load_configs}}, \code{\link{load_updates}}
+The configs and update files must be csv files. See \code{\link{load_configs}}, \code{\link{load_updates}} for details.
 
-The custom code must hold valid R code. Knowledge of the data.table package is necessary for writing this code snippets.
+The custom code must hold valid R code.
 
 The exclusion patterns must hold valid R regex expressions. Can be full variable names or a set of patterns.
-}
-\examples{
-\dontrun{cin = redcap_project()}
-
-\dontrun{cin}
 }
 \seealso{
 \code{\link{Redcap}}

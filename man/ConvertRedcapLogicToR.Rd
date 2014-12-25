@@ -7,10 +7,10 @@
 convert_redcap2r(x)
 }
 \arguments{
-\item{x}{a string containing REDCap logic.}
+\item{x}{A string containing REDCap logic.}
 }
 \value{
-a string with containing R code (token) that can be parsed in it's current context into an R expression tree.
+A string with containing valid R code (token) that can be parsed in it's current context into an R expression tree for evaluation.
 }
 \description{
 Wrapper for converting REDCap branching logic to valid R code (for metaprogramming purposes).
@@ -18,7 +18,7 @@ Wrapper for converting REDCap branching logic to valid R code (for metaprogrammi
 \details{
 REDCap data dictionaries contain logic encapsulated in the branching logic that affects data capture and hence data management and analysis.
 
-These logic has to be transformed into the appropriate analytical tool's DSL for consistent data munging and analysis.
+These logic(s) has to be transformed into the appropriate analytical tool's DSL for consistent data munging and analysis.
 
 In our case, this involves conversion from REDCap logic to R code.
 

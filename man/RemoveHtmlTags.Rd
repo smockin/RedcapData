@@ -7,13 +7,13 @@
 remove_html_tags(x)
 }
 \arguments{
-\item{x}{string to refine}
+\item{x}{A string possibly with embedded html tags.}
 }
 \value{
-A html free string
+A string free of html tags and elements.
 }
 \description{
-Removes html tags from string which can later be used as html-free text eg labels.
+Removes html tags from string which can later be used as html-free text eg in labels.
 }
 \details{
 This is a utility function for refining text.

@@ -7,10 +7,10 @@
 convert_dates_red2r(x)
 }
 \arguments{
-\item{x}{a string containing R / REDCap source code.}
+\item{x}{A string with REDCap logic, either raw or preprocessed.}
 }
 \value{
-Intermediate code with R date syntax that can be evaluated after further modifications into R expression trees
+Preprocessed R code that can be refined further or valid R syntax that can be parsed into an expression tree for evaluation.
 }
 \description{
 Date conversion from REDCap to R.
@@ -21,5 +21,10 @@ In REDCap logic, dates are represented as raw strings.
 This is unlike R which requires objects to be of class `Date` for date-like operations to be carried out on the object.
 
 This requires conversion to facilitate date-based operations.
+}
+\seealso{
+Other RedcapToR: \code{\link{convert_missing_red2r}};
+  \code{\link{logical_xpressions_red2r}};
+  \code{\link{xtend_chb_names}}
 }
 

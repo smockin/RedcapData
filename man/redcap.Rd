@@ -7,7 +7,7 @@
 \alias{redcap_wrapper}
 \title{Redcap Wrapper Class}
 \value{
-A redcap class with an array of data-allied functionality
+A redcap class with an array of data-allied functionality.
 }
 \description{
 This class is the entry point for interacting with the CIN data which is stored in a REDCap data repository
@@ -28,7 +28,7 @@ Show the object to view status.
 \section{Fields}{
 
 \describe{
-\item{\code{opts}}{RedcapConfig object that controls the mode of interaction with the data repoistory during this objects lifecycle}
+\item{\code{opts}}{RedcapConfig object that controls the mode of interaction with the data repoistory during this object's lifecycle.}
 }}
 \section{Methods}{
 
@@ -53,7 +53,7 @@ Use load_data() to refresh the cache.}
 
 \item{\code{load_data()}}{Stream data from REDCap.
 Clears the cache and loads data.
-< NOTE: Do this only for initial loading or when you are sure there are changes in the data repo.}
+< NOTE: Do this only for initial loading or when you are sure there are changes in the data repo >.}
 
 \item{\code{load_metadata()}}{Stream metadata only from REDCap}
 

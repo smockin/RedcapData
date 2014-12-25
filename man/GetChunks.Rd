@@ -7,14 +7,14 @@
 get_chunks(x, chunksize)
 }
 \arguments{
-\item{x}{Input}
+\item{x}{Input vector}
 
 \item{chunksize}{The size of the chunks}
 }
 \value{
 A list of objects of the same data type as input, each of size equal to the chunk size.
 
-The last chunk may be smaller if the input's length is not the LCM of the input's length and the chunks size.
+The last chunk may be smaller if the input's length is not a multiple of the LCM of the input's length and the chunks size.
 }
 \description{
 From a vector obtain a list of chunks of a specific size
@@ -24,7 +24,7 @@ This is a utility functiion that facilitates chunked operations.
 
 A common scenario is to chunk the indices of a specific object and then perform operations on the chunks separately and then later merge the output.
 
-This can be useful in situations where multiple operations of a smaller scope is better than bulk processing.
+This can be useful in situations where multiple operations of smaller scope is preferrable to bulk processing.
 }
 \seealso{
 \code{\link{get_chunked_redcap_data}}

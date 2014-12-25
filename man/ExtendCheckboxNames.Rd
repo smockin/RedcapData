@@ -7,10 +7,10 @@
 xtend_chb_names(x)
 }
 \arguments{
-\item{x}{checkbox name in REDCap logic}
+\item{x}{String with REDCap logic possibly with embedded checkbox references.}
 }
 \value{
-R code that can be evaluated after further modifications
+Preprocessed R code that can be refined further or valid R syntax that can be parsed into an expression tree for evaluation.
 }
 \description{
 Expand REDCap branching logic and other code that include checkboxes to match indexing format used in underlying repository.
@@ -20,6 +20,11 @@ For code generation, code has to be translated from one DSL or syntax to another
 
 In this case, conversion from REDCap logic to the appropriate R syntax.
 
-This function helps expand REDCap checkbox syntax eg chk(1) to the underlysing data format expected in R eg chk___1
+This function helps expand REDCap checkbox syntax eg chk(1) to the underlying data format expected in R eg chk___1
+}
+\seealso{
+Other RedcapToR: \code{\link{convert_dates_red2r}};
+  \code{\link{convert_missing_red2r}};
+  \code{\link{logical_xpressions_red2r}}
 }
 

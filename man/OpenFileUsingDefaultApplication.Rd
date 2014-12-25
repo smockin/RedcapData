@@ -2,7 +2,7 @@
 % Please edit documentation in R/generic_helper.R
 \name{open_using_default_app}
 \alias{open_using_default_app}
-\title{Open file using  OS default application}
+\title{Open file using OS default application}
 \usage{
 open_using_default_app(file_path)
 }
@@ -10,7 +10,7 @@ open_using_default_app(file_path)
 \item{file_path}{Path to target file}
 }
 \description{
-Pop a file open using the default app set at the operating system level to handle files of the type specified.
+Pop a file open using the default application set at the operating system level to handle files of the type specified.
 }
 \details{
 This allows for results to be viewed interactively during analysis and programming.

@@ -7,12 +7,12 @@
 toproper(x, all = FALSE)
 }
 \arguments{
-\item{x}{a string.}
+\item{x}{A string.}
 
 \item{all}{Whether to convert all words. Default is only the first word is converted to proper case, the rest is lower case.}
 }
 \value{
-a string formatted to proper case
+A string formatted to proper case
 }
 \description{
 Convert strings to proper case.
