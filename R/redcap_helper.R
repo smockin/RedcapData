@@ -1,3 +1,5 @@
+#' @rdname GetChunks
+#'
 #' @name get_chunks
 #'
 #' @include generic_helper.R
@@ -8,15 +10,15 @@
 #'
 #' @return A list of objects of the same data type as input, each of size equal to the chunk size.
 #'
-#' The last chunk may be smaller if the input's length is not the LCM of the input's length and the chunks size.
+#' The last chunk may be smaller if the input's length is not a multiple of the LCM of the input's length and the chunks size.
 #'
 #' @details This is a utility functiion that facilitates chunked operations.
 #'
 #' A common scenario is to chunk the indices of a specific object and then perform operations on the chunks separately and then later merge the output.
 #'
-#' This can be useful in situations where multiple operations of a smaller scope is better than bulk processing.
+#' This can be useful in situations where multiple operations of smaller scope is preferrable to bulk processing.
 #'
-#' @param x Input
+#' @param x Input vector
 #' @param chunksize The size of the chunks
 #'
 #' @seealso \code{\link{get_chunked_redcap_data}}
@@ -45,6 +47,8 @@ get_chunks = function(x, chunksize) {
   value
 }
 
+#' @rdname GetChunkedRedcapData
+#'
 #' @name get_chunked_redcap_data
 #'
 #' @title Download REDCap data in chunks
@@ -140,6 +144,8 @@ get_chunked_redcap_data = function(
   })
 }
 
+#' @rdname GetBulkRedcapData
+#'
 #' @name get_redcap_data
 #'
 #' @title Bulk download of REDCap data
@@ -213,6 +219,8 @@ get_redcap_data = function(
   value
 }
 
+#' @rdname IsMetadataValid
+#'
 #' @name is_valid_metadata
 #'
 #' @title Check whether REDCap metadata is valid
@@ -249,6 +257,8 @@ is_valid_metadata = function(metadata) {
   value
 }
 
+#' @rdname GetVariableNamesInRedcapDataset
+#'
 #' @name get_vars_in_data
 #'
 #' @title Get the names of variables in a dataset based on REDCap metadata
@@ -291,6 +301,8 @@ get_vars_in_data = function(metadata) {
   value
 }
 
+#' @rdname GetRDataTypesOfVariablesInRedcapDataset
+#'
 #' @name get_r_types_in_data
 #'
 #' @title Get the R data types of variables in dataset from REDCap metadata
@@ -335,6 +347,8 @@ get_r_types_in_data = function(metadata) {
   value
 }
 
+#' @rdname GenerateCodeToRemoveCodedMissingValues
+#'
 #' @name generate_remove_missing_code
 #'
 #' @title Autogenerate code for removing coded missing values (set to NA) in REDCap data
@@ -377,9 +391,11 @@ generate_remove_missing_code = function(metadata, dataset_name = "data") {
   cmd
 }
 
+#' @rdname GenerateCodeToRemoveOutliers
+#'
 #' @name generate_remove_outliers_code
 #'
-#' @title Autogenerate code for removing out of range values (Set to NA) in REDCap data
+#' @title Autogenerate code for removing out of range values (set to NA) in REDCap data
 #'
 #' @description This is a utility function that employs code generation to produce r code for cleaning data.
 #'
@@ -463,6 +479,9 @@ generate_remove_outliers_code = function(metadata, dataset_name = "data") {
   cmd
 }
 
+
+#' @rdname GenerateCodeForDateCasting
+#'
 #' @name generate_date_conversion_code
 #'
 #' @title Autogenerate code for date conversion from valid string date representations
@@ -498,6 +517,8 @@ generate_date_conversion_code = function(metadata, dataset_name = "data") {
   cmd
 }
 
+#' @rdname GenerateCodeForFormatting
+#'
 #' @name generate_formatting_code
 #'
 #' @title Autogenerate code for data formatting (variable and data labelling)
@@ -589,6 +610,8 @@ generate_formatting_code = function(metadata, dataset_name = "data") {
   cmd
 }
 
+#' @rdname GenerateCodeForDataEntryValidation
+#'
 #' @name generate_error_report_code
 #'
 #' @title Autogenerate code for error reporting
@@ -626,13 +649,13 @@ generate_error_report_code = function(metadata, date_var, hosp_var, custom_code 
   tmp = ""
   tmp = c(tmp, paste0(get_tab(), "validate_data_entry = function(data_row) {"))
   add_tab()
-  tmp = c(tmp, paste0(get_tab(), "if (!\"data.table\" %in% class(data_row))"))
+  tmp = c(tmp, paste0(get_tab(), "if (!is.data.frame(data_row))"))
   add_tab()
-  tmp = c(tmp, paste0(get_tab(), "stop(\"input not data table\")"))
+  tmp = c(tmp, paste0(get_tab(), "stop(\"input is not a data frame\")"))
   remove_tab()
   tmp = c(tmp, paste0(get_tab(), "if (!(nrow(data_row) == 1))"))
   add_tab()
-  tmp = c(tmp, paste0(get_tab(), "stop(\"input must have one row\")"))
+  tmp = c(tmp, paste0(get_tab(), "stop(\"input must have only one row\")"))
   remove_tab()
   tmp = c(tmp, paste0(get_tab(), "while (\"data_row\" %in% search())"))
   add_tab()
@@ -963,6 +986,9 @@ generate_error_report_code = function(metadata, date_var, hosp_var, custom_code 
   cmd
 }
 
+
+#' @rdname GetCacheStatus
+#'
 #' @name get_status
 #'
 #' @title Get Cache status
@@ -1008,6 +1034,8 @@ get_status = function(cache_objects, pretty = FALSE) {
   message
 }
 
+#' @rdname PrepareMetadataForCodeGeneration
+#'
 #' @name prepare_metadata_for_code_generation
 #'
 #' @title Prepare metadata for code generation
@@ -1029,6 +1057,7 @@ prepare_metadata_for_code_generation = function(metadata) {
   metadata = data.table::data.table(metadata)
   metadata = metadata[, key := .I]
   setkey(metadata, key)
-  metadata = metadata[field_type != "descriptive"]
+  metadata = metadata[tolower(field_type) != "descriptive"]
+  metadata = metadata[tolower(field_type) == "checkbox", required_field:= TRUE, by = key]
   metadata
 }
