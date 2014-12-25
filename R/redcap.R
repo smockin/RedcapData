@@ -397,7 +397,7 @@ Redcap = setRefClass(
       tolog = paste0(tolog,
                      timestamp, "\t\t***", tmp, "***\t\t", paste0("[fun: ", function_name, "] ", message)
       )
-      .__log <<- paste0(.__log, tolog)
+      .self$.__log = paste0(.__log, tolog)
       if (level == 1)
         warning(sQuote(message), call. = FALSE)
       if (level == 2)
@@ -455,7 +455,7 @@ redcap_project = function(
     stop("configurations file not found")
   configs_data = read.csv(configs_location, as.is = TRUE)
   if (!all(c("key", "value", "type") %in% names(configs_data)))
-    stop("invalid configurations data [must have `key`, `value` and `type` entries. See help details.")
+    stop("invalid configurations data [must have `key`, `value` and `type` entries]. See help details.")
   configs_data = configs_data[, c("key", "value", "type")]
   opts$config_data = configs_data
   if (!is.na(custom_code_location)) {

@@ -77,7 +77,7 @@ get_chunks = function(x, chunksize) {
 #' @param dataset_name Name of the resultant dataset
 #' @param metadataset_name Name of the resultant metadata
 #'
-#' @seealso \code{\link{get_chunks}}, \code{\link{redcap}}
+#' @seealso \code{\link{get_chunks}}, \code{\link{Redcap}}
 #'
 #' @export
 #'
@@ -167,7 +167,7 @@ get_chunked_redcap_data = function(
 #' @param forms A character vector of the list of forms to pull data from.
 #' @param fields A character vector of the specific fields to pull data from.
 #' @param ids_to_pull A character vector of the specific record itentifiers to pull data from.
-#' @seealso \code{\link{redcap}}
+#' @seealso \code{\link{Redcap}}
 #'
 #' @export
 #'
@@ -207,7 +207,7 @@ get_redcap_data = function(
     assign("redcap__err", e$message, envir = fun_env)
   },
   warning = function(w) {
-    warning(e$message)
+    warning(w$message)
   })
   if (exists("redcap__err", envir = fun_env)) {
     msg = sQuote(get("redcap__err", envir = fun_env))
@@ -627,7 +627,7 @@ generate_formatting_code = function(metadata, dataset_name = "data") {
 #' @param metadata REDCap metadata
 #' @param date_var Name of variable that captures the date of entry
 #' @param hosp_var Name of variable that holds the hospital code
-#' @param custom code Any code that is appended for custom plugin of special validation checks.
+#' @param custom_code Any code that is appended for custom plugin of special validation checks.
 #' @param updates Name of a list of RedcapUpdate(s) to be used for plugging functionality that abstracts the introduction of new variables during the projects lifecycle. See \code{\link{RedcapUpdate}}
 #' @param updates_envir_depth Integer of what parent frame contains updates. Default is immediate parent of calling environment (1) ie one level deep.
 #'

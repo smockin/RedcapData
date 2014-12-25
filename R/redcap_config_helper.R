@@ -251,13 +251,15 @@ load_configs = function(config_data = NULL, custom_code = NA, exclusion_pattern 
 #'
 #' @title Default Configuration Keys
 #'
-#' @description Default configuration keys
+#' @description Default keys for Redcap configuration
 #'
-#' @details This serves as the default set of configurations if no value has been specified for som specific key.
+#' @details This serves as the default set of configurations if no value has been specified for some specific key(s).
 #'
-#' Helps in instantiation of RedcapConfig objects
+#' Helps in instantiation of RedcapConfig objects.
 #'
-#' @seealso \code{\link{RedcapConfig}}
+#' @return A list with default Redcap configurations as entries.
+#'
+#' @family Configuration Objects
 
 config_keys = list(
   api_url = "http://localhost/redcap/api/",
