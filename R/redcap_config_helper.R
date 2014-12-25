@@ -1,6 +1,8 @@
 #' @include redcap_config.R
 NULL
 
+#' @rdname LoadUpdates
+#'
 #' @name load_updates
 #'
 #' @title Wrapper for creating REDCap update objects
@@ -78,6 +80,8 @@ load_updates = function(updates_data) {
   value
 }
 
+#' @rdname LoadConfigurations
+#'
 #' @name load_configs
 #'
 #' @title Wrapper for creating REDCap configuration objects
@@ -240,6 +244,20 @@ load_configs = function(config_data = NULL, custom_code = NA, exclusion_pattern 
     stop("configs not set")
   obj
 }
+
+#' @rdname ConfigurationKeys
+#'
+#' @name config_keys
+#'
+#' @title Default Configuration Keys
+#'
+#' @description Default configuration keys
+#'
+#' @details This serves as the default set of configurations if no value has been specified for som specific key.
+#'
+#' Helps in instantiation of RedcapConfig objects
+#'
+#' @seealso \code{\link{RedcapConfig}}
 
 config_keys = list(
   api_url = "http://localhost/redcap/api/",

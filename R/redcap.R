@@ -31,9 +31,9 @@ NULL
 #'
 #' @export
 #'
-#' @field opts RedcapConfig object that controls the mode of interaction with the data repoistory during this objects lifecycle
+#' @field opts RedcapConfig object that controls the mode of interaction with the data repoistory during this object's lifecycle.
 #'
-#' @return A redcap class with an array of data-allied functionality
+#' @return A redcap class with an array of data-allied functionality.
 #'
 #' @seealso \code{\link{redcap_project}}
 #'
@@ -74,9 +74,11 @@ Redcap = setRefClass(
     load_data = function() {
       "Stream data from REDCap.
       Clears the cache and loads data.
-      < NOTE: Do this only for initial loading or when you are sure there are changes in the data repo.
+      < NOTE: Do this only for initial loading or when you are sure there are changes in the data repo >.
       "
 
+      if (length(ls(.self$.__cache)))
+        message("NOTE: cache has been cleared")
       rm(list = ls(.self$.__cache), envir = .self$.__cache)
       if (.self$opts$chunked) {
         if (!is.numeric(.self$opts$chunksize))
@@ -201,7 +203,9 @@ Redcap = setRefClass(
         cln_mt = data.table(cln_mt)
         cln_mt = cln_mt[, key := .I]
         setkey(cln_mt, key)
-        cln_mt = cln_mt[!field_type %in% c("descriptive", "calc")]
+        cln_mt = cln_mt[field_type != "descriptive"]
+        cln_mt = cln_mt[field_type == "checkbox", required_field := "y"]
+
         if (length(na.omit(.self$opts$configs$exclusion_pattern)) != 0) {
           to_exclude = as.character(.self$opts$configs$exclusion_pattern)
           to_exclude = sapply(to_exclude, function(pt) {
@@ -402,6 +406,8 @@ Redcap = setRefClass(
   )
 )
 
+#' @rdname RedcapProject
+#'
 #' @name redcap_project
 #'
 #' @title Wrapper for creating REDCap objects
@@ -418,9 +424,9 @@ Redcap = setRefClass(
 #'
 #' It then calls the new method of the underlying reference class.
 #'
-#' The configs and update files must be csv files. See \code{\link{load_configs}}, \code{\link{load_updates}}
+#' The configs and update files must be csv files. See \code{\link{load_configs}}, \code{\link{load_updates}} for details.
 #'
-#' The custom code must hold valid R code. Knowledge of the data.table package is necessary for writing this code snippets.
+#' The custom code must hold valid R code.
 #'
 #' The exclusion patterns must hold valid R regex expressions. Can be full variable names or a set of patterns.
 #'
@@ -435,9 +441,6 @@ Redcap = setRefClass(
 #'
 #' @return A redcap class instance that can be used to interact with the data repository
 #'
-#' @examples \dontrun{cin = redcap_project()}
-#'
-#' \dontrun{cin}
 
 redcap_project = function(
   configs_location,

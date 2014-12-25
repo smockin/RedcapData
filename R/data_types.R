@@ -1,8 +1,10 @@
-#' @name DataType_Checks
+#' @rdname DataTypeChecks
+#'
+#' @name DataTypeChecks
 #'
 #' @title Data Type checks for valid string representations of R data types
 #'
-#' @description Identify valid R data types from strings for proper type casting during data nanalysis and munging
+#' @description Identify valid R data types from strings for proper type casting during data analysis and munging
 #'
 #' @details This functions assist in many generic tasks such as configuration type casting, branching logic syntax conversion and data type checking during error reporting.
 #'
@@ -11,7 +13,7 @@
 NULL
 
 #'
-#' @rdname DataType_Checks
+#' @rdname DataTypeChecks
 #' @param x a character vector of unit length
 #' @export
 
@@ -23,7 +25,7 @@ is_date = function(x) {
 }
 
 #'
-#' @rdname DataType_Checks
+#' @rdname DataTypeChecks
 #' @export
 
 is_int = function(x) {
@@ -34,7 +36,7 @@ is_int = function(x) {
 }
 
 #'
-#' @rdname DataType_Checks
+#' @rdname DataTypeChecks
 #' @export
 
 is_number = function(x) {
@@ -45,7 +47,7 @@ is_number = function(x) {
 }
 
 #'
-#' @rdname DataType_Checks
+#' @rdname DataTypeChecks
 #' @export
 
 is_boolean = function(x) {
