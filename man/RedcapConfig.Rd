@@ -33,7 +33,8 @@ This allows the configurations to be loosely coupled from the REDCap interaction
 }}
 \seealso{
 Other Configuration Objects: \code{\link{RedcapUpdate}};
-  \code{\link{load_configs}}; \code{\link{load_updates}}
+  \code{\link{config_keys}}; \code{\link{load_configs}};
+  \code{\link{load_updates}}
 }
 \concept{
 configuration cin redcap

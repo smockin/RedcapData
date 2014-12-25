@@ -33,7 +33,8 @@ The dates can be accessed to allow for conditional generation of the error repor
 }}
 \seealso{
 Other Configuration Objects: \code{\link{RedcapConfig}};
-  \code{\link{load_configs}}; \code{\link{load_updates}}
+  \code{\link{config_keys}}; \code{\link{load_configs}};
+  \code{\link{load_updates}}
 }
 \concept{
 updates configuration cin redcap

@@ -36,7 +36,7 @@ This connection is then used to read the data from REDCap into R.
 This is done in bulk. In the case  of network latency or big data \code{\link{get_chunked_redcap_data}} would be a better alternative for more responsiveness.
 }
 \seealso{
-\code{\link{redcap}}
+\code{\link{Redcap}}
 
 Other Data Input: \code{\link{get_chunked_redcap_data}}
 }

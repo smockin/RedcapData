@@ -44,7 +44,7 @@ This is just a convenient wrapper round the \code{\link{get_redcap_data}} functi
 In cases of strong bandwidth or small data sizes, just use \code{\link{get_redcap_data}}.
 }
 \seealso{
-\code{\link{get_chunks}}, \code{\link{redcap}}
+\code{\link{get_chunks}}, \code{\link{Redcap}}
 
 Other Data Input: \code{\link{get_redcap_data}}
 }

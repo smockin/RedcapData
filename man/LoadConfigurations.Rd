@@ -94,6 +94,7 @@ Some common configuations include:
 \code{\link{RedcapUpdate}}, \code{\link{Redcap}}, \code{\link{redcap_project}}
 
 Other Configuration Objects: \code{\link{RedcapConfig}};
-  \code{\link{RedcapUpdate}}; \code{\link{load_updates}}
+  \code{\link{RedcapUpdate}}; \code{\link{config_keys}};
+  \code{\link{load_updates}}
 }
 

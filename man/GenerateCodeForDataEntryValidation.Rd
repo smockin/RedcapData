@@ -14,11 +14,11 @@ generate_error_report_code(metadata, date_var, hosp_var, custom_code = NA,
 
 \item{hosp_var}{Name of variable that holds the hospital code}
 
+\item{custom_code}{Any code that is appended for custom plugin of special validation checks.}
+
 \item{updates}{Name of a list of RedcapUpdate(s) to be used for plugging functionality that abstracts the introduction of new variables during the projects lifecycle. See \code{\link{RedcapUpdate}}}
 
 \item{updates_envir_depth}{Integer of what parent frame contains updates. Default is immediate parent of calling environment (1) ie one level deep.}
-
-\item{custom}{code Any code that is appended for custom plugin of special validation checks.}
 }
 \value{
 A function that can be evaluated to validate data entry workflow for a single record.

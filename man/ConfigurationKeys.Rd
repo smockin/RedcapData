@@ -12,22 +12,27 @@
  $ chunksize       : int NA
  $ hosp_var        : chr "hosp_id"
  $ date_var        : chr "date_today"
- $ report_location : chr "C:\\\\Users\\\\bmakone\\\\AppData\\\\Local\\\\Temp\\\\RtmpoRqSzf\\\\Error_Report1188b44237a.csv"
+ $ report_location : chr "C:\\\\Users\\\\bmakone\\\\AppData\\\\Local\\\\Temp\\\\RtmpeOYzSp\\\\Error_Report171423432946.csv"
  $ hosp_to_validate: int NA
 }}
 \usage{
 config_keys
 }
+\value{
+A list with default Redcap configurations as entries.
+}
 \description{
-Default configuration keys
+Default keys for Redcap configuration
 }
 \details{
-This serves as the default set of configurations if no value has been specified for som specific key.
+This serves as the default set of configurations if no value has been specified for some specific key(s).
 
-Helps in instantiation of RedcapConfig objects
+Helps in instantiation of RedcapConfig objects.
 }
 \seealso{
-\code{\link{RedcapConfig}}
+Other Configuration Objects: \code{\link{RedcapConfig}};
+  \code{\link{RedcapUpdate}}; \code{\link{load_configs}};
+  \code{\link{load_updates}}
 }
 \keyword{datasets}
 
