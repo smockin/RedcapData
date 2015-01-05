@@ -7,6 +7,8 @@ NULL
 #' @include redcap_config_helper.R
 NULL
 
+#' @rdname Redcap
+#'
 #' @name Redcap
 #'
 #' @title Redcap Wrapper Class
