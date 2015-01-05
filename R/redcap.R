@@ -82,10 +82,10 @@ Redcap = setRefClass(
       if (length(ls(.self$.__cache)))
         message("NOTE: cache has been cleared")
       rm(list = ls(.self$.__cache), envir = .self$.__cache)
-      if (.self$opts$chunked) {
-        if (!is.numeric(.self$opts$chunksize))
+      if (.self$opts$configs$chunked) {
+        if (!is.numeric(.self$opts$configs$chunksize))
           .self$log("chunksize not specified yet chunked=TRUE", 2, function_name = "load_data")
-        if (.self$opts$chunksize < 1)
+        if (.self$opts$configs$chunksize < 1)
           .self$log("specify a valid chunksize", 2, function_name = "load_data")
         message("loading chunked data...")
         tryCatch({
@@ -93,7 +93,7 @@ Redcap = setRefClass(
             api = .self$opts$configs$api_url,
             token = .self$opts$configs$token,
             local = .self$opts$configs$local,
-            chunksize = .self$opts$chunksize,
+            chunksize = .self$opts$configs$chunksize,
             forms = NULL,
             fields = NULL,
             ids_to_pull = NULL,
