@@ -1058,6 +1058,6 @@ prepare_metadata_for_code_generation = function(metadata) {
   metadata = metadata[, key := .I]
   setkey(metadata, key)
   metadata = metadata[tolower(field_type) != "descriptive"]
-  metadata = metadata[tolower(field_type) == "checkbox", required_field:= TRUE, by = key]
+  metadata = metadata[tolower(field_type) == "checkbox", required_field:= "Y", by = key]
   metadata
 }
