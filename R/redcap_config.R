@@ -290,7 +290,7 @@ RedcapUpdate = setRefClass(
     show = function() {
       msg = "A REDCap update info <class:RedcapUpdate>\n"
       msg = c(msg, paste0("Name: ", .self$name))
-      msg = c(msg, paste0("No of sites: ", .self$name))
+      msg = c(msg, paste0("No of sites: ", nrow(.self$site_info)))
       msg = c(msg, paste0("Variables Added: { ", paste0(.self$new_vars, collapse = ", "), " }"))
       if (!.self$is_valid()) {
         msg = c(msg, paste0("<!! Note: Update object is invalid! !!>"))
