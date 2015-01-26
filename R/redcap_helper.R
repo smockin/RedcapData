@@ -105,12 +105,12 @@ get_chunked_redcap_data = function(
   chunksize = abs(as.integer(chunksize))
   if (chunksize < 1)
     stop("invalid chunksize")
-
+  
   outer_env = parent.frame(1)
   if (!exists(metadataset_name, envir = outer_env))
     assign(metadataset_name, get_redcap_data(api, token, local, content = "metadata"), outer_env)
   id_name = get(metadataset_name, envir = outer_env)[1, 1]
-
+  
   ids_specified = FALSE
   if (!is.null(ids_to_pull)) {
     if (!is.na(ids_to_pull)) {
@@ -121,26 +121,26 @@ get_chunked_redcap_data = function(
   if (!ids_specified) {
     ids_list = as.character(unlist(get_redcap_data(api, token, fields = id_name)))
   }
-
+  
   data_size = length(ids_list)
   ids_list = get_chunks(ids_list, chunksize)
-
+  
   tryCatch({
     message(paste0("downloading data from redcap... (", data_size, " rows!)"))
     counter = chunksize
-    data_list = lapply(ids_list, function(ids) {
+    data_list = Map(function(ids) {
       ds_chunk = get_redcap_data(api = api, token = token, local = local, fields = fields, forms = forms, ids_to_pull = ids)
       message(paste0("downloaded ", min(100, round(counter * 100 / data_size, 2)), "%"))
       assign("counter", counter + chunksize, envir = parent.env(environment()))
       ds_chunk
-    })
+    }, ids_list)
     assign(dataset_name, data.frame(data.table::rbindlist(data_list)), envir = outer_env)
   },
   error = function(e) {
-    stop("chunkdownload - ", sQuote(e$message))
+    stop("chunked download failed: [details : ", sQuote(e$message), "]")
   },
   warning = function(w) {
-    warning("chunkdownload - ", sQuote(w$message))
+    warning("chunked download failed: [details: ", sQuote(w$message), "]")
   })
 }
 
@@ -296,7 +296,7 @@ get_vars_in_data = function(metadata) {
     }
     value
   }
-
+  
   value = na.omit(metadata[, get_vars_r(.SD), by = key][, var])
   value
 }
@@ -324,7 +324,7 @@ get_r_types_in_data = function(metadata) {
   metadata = metadata[, key := .I]
   if (!is_valid_metadata(metadata))
     stop("metadata not valid")
-
+  
   get_r_type_r = function(r) {
     widget = r$field_type
     if (widget == "checkbox") {
@@ -342,7 +342,7 @@ get_r_types_in_data = function(metadata) {
     }
     value
   }
-
+  
   value = na.omit(metadata[, get_vars_r(.SD), by = key][, V1])
   value
 }
@@ -376,7 +376,7 @@ generate_remove_missing_code = function(metadata, dataset_name = "data") {
   )
   invalid_vals = paste0(invalid_vals, collapse = ", ")
   invalid_vals = paste0("c(", invalid_vals, ")")
-
+  
   cmd = stringr::str_trim(get_vars_in_data(metadata))
   if (length(cmd) == 0L)
     return("")
@@ -423,7 +423,7 @@ generate_remove_outliers_code = function(metadata, dataset_name = "data") {
   if (length(has_valid) == 0L)
     return("")
   metadata = metadata[has_valid]
-
+  
   generate_code_r = function(r) {
     cmd = character(0L)
     var_r = stringr::str_trim(r$field_name)
@@ -449,7 +449,7 @@ generate_remove_outliers_code = function(metadata, dataset_name = "data") {
       ""
     has_min_r = all(!is.na(min_r), stringr::str_trim(min_r) != "")
     has_max_r = all(!is.na(max_r), stringr::str_trim(max_r) != "")
-
+    
     if (any(has_min_r, has_max_r)) {
       if (has_min_r) {
         tmp = min_r
@@ -527,7 +527,7 @@ generate_date_conversion_code = function(metadata, dataset_name = "data") {
 #'
 #' @details Using the redcap metadata, code is generated that formats data.
 #'
-#' It assigns HMisc labels to variables and recodes data to factors.
+#' It recodes categorical data to factors.
 #'
 #' This makes it easier to perform traditional statistical analysis which often expects coded categorical variables as input.
 #'
@@ -591,20 +591,15 @@ generate_formatting_code = function(metadata, dataset_name = "data") {
     value = data.table::data.table(Variable = variable, Label = label, Levels = levels, Label_Levels = labels_levels)
     value
   }
-
+  
   labels_hash_table = metadata[, reshape_labels(.SD), by = key]
   labels_f_hash_table = labels_hash_table[!is.na(Levels), ]
-
+  
   cmd = "\n\n# Convert categorical data to factors:\n\n"
   tmp = paste0(dataset_name, "$", labels_f_hash_table[, Variable], " = factor(",
                dataset_name, "$", labels_f_hash_table[, Variable], ", levels = ",
                labels_f_hash_table[, Levels], ", labels = ",
                labels_f_hash_table[, Label_Levels], ")")
-  cmd = c(cmd, tmp)
-
-  cmd = c(cmd, '\n\n# Assigning Hmisc labels to all variables:\n\nlibrary(Hmisc)\n')
-  tmp = paste0("Hmisc::label(", dataset_name, "$", labels_hash_table[, Variable], ") = \"",
-               labels_hash_table[, Label], "\"")
   cmd = c(cmd, tmp)
   cmd = paste0(cmd, collapse = "\n")
   cmd
@@ -777,6 +772,7 @@ generate_error_report_code = function(metadata, date_var, hosp_var, custom_code 
     if (!is.null(updates)) {
       cmd_r = c(cmd_r, paste0(get_tab(), ".__update_date = lapply(.__update, function(x) x$get_update_date(\"", vname_x2014cin, "\", ", hosp_var, "))"))
       cmd_r = c(cmd_r, paste0(get_tab(), ".__update_date = do.call(c, .__update_date)"))
+      cmd_r = c(cmd_r, paste0(get_tab(), ".__update_date = ifelse(is.null(.__update_date), NA, .__update_date)"))
       cmd_r = c(cmd_r, paste0(get_tab(), "if (length(na.omit(.__update_date)) > 0)"))
       add_tab()
       cmd_r = c(cmd_r, paste0(get_tab(), ".__update_date = max(.__update_date, na.rm = T)"))
@@ -980,7 +976,7 @@ generate_error_report_code = function(metadata, date_var, hosp_var, custom_code 
   tmp = c(tmp, paste0(get_tab(), "}"))
   tmp = paste0(tmp, collapse = "\n")
   reset_tab()
-
+  
   cmd = c("\n# <Note: !! Do not modify this function as it may change in future code regenerations !!>\n", cmd, tmp)
   cmd = paste0(cmd, collapse = "\n")
   cmd
@@ -1007,30 +1003,30 @@ generate_error_report_code = function(metadata, date_var, hosp_var, custom_code 
 get_status = function(cache_objects, pretty = FALSE) {
   if (length(cache_objects) == 0) {
     if (!pretty)
-      return("No events yet [hint:use <redcap-object>$load_data() to load data into memory]\n")
+      return("No events yet. (hint) use `obj`$load_data() to load data into memory.")
     else
-      return("{\tNo events yet [hint:use <redcap-object>$load_data() to load data into memory]\t}\n")
+      return("\nNo events yet. (hint) use `obj`$load_data() to load data into memory.\n")
   }
   message = character()
   if ("raw_records" %in% cache_objects)
-    message = c(message, "records loaded\t\t\t[hint:use <redcap-object>$get_raw_data() to get raw data]")
+    message = c(message, "records loaded. (hint) use `obj`$get_raw_data() to get raw data.")
   if ("raw_meta" %in% cache_objects)
-    message = c(message, "metadata loaded\t\t\t[hint:use <redcap-object>$get_metadata() to get metadata]")
+    message = c(message, "metadata loaded. (hint) use `obj`$get_metadata() to get metadata.")
   if ("fmt_records" %in% cache_objects)
-    message = c(message, "records formatted\t\t\t[hint:use <redcap-object>$get_formatted_data() to get data with variable and data labels plugged in]")
+    message = c(message, "records formatted. (hint) use `obj`$get_formatted_data() to get data with data labels plugged in (factors).")
   if ("clean_records" %in% cache_objects)
-    message = c(message, "records cleaned\t\t\t[hint:use <redcap-object>$get_clean_data() to get formatted data with missing and out of range values set to NA]")
+    message = c(message, "records cleaned. (hint) use `obj`$get_clean_data() to get formatted data with coded missing values set to NA.")
   if ("clean_meta" %in% cache_objects)
-    message = c(message, "metadata munged\t\t\t[for internal use: <metaprogramming>]")
+    message = c(message, "metadata munged. (for internal use - code generation)")
   if ("validate_data_entry" %in% cache_objects)
-    message = c(message, "error-code loaded\t\t\t[hint:use <redcap-object>$get_error_report() to get error report]")
+    message = c(message, "error report code in memory.  (hint) use `obj`$get_error_report() to get error report.")
   if ("err_rpt" %in% cache_objects)
-    message = c(message, "error-report created\t\t\t[hint:use <redcap-object>$get_error_report() to get error report]")
+    message = c(message, "error report created. (hint) use `obj`$get_error_report() to get error report.")
   if (pretty) {
-    message = paste0("\t* ", message)
+    message = paste0(">> ", message)
+    message = paste0(message, collapse = "\n")
+    message = paste0("\n", message, "\n")
   }
-  message = paste0(message, collapse = "\n")
-  message = paste0(" \n", message, "\n")
   message
 }
 

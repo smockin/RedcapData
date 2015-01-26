@@ -15,9 +15,9 @@ NULL
 #'
 #' @aliases redcap_wrapper redcap_class
 #'
-#' @concept cin
+#' @concept redcap_data
 #'
-#' @description This class is the entry point for interacting with the CIN data which is stored in a REDCap data repository
+#' @description This class is the entry point for interacting with data stored in a REDCap data repository
 #'
 #' @details This object facilitates R's interface with the REDCap repository.
 #'
@@ -51,34 +51,32 @@ Redcap = setRefClass(
     .__log = "character",
     opts = "RedcapConfig"
   ),
-
+  
   methods = list(
-
+    
     show = function() {
       www = gsub("/api/", "", .self$opts$configs$api_url)
-      if (.self$opts$configs$local)
-        msg = "redcap:\nA local redcap instance <class:Redcap>\n"
-      else
-        msg = paste0("redcap:\nA remote redcap instance running at ", sQuote(www), " <class:Redcap>\n")
+      if (.self$opts$configs$local) msg = "\nInstance:\nA local redcap instance\n" else msg = paste0("\nInstance:\nA remote redcap instance running at ", sQuote(www), "\n")
       if (length(ls(.self$.__cache)) == 0) {
-        msg = c(msg, "memory: cache empty\n")
+        msg = c(msg, "Memory status:\nCache is empty\n")
       }
       else {
-        msg = c(msg, paste0("memory: cache contains ", length(ls(.self$.__cache)), " items\n"))
+        msg = c(msg, paste0("Memory status:\nCache contains ", length(ls(.self$.__cache)), " items\n"))
       }
-      msg = c(msg, paste0("events:", get_status(ls(.self$.__cache), pretty = TRUE)))
+      msg = c(msg, paste0("Events:", get_status(ls(.self$.__cache), pretty = TRUE)))
       if (length(.self$.__log) > 0)
-        msg = c(msg, paste0("log:\n", .self$.__log))
+        msg = c(msg, paste0("Log:\n", .self$.__log, "\n"))
       msg = paste0(msg, collapse = "\n")
+      msg = paste0(msg, "\n")
       cat(msg)
     },
-
+    
     load_data = function() {
       "Stream data from REDCap.
       Clears the cache and loads data.
       < NOTE: Do this only for initial loading or when you are sure there are changes in the data repo >.
       "
-
+      
       if (length(ls(.self$.__cache)))
         message("NOTE: cache has been cleared")
       rm(list = ls(.self$.__cache), envir = .self$.__cache)
@@ -138,10 +136,10 @@ Redcap = setRefClass(
       }
       .self$log("records and metadata loaded", 0, function_name = "load_data")
     },
-
+    
     load_metadata = function() {
       "Stream metadata only from REDCap"
-
+      
       tryCatch({
         meta = get_redcap_data(
           api = .self$opts$configs$api_url,
@@ -159,46 +157,79 @@ Redcap = setRefClass(
       .self$.__cache$raw_meta = meta
       .self$log("metadata downloaded", 0, function_name = "load_metadata")
     },
-
-    clean_records = function() {
-      "Clean records removing out of range and coded missing values"
-
-      if (!"clean_records" %in% ls(all = T, envir = .self$.__cache)) {
+    
+    partially_clean_records = function() {
+      "Clean records removing coded missing values"
+      
+      if (!"part_clean_records" %in% ls(all = T, envir = .self$.__cache)) {
         if (!"fmt_records" %in% ls(all = T, envir = .self$.__cache)) {
           message("formatted data not in cache, attempting to format raw data...")
           .self$format_records()
         }
-        message("cleaning data...")
+        message("partially cleaning data...")
         dataset = data.frame(.self$.__cache$fmt_records)
-        if (!"clean_cmd" %in% ls(all = T, envir = .self$.__cache)) {
-          .self$.__cache$clean_cmd = paste0(
+        if (!"part_clean_cmd" %in% ls(all = T, envir = .self$.__cache)) {
+          .self$.__cache$part_clean_cmd = paste0(
             "\n# <Note: !! Do not edit this code as it may change in future code regenerations. !!>",
             generate_remove_missing_code(.self$get_metadata(), "dataset"),
             generate_date_conversion_code(.self$get_metadata(), "dataset"),
+            sep = "\n"
+          )
+        }
+        tryCatch({
+          eval(parse(text=.self$.__cache$part_clean_cmd))
+        },
+        warning = function(w) {
+          .self$log(w$message, 1, function_name = "partially_clean_records")
+        },
+        error = function(e) {
+          .self$log(e$message, 2, function_name = "partially_clean_records")
+        })
+        .self$.__cache$part_clean_records = dataset
+        .self$log("data partially cleaned", 0, function_name = "partially_clean_records")
+        message("data partially cleaned")
+      } else {
+        message("data already partially cleaned")
+      }
+    },
+    
+    fully_clean_records = function() {
+      "Clean records removing out of range values"
+      
+      if (!"full_clean_records" %in% ls(all = T, envir = .self$.__cache)) {
+        if (!"part_clean_records" %in% ls(all = T, envir = .self$.__cache)) {
+          message("partially cleaned data not in cache, attempting to partially clean data...")
+          .self$partially_clean_records()
+        }
+        message("fully cleaning data...")
+        dataset = data.frame(.self$.__cache$part_clean_records)
+        if (!"full_clean_cmd" %in% ls(all = T, envir = .self$.__cache)) {
+          .self$.__cache$full_clean_cmd = paste0(
+            "\n# <Note: !! Do not edit this code as it may change in future code regenerations. !!>",
             generate_remove_outliers_code(.self$get_metadata(), "dataset"),
             sep = "\n"
           )
         }
         tryCatch({
-          eval(parse(text=.self$.__cache$clean_cmd))
+          eval(parse(text=.self$.__cache$full_clean_cmd))
         },
         warning = function(w) {
-          .self$log(w$message, 1, function_name = "clean_records")
+          .self$log(w$message, 1, function_name = "fully_clean_records")
         },
         error = function(e) {
-          .self$log(e$message, 2, function_name = "clean_records")
+          .self$log(e$message, 2, function_name = "fully_clean_records")
         })
-        .self$.__cache$clean_records = dataset
-        message("data cleaned")
-        .self$log("data cleaned", 0, function_name = "clean_records")
+        .self$.__cache$full_clean_records = dataset
+        .self$log("data fully cleaned", 0, function_name = "fully_clean_records")
+        message("data fully cleaned")
       } else {
-        message("data already cleaned")
+        message("data already fully cleaned")
       }
     },
-
+    
     get_clean_metadata = function() {
       "Clean meta data for autogeneration of error report code"
-
+      
       if (!"clean_meta" %in% ls(all = T, envir = .self$.__cache)) {
         message("cleaning metadata...")
         cln_mt = .self$get_metadata()
@@ -207,7 +238,7 @@ Redcap = setRefClass(
         setkey(cln_mt, key)
         cln_mt = cln_mt[field_type != "descriptive"]
         cln_mt = cln_mt[field_type == "checkbox", required_field := "y"]
-
+        
         if (length(na.omit(.self$opts$configs$exclusion_pattern)) != 0) {
           to_exclude = as.character(.self$opts$configs$exclusion_pattern)
           to_exclude = sapply(to_exclude, function(pt) {
@@ -223,10 +254,10 @@ Redcap = setRefClass(
       .self$log("clean metadata accessed", 0, function_name = "get_clean_metadata")
       .self$.__cache$clean_meta
     },
-
+    
     format_records = function() {
       "Format records to add Hmisc labels and create factors"
-
+      
       if (!"fmt_records" %in% ls(all = T, envir = .self$.__cache)) {
         dataset = .self$get_raw_data()
         message("formatting data...")
@@ -248,10 +279,10 @@ Redcap = setRefClass(
         message("data already formatted")
       }
     },
-
+    
     report_errors = function() {
       "Create error report"
-
+      
       dataset = .self$get_raw_data()
       if (!"data.table" %in% class(dataset))
         dataset = data.table(dataset)
@@ -311,10 +342,10 @@ Redcap = setRefClass(
       })
       .self$.__cache$err_rpt = rpt
     },
-
+    
     get_error_report = function(pop = TRUE) {
       "Get error report"
-
+      
       if (!"err_rpt" %in% ls(all = T, envir = .self$.__cache))
         .self$report_errors()
       errors = .self$.__cache$err_rpt
@@ -338,49 +369,58 @@ Redcap = setRefClass(
       })
       .self$log("error report accessed", 0, function_name = "get_error_report")
     },
-
+    
     get_raw_data = function() {
       "Get raw records from memory.
       If there is not data in memory, an error is raised.
       Use load_data() to refresh the cache.
       "
-
+      
       if (!"raw_records" %in% ls(all = T, envir = .self$.__cache))
         stop("no data in memory. use load_data to load cache")
       .self$log("raw data accessed", 0, function_name = "get_raw_data")
       .self$.__cache$raw_records
     },
-
-    get_clean_data = function() {
-      "Get cleaned records from memory"
-
-      if (!"clean_records" %in% ls(all = T, envir = .self$.__cache))
-        .self$clean_records()
-      .self$log("clean data accessed", 0, function_name = "get_clean_data")
-      .self$.__cache$clean_records
+    
+    get_fully_cleaned_data = function() {
+      "Get fully cleaned records from memory"
+      
+      if (!"full_clean_records" %in% ls(all = T, envir = .self$.__cache))
+        .self$fully_clean_records()
+      .self$log("fully cleaned data accessed", 0, function_name = "get_fully_cleaned_data")
+      .self$.__cache$full_clean_records
     },
-
+    
+    get_partially_cleaned_data = function() {
+      "Get partially cleaned records from memory"
+      
+      if (!"part_clean_records" %in% ls(all = T, envir = .self$.__cache))
+        .self$partially_clean_records()
+      .self$log("partially cleaned data accessed", 0, function_name = "get_partially_cleaned_data")
+      .self$.__cache$part_clean_records
+    },
+    
     get_formatted_data = function() {
       "Get formatted records from memory"
-
+      
       if (!"fmt_records" %in% ls(all = T, envir = .self$.__cache))
         .self$format_records()
       .self$log("formatted data accessed", 0, function_name = "get_formatted_data")
       .self$.__cache$fmt_records
     },
-
+    
     get_metadata = function() {
       "Get raw metadata from memory"
-
+      
       if (!"raw_meta" %in% ls(all = T, envir = .self$.__cache))
         .self$load_metadata()
       .self$log("metadata accessed", 0, function_name = "get_metadata")
       .self$.__cache$raw_meta
     },
-
+    
     log = function(message, level = 0, function_name = "") {
       "Log events <internal use>"
-
+      
       tmp = if (level == 0) {
         "info"
       } else if (level == 1) {
@@ -397,7 +437,7 @@ Redcap = setRefClass(
                        "Level", paste0(rep("\t", 10), collapse = ""), "Message\n")
       }
       tolog = paste0(tolog,
-                     timestamp, "\t\t***", tmp, "***\t\t", paste0("[fun: ", function_name, "] ", message)
+                     timestamp, "\t\t***", tmp, "***\t\t", paste0("(FUN: ", function_name, ") ", message)
       )
       .self$.__log = paste0(.__log, tolog)
       if (level == 1)
@@ -432,6 +472,12 @@ Redcap = setRefClass(
 #'
 #' The exclusion patterns must hold valid R regex expressions. Can be full variable names or a set of patterns.
 #'
+#' @param ... Individual configuration settings as expected in the configs file.
+#'
+#' If \code{configs_location} is specified, these are discarded.
+#'
+#' See details...
+#'
 #' @param configs_location Location of the configs file (csv). See details...
 #' @param custom_code_location Location of any custom code for error reporting (.R | .txt). See details...
 #' @param updates_location Location of a file containing any updates to redcap metadata. (csv) See details...
@@ -445,17 +491,38 @@ Redcap = setRefClass(
 #'
 
 redcap_project = function(
+  ...,
   configs_location,
   custom_code_location = NA,
   updates_location = NA,
   exclusion_pattern = NA_character_
 ) {
   opts = list()
-  if (is.na(configs_location))
-    stop("Specify configuration file location")
-  if (!file.exists(configs_location))
-    stop("configurations file not found")
-  configs_data = read.csv(configs_location, as.is = TRUE)
+  if (missing(configs_location)) {
+    configs_data <- list(...)
+    configs_valid <- names(configs_data) %in% c(
+      "api_url",
+      "token",
+      "local",
+      "chunked",
+      "chunksize",
+      "hosp_var",
+      "date_var",
+      "report_location",
+      "hosp_to_validate"
+    )
+    configs_data = configs_data[configs_valid]
+    configs_data = data.frame(
+      key = names(configs_data),
+      value = Reduce(c, configs_data),
+      type = get_config_type_from_variable(Reduce(c, configs_data)),
+      stringsAsFactors = TRUE
+    )
+  } else {
+    if (!file.exists(configs_location))
+      stop("configurations file not found")
+    configs_data = read.csv(configs_location, as.is = TRUE)
+  }
   if (!all(c("key", "value", "type") %in% names(configs_data)))
     stop("invalid configurations data [must have `key`, `value` and `type` entries]. See help details.")
   configs_data = configs_data[, c("key", "value", "type")]

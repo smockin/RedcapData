@@ -271,4 +271,35 @@ config_keys = list(
   date_var = "date_today",
   report_location = tempfile("Error_Report", fileext = ".csv"),
   hosp_to_validate = NA_integer_
-  )
+)
+
+#' @rdname GetConfigurationTypeFromVariable
+#'
+#' @name get_config_type_from_variable
+#'
+#' @title Get configuration type from variable
+#'
+#' @description From an R object set at configuration, define the required special type for configuration
+#'
+#' @details This is a utility function that helps map R types to their corresponding config type as expected for this package.
+#'
+#' This allievates the use of csv files for configuration as options can be specified as anonymous function arguments (kwargs)
+#'
+#' @param x A list of configurations with the names set to the corresponding key
+#'
+#' @return A string of the special config data type
+#'
+#' @seealso \code{\link{redcap_project}}
+
+get_config_type_from_variable <- function(configs_list) {
+  value <- sapply(configs_list, function(cnf) {
+    value <- if (is_date(cnf))
+      "date" else if (is_int(cnf))
+        "integer" else if (is_number(cnf))
+          "number" else if (is_boolean(cnf))
+            "boolean" else
+              "string"
+    value
+  })
+  value
+}
