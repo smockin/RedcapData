@@ -1,22 +1,23 @@
-Package: Cin
-Title: Data management utility support for CIN
+Package: RedcapData
+Title: Data management utility support for REDCap repositories
 Version: 1.0.1
 Authors@R: "Boniface Makone <bonifacemakone@gmail.com> [aut, cre]"
 Description: This package contains utility and helper functions that support
-    data management and analysis tasks of the Clinical Information Network.
-    These tasks include data quality assurance, statistical data analysis and
-    reporting.
+    data management tasks of REDCap repositories. These tasks include data
+    input, formatting, cleaning and error report generation.
 Depends:
-    R (>= 3.0.0)
+    R (>= 3.0.0),
+    data.table,
+    RCurl,
+    stringr
 License: MIT
 LazyData: true
 Imports:
     data.table,
     RCurl,
     stringr,
-    Hmisc,
     methods
-URL: http://www.kemri-wellcome.org
+URL: https://github.com/bonmac/RedcapData
 Collate:
     'data_types.R'
     'branching_logic.R'
@@ -26,3 +27,4 @@ Collate:
     'redcap_config.R'
     'redcap_config_helper.R'
     'redcap.R'
+    'zzz.R'
