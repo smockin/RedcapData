@@ -324,7 +324,7 @@ Redcap = setRefClass(
         }
         rpt = rpt[, key_x2014cin := NULL]
         if (nrow(rpt) == 0) {
-          rpt = data.table(Message == "No errors in data capture!")
+          rpt = data.table(Message = "No errors in data capture!")
         }
         message("report generated")
         .self$log("error report created", 0, function_name = "report_errors")
