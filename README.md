@@ -59,7 +59,7 @@ devtools::install_github("bonmac/RedcapData", ref = "devel")
 ```r
 library(RedcapData)
 
-test <- redcap_project(api_url = "<some-url>/api/",
+test <- redcap_project(api_url = "<url-to-host-server>/redcap/api/",
                       token = "<secret-token>",
                       chunked = T,
                       chunksize = 500,
@@ -73,7 +73,7 @@ test
 ```
 
 Instance:
-A remote redcap instance running at ‘http://10.0.10.188/redcap’
+A remote redcap instance running at ‘<url-to-host-server>/redcap’
 
 Memory status:
 Cache is empty
@@ -117,14 +117,14 @@ REDCap Configurations:
 >> exclusion_pattern : No exclusion pattern specified
 >> custom_code : No custom error reporting code specified
 >> hosp_to_validate : NA
->> report_location : C:\Users\User\AppData\Local\Temp\RtmpYlxVgw\Error_Report17e028254ef5.csv
+>> report_location : C:\Users\<user-name>\AppData\Local\Temp\RtmpYlxVgw\Error_Report17e028254ef5.csv
 >> date_var : date_today
 >> hosp_var : hosp_id
 >> chunksize : 500
 >> chunked : TRUE
 >> local : FALSE
->> token : <some-token>
->> api_url : <some-url>/api/
+>> token : <secret-token>
+>> api_url : <url-to-host-server>/redcap/api/
 ```
 
 ---
@@ -188,7 +188,7 @@ test
 ```
 
 Instance:
-A remote redcap instance running at ‘http://10.0.10.188/redcap’
+A remote redcap instance running at ‘<url-to-host-server>/redcap’
 
 Memory status:
 Cache contains 2 items
@@ -236,7 +236,7 @@ test
 ```
 
 Instance:
-A remote redcap instance running at ‘http://10.0.10.188/redcap’
+A remote redcap instance running at ‘<url-to-host-server>/redcap’
 
 Memory status:
 Cache contains 4 items
@@ -289,7 +289,7 @@ test
 ```
 
 Instance:
-A remote redcap instance running at ‘http://10.0.10.188/redcap’
+A remote redcap instance running at ‘<url-to-host-server>/redcap’
 
 Memory status:
 Cache contains 6 items
@@ -342,7 +342,7 @@ test
 ```
 
 Instance:
-A remote redcap instance running at ‘http://10.0.10.188/redcap’
+A remote redcap instance running at ‘<url-to-host-server>/redcap’
 
 Memory status:
 Cache contains 8 items
@@ -383,12 +383,48 @@ Timestamp  														Level										Message
 test$get_error_report(pop = TRUE)
 ```
 
+> If, during configuration, ```chunked``` is set to ```TRUE``` and a valid chunksize is specified, then the repository is validated in chunks just as in data input.
+
 ### Output
 
 ```
 generating error report code...
 cleaning metadata...
 metadata cleaned
+error report code generated
+generating report. This might take a while...
+validated 7.43%...
+validated 14.85%...
+validated 22.28%...
+validated 29.71%...
+validated 37.14%...
+validated 44.56%...
+validated 51.99%...
+validated 59.42%...
+validated 66.84%...
+validated 74.27%...
+validated 81.7%...
+validated 89.13%...
+validated 96.55%...
+validated 100%
+report generated
+Error report saved to ‘C:\Users\<user-name>\AppData\Local\Temp\RtmpeENmPq\Error_Reportf544a5f709e.csv’
+```
+
+> Else validation is done in bulk
+
+### Output
+
+```
+
+generating error report code...
+cleaning metadata...
+metadata cleaned
+error report code generated
+generating report. This might take a while...
+report generated
+Error report saved to ‘C:\Users\<user-name>\AppData\Local\Temp\RtmpmmiNDF\Error_Report128c7fcd5a04.csv
+
 ```
 
 > The object is consequently updated. Show the object to view this.
@@ -402,4 +438,45 @@ test
 ### Output
 
 ```
+
+
+Instance:
+A remote redcap instance running at ‘http://10.0.10.188/redcap’
+
+Memory status:
+Cache contains 11 items
+
+Events:
+>> records loaded. (hint) use `obj`$get_raw_data() to get raw data.
+>> metadata loaded. (hint) use `obj`$get_metadata() to get metadata.
+>> records formatted. (hint) use `obj`$get_formatted_data() to get data with data labels plugged in (factors).
+>> metadata munged. (for internal use - code generation)
+>> error report code in memory.  (hint) use `obj`$get_error_report() to get error report.
+>> error report created. (hint) use `obj`$get_error_report() to get error report.
+
+Log:
+Timestamp  														Level										Message
+2015-01-27 [10:57AM]		***info***		(FUN: load_data) records and metadata loaded
+2015-01-27 [10:57AM]		***info***		(FUN: get_raw_data) raw data accessed
+2015-01-27 [10:57AM]		***info***		(FUN: get_raw_data) raw data accessed
+2015-01-27 [10:57AM]		***info***		(FUN: get_metadata) metadata accessed
+2015-01-27 [10:57AM]		***info***		(FUN: format_records) data formatted
+2015-01-27 [10:57AM]		***info***		(FUN: get_formatted_data) formatted data accessed
+2015-01-27 [10:57AM]		***info***		(FUN: get_metadata) metadata accessed
+2015-01-27 [10:57AM]		***info***		(FUN: get_metadata) metadata accessed
+2015-01-27 [10:57AM]		***info***		(FUN: partially_clean_records) data partially cleaned
+2015-01-27 [10:57AM]		***info***		(FUN: get_partially_cleaned_data) partially cleaned data accessed
+2015-01-27 [10:57AM]		***info***		(FUN: get_metadata) metadata accessed
+2015-01-27 [10:57AM]		***info***		(FUN: fully_clean_records) data fully cleaned
+2015-01-27 [10:57AM]		***info***		(FUN: get_fully_cleaned_data) fully cleaned data accessed
+2015-01-27 [10:57AM]		***info***		(FUN: get_raw_data) raw data accessed
+2015-01-27 [10:57AM]		***info***		(FUN: get_metadata) metadata accessed
+2015-01-27 [10:57AM]		***info***		(FUN: get_clean_metadata) metadata cleaned
+2015-01-27 [10:57AM]		***info***		(FUN: get_clean_metadata) clean metadata accessed
+2015-01-27 [10:57AM]		***info***		(FUN: report_errors) error report code generated
+2015-01-27 [10:57AM]		***info***		(FUN: report_errors) error report function in memory
+2015-01-27 [11:06AM]		***info***		(FUN: report_errors) error report created
+2015-01-27 [11:06AM]		***info***		(FUN: get_error_report) error report accessed
+
+
 ```

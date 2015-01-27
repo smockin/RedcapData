@@ -83,17 +83,17 @@ RedcapConfig = setRefClass(
         } else {
           "No exclusion pattern specified"
         }
-        msg = "REDCap Configurations:\n{"
+        msg = "REDCap Configurations:\n---------------------------\n"
         invisible({
           sapply(1 : length(out), function(idx) {
             nameCnf = names(out)[idx]
             cnf = out[idx]
             msg = get("msg", envir = parent.frame(3))
-            msg = c(msg, paste0("\t", nameCnf, " : ", cnf))
+            msg = c(msg, paste0(">> ", nameCnf, " : ", cnf))
             assign("msg", msg, envir = parent.frame(3))
           })
         })
-        msg = c(msg, "}")
+        msg = c(msg, "")
         msg = paste0(msg, collapse = "\n")
         msg = paste0(msg, "\n")
         cat(msg)
