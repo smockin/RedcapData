@@ -824,7 +824,7 @@ generate_error_report_code = function(metadata, date_var, hosp_var, custom_code 
         cmd_r = c(cmd_r, paste0(get_tab(), "if (isTRUE(.__is_update & ", date_var, " > .__update_date)) {"))
         add_tab()
       }
-      if (tolower(vtype_val_x2014cin) == "date_ymd") {
+      if (isTRUE(tolower(vtype_val_x2014cin) == "date_ymd")) {
         cmd_r = c(cmd_r, paste0(get_tab(), "if (!isTRUE(Cin::is_date(", vname_x2014cin, "))) {"))
         add_tab()
         cmd_r = c(cmd_r, paste0(get_tab(), "form__x2014cin = c(form__x2014cin, \"", toproper(fname_x2014cin, all = T), "\")"))
@@ -833,7 +833,7 @@ generate_error_report_code = function(metadata, date_var, hosp_var, custom_code 
         remove_tab()
         cmd_r = c(cmd_r, paste0(get_tab(), "}"))
       }
-      else if (tolower(vtype_val_x2014cin) == "number") {
+      else if (isTRUE(tolower(vtype_val_x2014cin) == "number")) {
         cmd_r = c(cmd_r, paste0(get_tab(), "if (!isTRUE(Cin::is_number(", vname_x2014cin, "))) {"))
         add_tab()
         cmd_r = c(cmd_r, paste0(get_tab(), "form__x2014cin = c(form__x2014cin, \"", toproper(fname_x2014cin, all = T), "\")"))
@@ -842,7 +842,7 @@ generate_error_report_code = function(metadata, date_var, hosp_var, custom_code 
         remove_tab()
         cmd_r = c(cmd_r, paste0(get_tab(), "}"))
       }
-      else if (tolower(vtype_val_x2014cin) == "integer") {
+      else if (isTRUE(tolower(vtype_val_x2014cin) == "integer")) {
         cmd_r = c(cmd_r, paste0(get_tab(), "if (!isTRUE(Cin::is_int(", vname_x2014cin, "))) {"))
         add_tab()
         cmd_r = c(cmd_r, paste0(get_tab(), "form__x2014cin = c(form__x2014cin, \"", toproper(fname_x2014cin, all = T), "\")"))
