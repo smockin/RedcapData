@@ -6,6 +6,7 @@
 ----
 
 # Preface
+
 > [Research Electronic Data Capture](http://project-redcap.org), a web-based open source application, is used in capturing data from a variety of sources. It is actively developed and comprises of a number of institutional partners who actively use and contribute to its development.
 
 > REDCap exposes metadata on its projects through a standardized .csv file called the data dictionary. This document defines the underlying data schematics of the repository from the data capture workflow to the variable names and their respective data types. In addition to this, REDCap provides an API for interacting with the repository external to the application hence it is easy to pull and push data and files in and out of the repository. This makes data exchange and interaction with other software applications easier.
@@ -20,7 +21,9 @@
 
 > Most of the functionality is based around the API which is used to pull records and metadata from the repository. Consequently code generation is used to map some of the logic and metadata abstracted in the data dictionary to R code that is then parsed to expression trees. These are then evaluated in the current R environment and workspace to achieve some desired effect or functionality.
 
-> Much of the time, individual projects undergo structural mutations during their lifetimes causing a disconnect between the analysis code and the underlying data schema. Code generation from metadata is used as a technique in an attempt to cushion the analyst / researcher distorted analyses ersulting from stale code. This also leads to a consistent format that can be used across different projects enabling code reuse. In cases of special or peculiar conditions, then the package also provides options to plugin customizations whenever necessary.
+> Much of the time, individual projects undergo structural mutations during their lifetimes causing a disconnect between the analysis code and the underlying data schema. Code generation from metadata is used as a technique in an attempt to cushion the analyst/researcher from  distorted analyses resulting from stale code. This also leads to a consistent format that can be used across different projects enabling code reuse. In cases of special or peculiar conditions, then the package also provides options to plugin customizations whenever necessary.
+
+> The main object is the ```Redcap``` class which comprises of a cache (an R environment object), a log (character string) and a ```RedcapConfig``` object that holds the configurations. This prevents copy by value (environments are copied by reference) hence prevents blotting of memory. The object also stores data in its cache preventing time consuming processes when data is in memory.
 
 ---
 
@@ -28,19 +31,32 @@
 
 > Tasks to review:
 
+* Installation
 * Configuration
 * Data input
 * Data formatting
 * Data cleaning
 * Error report
 
+## Installation
+
+> The project is hosted on github and therefore requires ```devtools``` package for installation
+
+### Code
+
+```r
+if (!is.element("devtools", .packages(all.available = T))) install.packages("devtools")
+library(devtools)
+devtools::install_github("bonmac/RedcapData", ref = "devel")
+```
+
 ## Configuration
 
-> Instantiate a ```Redcap``` class using the ```redcap_project``` function. The configurations can be set individually using kwargs (keyword arguments) or specified in a structured .csv file (see details). Custom code for error reporting and/or update informations (changes to metadata over time - specified in a structured .csv file) can be included to customize error reporting. When using .csv files specify the absolute paths to the csv files.
+> Instantiate a ```Redcap``` class using the ```redcap_project``` function. The configurations can be set individually using kwargs (keyword arguments) or specified in a structured .csv file (see details). Custom code for error reporting and/or update informations (changes to metadata over time - specified in a structured .csv file) can be included to customize error reporting. When using .csv files, specify the absolute paths to the csv files.
 
-### Code snippet
+### Code
 
-```
+```r
 library(RedcapData)
 
 test <- redcap_project(api_url = "<some-url>/api/",
@@ -74,7 +90,7 @@ No events yet. (hint) use `obj`$load_data() to load data into memory.
 
 ### Code
 
-```
+```r
 test$opts
 ```
 
@@ -89,7 +105,7 @@ Redcap configurations with no update info(s)
 
 ### Code
 
-```
+```r
 test$opts$configs$list_configs()
 ```
 
@@ -119,7 +135,7 @@ REDCap Configurations:
 
 ### Code
 
-```
+```r
 test$load_data()
 ```
 
@@ -163,7 +179,7 @@ records and metadata loaded
 
 ### Code
 
-```
+```r
 test
 ```
 
@@ -196,7 +212,7 @@ Timestamp    													Level										Message
 
 ### Code
 
-```
+```r
 fmt_data <- test$get_formatted_data()
 ```
 
@@ -211,11 +227,12 @@ formatting done
 
 ### Code
 
-```
+```r
 test
 ```
 
 ### Output
+
 ```
 
 Instance:
@@ -248,7 +265,7 @@ Timestamp  														Level										Message
 
 ### Code
 
-```
+```r
 test$get_partially_cleaned_data()
 ```
 
@@ -263,11 +280,12 @@ data partially cleaned
 
 ### Code
 
-```
+```r
 test
 ```
 
 ### Output
+
 ```
 
 Instance:
@@ -299,7 +317,8 @@ Timestamp  														Level										Message
 > Often in data management it is necessary to map the data analysis to the data capture to prevent distortion. To futher remove the ouliers using the validation rules set up during tool design, we use the object's ```get_fully_cleaned_data``` member function.
 
 ### Code
-```
+
+```r
 cln_data <- test$get_fully_cleaned_data()
 ```
 
@@ -314,11 +333,12 @@ data fully cleaned
 
 ### Code
 
-```
+```r
 test
 ```
 
 ### Output
+
 ```
 
 Instance:
@@ -358,11 +378,13 @@ Timestamp  														Level										Message
 > To validate the data entered during capture, it is necessary to generate an error report since REDCap allows for soft validations. This can be used after data entry (eg daily) to verify whether data captured repected the validation rules set at tool design. To create this report use the objects ```get_error_report``` member function. It provides an option whether to pop the file open using the default application set by the OS. This is only applicable in windowed environments.
 
 ### Code
-```
+
+```r
 test$get_error_report(pop = TRUE)
 ```
 
 ### Output
+
 ```
 generating error report code...
 cleaning metadata...
@@ -373,10 +395,11 @@ metadata cleaned
 
 ### Code
 
-```
+```r
 test
 ```
 
 ### Output
+
 ```
 ```

@@ -343,7 +343,7 @@ Redcap = setRefClass(
       .self$.__cache$err_rpt = rpt
     },
     
-    get_error_report = function(pop = TRUE) {
+    get_error_report = function(pop = FALSE) {
       "Get error report"
       
       if (!"err_rpt" %in% ls(all = T, envir = .self$.__cache))
