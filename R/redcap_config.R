@@ -43,9 +43,9 @@ RedcapConfig = setRefClass(
           get_summary_update = function(upd) {
             msg = character()
             if (upd$is_valid()) {
-              msg = c(msg, paste0(upd$name, ": ", length(upd$new_vars), " new variables (", nrow(upd$site_info), " site(s))"))
+              msg = c(msg, paste0(">> ", upd$name, ": ", length(upd$new_vars), " new variables (", nrow(upd$site_info), " site(s))"))
             } else {
-              msg = c(msg, paste0(upd$name, ": ", " invalid!"))
+              msg = c(msg, paste0(">> ", upd$name, ": ", " invalid!"))
             }
             msg = paste0(msg, collapse = "\n")
             msg
@@ -291,12 +291,13 @@ RedcapUpdate = setRefClass(
       msg = "REDCap update info\n"
       msg = c(msg, paste0("Name: ", .self$name))
       msg = c(msg, paste0("No of sites: ", nrow(.self$site_info)))
-      msg = c(msg, paste0("Variables Added: \n[ ", paste0(.self$new_vars, collapse = ", "), " ]"))
+      msg = c(msg, "Variables Added:")
+      msg = c(msg, paste0(">> ", .self$new_vars))
       if (!.self$is_valid()) {
         msg = c(msg, paste0("!! Note: Update object is invalid! !!"))
       }
       msg = paste0(msg, collapse = "\n")
-      msg = paste0(msg, "\n")
+      msg = paste0("\n\n", msg, "\n\n")
       cat(msg)
     },
 
