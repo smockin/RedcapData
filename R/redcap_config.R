@@ -37,9 +37,9 @@ RedcapConfig = setRefClass(
         msg = character()
         cnt = length(.self$updates)
         if (cnt == 0) {
-          msg = c(msg, "Redcap configurations with no update info(s) <class:RedcapConfig>\n")
+          msg = c(msg, "Redcap configurations with no update info(s)\n")
         } else {
-          msg = c(msg, paste0("Redcap configurations with ", cnt, " updates info(s) <class:RedcapConfig>"))
+          msg = c(msg, paste0("Redcap configurations with ", cnt, " updates info(s)"))
           get_summary_update = function(upd) {
             msg = character()
             if (upd$is_valid()) {
@@ -288,12 +288,12 @@ RedcapUpdate = setRefClass(
   methods = list(
 
     show = function() {
-      msg = "A REDCap update info <class:RedcapUpdate>\n"
+      msg = "REDCap update info\n"
       msg = c(msg, paste0("Name: ", .self$name))
       msg = c(msg, paste0("No of sites: ", nrow(.self$site_info)))
-      msg = c(msg, paste0("Variables Added: { ", paste0(.self$new_vars, collapse = ", "), " }"))
+      msg = c(msg, paste0("Variables Added: \n[ ", paste0(.self$new_vars, collapse = ", "), " ]"))
       if (!.self$is_valid()) {
-        msg = c(msg, paste0("<!! Note: Update object is invalid! !!>"))
+        msg = c(msg, paste0("!! Note: Update object is invalid! !!"))
       }
       msg = paste0(msg, collapse = "\n")
       msg = paste0(msg, "\n")
@@ -306,7 +306,7 @@ RedcapUpdate = setRefClass(
       msgs = character()
       valid = TRUE
       if (!is.data.frame(.self$site_info)) {
-        c(msgs, "invalid site info [must be data frame]")
+        c(msgs, "invalid site info (must be data frame)")
         valid = FALSE
       }
       .self$site_info = as.data.frame(.self$site_info)
