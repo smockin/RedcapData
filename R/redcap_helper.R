@@ -794,7 +794,7 @@ generate_error_report_code = function(metadata, date_var, hosp_var, custom_code 
         cmd_r = c(cmd_r, paste0(get_tab(), "if (isTRUE(any(is.na(", vname_x2014cin, "), stringr::str_trim(", vname_x2014cin, ") == \"\"))) {"))
       add_tab()
       if (!is.null(updates)) {
-        cmd_r = c(cmd_r, paste0(get_tab(), "if (isTRUE(.__is_update & ", date_var, " > .__update_date)) {"))
+        cmd_r = c(cmd_r, paste0(get_tab(), "if (!isTRUE(.__is_update & ", date_var, " <= .__update_date)) {"))
         add_tab()
       }
       cmd_r = c(cmd_r, paste0(get_tab(), "form__x2014cin = c(form__x2014cin, \"", toproper(fname_x2014cin, all = T), "\")"))
@@ -821,7 +821,7 @@ generate_error_report_code = function(metadata, date_var, hosp_var, custom_code 
       cmd_r = c(cmd_r, paste0(get_tab(), "if (!isTRUE(stringr::str_trim(as.character(", vname_x2014cin, ")) %in% c(as.character(seq(as.Date(\"1910-01-01\"), as.Date(\"1950-01-01\"), by = \"year\")), \"-1\"))) {"))
       add_tab()
       if (!is.null(updates)) {
-        cmd_r = c(cmd_r, paste0(get_tab(), "if (isTRUE(.__is_update & ", date_var, " > .__update_date)) {"))
+        cmd_r = c(cmd_r, paste0(get_tab(), "if (!isTRUE(.__is_update & ", date_var, " <= .__update_date)) {"))
         add_tab()
       }
       if (isTRUE(tolower(vtype_val_x2014cin) == "date_ymd")) {
@@ -884,7 +884,7 @@ generate_error_report_code = function(metadata, date_var, hosp_var, custom_code 
       cmd_r = c(cmd_r, paste0(get_tab(), "if (!isTRUE(stringr::str_trim(as.character(", vname_x2014cin, ")) %in% c(as.character(seq(as.Date(\"1910-01-01\"), as.Date(\"1950-01-01\"), by = \"year\")), \"-1\"))) {"))
       add_tab()
       if (!is.null(updates)) {
-        cmd_r = c(cmd_r, paste0(get_tab(), "if (isTRUE(.__is_update & ", date_var, " > .__update_date)) {"))
+        cmd_r = c(cmd_r, paste0(get_tab(), "if (!isTRUE(.__is_update & ", date_var, " <= .__update_date)) {"))
         add_tab()
       }
       range_code_x2014cin = "if (isTRUE("
