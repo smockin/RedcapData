@@ -233,7 +233,8 @@ Redcap = setRefClass(
       if (!"clean_meta" %in% ls(all = T, envir = .self$.__cache)) {
         message("cleaning metadata...")
         cln_mt = .self$get_metadata()
-        cln_mt = data.table(cln_mt)
+        cln_mt = data.frame(sapply(cln_mt, as.character), stringsAsFactors = FALSE)
+        cln_mt = data.table::data.table(cln_mt)
         cln_mt = cln_mt[, key := .I]
         setkey(cln_mt, key)
         cln_mt = cln_mt[field_type != "descriptive"]
