@@ -266,7 +266,10 @@ toproper <- function(x, all = FALSE) {
     last <- tolower(substr(w, 2, nchar(w)))
     paste0(first, last)
   }
-  if (!all) { x = to_proper_case(x) } else {
+  if (is.na(x)) return(NA)
+  if (!all) { 
+    x = to_proper_case(x) 
+    } else {
     x <- Reduce(c, Map( function(w) {
       w <- to_proper_case(w)
     }, unlist(strsplit(x, " "))))
