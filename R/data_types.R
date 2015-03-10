@@ -30,7 +30,10 @@ is_date = function(x) {
 is_int = function(x) {
   x = as.character(x)
   if (is.na(x) | str_trim(x) == "") return(TRUE)
-  isTRUE(regexpr("^[\\-]?[0-9]*$", str_trim(x)) > 0L)
+  . = isTRUE(regexpr("^[\\-]?[0-9]*$", str_trim(x)) > 0L)
+  if (!.)
+    . = isTRUE(regexpr('^[\\-]?[0-9]*[\\.]?[0-9]?e\\+[0-9]*$', str_trim(x)) > 0L)
+  .
 }
 
 #'
@@ -40,7 +43,11 @@ is_int = function(x) {
 is_number = function(x) {
   x = as.character(x)
   if (is.na(x) | str_trim(x) == "") return(TRUE)
-  isTRUE(regexpr("^[\\-]?[0-9]*[\\.]?[0-9]*$", str_trim(x)) > 0L)
+  if (is_int(x)) return(TRUE)
+  . = isTRUE(regexpr("^[\\-]?[0-9]*[\\.]?[0-9]*$", str_trim(x)) > 0L)
+  if (!.)
+    . = isTRUE(regexpr('^[\\-]?[0-9]*[\\.]?[0-9]?e\\+[0-9]*$', str_trim(x)) > 0L)
+  .
 }
 
 #'
