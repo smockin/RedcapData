@@ -293,8 +293,8 @@ Redcap = setRefClass(
       }
       upds = .self$opts$updates
       if (length(upds) == 0)
-        upds = NULL
-      tryCatch({
+        upds = list()
+#      tryCatch({
         if (!"validate_data_entry" %in% ls(all.names = T, envir = .self$.__cache)) {
           message("generating error report code...")
           tmp = generate_error_report_code(
@@ -314,11 +314,12 @@ Redcap = setRefClass(
         if (.self$opts$configs$chunked) {
           .counter = .self$opts$configs$chunksize
           rpt = lapply(get_chunks(1 : nrow(dataset), .self$opts$configs$chunksize), function(chunk) {
-            ds_chunk = dataset[chunk, .__cache$validate_data_entry(.SD, hosp_to_validate = .self$opts$configs$hosp_to_validate), by = key_x2014cin]
+            ds_chunk = dataset[chunk, .__cache$validate_data_entry(.SD, hosp_to_validate = .self$opts$configs$hosp_to_validate, updates = upds), by = key_x2014cin]
             message(paste0("validated ", min(100, round((.counter * 100) / nrow(dataset), 2)), "%", ifelse(.counter >= nrow(dataset), "", "...")))
             assign(".counter", (.counter + .self$opts$configs$chunksize), envir = parent.frame(2))
             ds_chunk
           })
+          browser()
           rpt = data.table::rbindlist(rpt)
         } else {
           rpt = dataset[, .__cache$validate_data_entry(.SD, hosp_to_validate = .self$opts$configs$hosp_to_validate), by = key_x2014cin]
@@ -329,13 +330,13 @@ Redcap = setRefClass(
         }
         message("report generated")
         .self$log("error report created", 0, function_name = "report_errors")
-      }, warning = function(w) {
-        .self$log(w$message, 1, function_name = "report_errors")
-        stop(w$message)
-      }, error = function(e) {
-        .self$log(e$message, 2, function_name = "report_errors")
-        stop(e$message)
-      })
+#     }, warning = function(w) {
+#       .self$log(w$message, 1, function_name = "report_errors")
+#       stop(w$message)
+#     }, error = function(e) {
+#       .self$log(e$message, 2, function_name = "report_errors")
+#       stop(e$message)
+#     })
       .self$.__cache$err_rpt = rpt
     },
     
