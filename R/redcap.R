@@ -319,10 +319,9 @@ Redcap = setRefClass(
             assign(".counter", (.counter + .self$opts$configs$chunksize), envir = parent.frame(2))
             ds_chunk
           })
-          browser()
           rpt = data.table::rbindlist(rpt)
         } else {
-          rpt = dataset[, .__cache$validate_data_entry(.SD, hosp_to_validate = .self$opts$configs$hosp_to_validate), by = key_x2014cin]
+          rpt = dataset[, .__cache$validate_data_entry(.SD, hosp_to_validate = .self$opts$configs$hosp_to_validate, updates = upds), by = key_x2014cin]
         }
         rpt = rpt[, key_x2014cin := NULL]
         if (nrow(rpt) == 0) {

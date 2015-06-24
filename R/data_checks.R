@@ -19,10 +19,10 @@
 #'
 
 date_can_be_validated = function(var) {
+  if (is.na(var)) return(F)
   if (is.null(var)) return(F)
   if (str_trim(var) == "") return(F)
-  if (is.na(var)) return(F)
-  var = str_trim(var)
+    var = str_trim(var)
   if (!is_date(var)) return(F)
   if (as.Date(var) %in% seq(as.Date("1910-01-01"), as.Date("1950-01-01"), by = "year")) return(F)
   T

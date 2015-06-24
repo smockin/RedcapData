@@ -663,7 +663,7 @@ generate_error_report_code = function(metadata, date_var, hosp_var, custom_code 
   tmp = c(tmp, paste0(get_tab(), "if (!date_can_be_validated(", date_var, ")) return(data.table("))
   add_tab()
   tmp = c(tmp, paste0(get_tab(), "RecordID = ", id_var))
-  tmp = c(tmp, paste0(get_tab(), ",DateOfEntry = NA"))
+  tmp = c(tmp, paste0(get_tab(), ",DateOfEntry = as.Date(NA)"))
   tmp = c(tmp, paste0(get_tab(), ",Hospital = ", hosp_var))
   tmp = c(tmp, paste0(get_tab(), ",Form = \"<< Before Data Evaluations >>\""))
   tmp = c(tmp, paste0(get_tab(), ",Section = \"<< Before Data Evaluations >>\""))
@@ -993,7 +993,6 @@ generate_error_report_code = function(metadata, date_var, hosp_var, custom_code 
   tmp = c(tmp, paste0(get_tab(), "}"))
   tmp = paste0(tmp, collapse = "\n")
   reset_tab()
-  
   cmd = c("\n# <Note: !! Do not modify this function as it may change in future code regenerations !!>\n", cmd, tmp)
   cmd = paste0(cmd, collapse = "\n")
   cmd
