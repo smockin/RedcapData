@@ -25,13 +25,10 @@ NULL
 
 RedcapConfig = setRefClass(
   "RedcapConfig",
-  fields = list(
-    updates = "list",
-    configs = "environment"
-  ),
-
+  fields = list(updates = "list",
+                configs = "environment"),
+  
   methods = list(
-
     show = function() {
       if (.self$is_valid()) {
         msg = character()
@@ -43,7 +40,11 @@ RedcapConfig = setRefClass(
           get_summary_update = function(upd) {
             msg = character()
             if (upd$is_valid()) {
-              msg = c(msg, paste0(">> ", upd$name, ": ", length(upd$new_vars), " new variables (", nrow(upd$site_info), " site(s))"))
+              msg = c(
+                msg, paste0(
+                  ">> ", upd$name, ": ", length(upd$new_vars), " new variables (", nrow(upd$site_info), " site(s))"
+                )
+              )
             } else {
               msg = c(msg, paste0(">> ", upd$name, ": ", " invalid!"))
             }
@@ -56,7 +57,7 @@ RedcapConfig = setRefClass(
             tmp = c(
               sapply(.self$updates[1:4], get_summary_update),
               "...",
-              sapply(.self$updates[(cnt)-3, cnt], get_summary_update)
+              sapply(.self$updates[(cnt) - 3, cnt], get_summary_update)
             )
           }
           tmp = paste0(tmp, collapse = "\n")
@@ -67,25 +68,25 @@ RedcapConfig = setRefClass(
         cat("Invalid configurations!\n")
       }
     },
-
+    
     list_configs = function() {
       "Display the configurations for the REDCap session/object"
-
+      
       if (.self$is_valid()) {
         out = as.list(.self$configs)
-        out$custom_code = if(!all(sapply(out$custom_code, is.na))) {
+        out$custom_code = if (!all(sapply(out$custom_code, is.na))) {
           "Has custom error reporting code specified"
         } else {
           "No custom error reporting code specified"
         }
-        out$exclusion_pattern = if(!all(sapply(out$exclusion, is.na))) {
+        out$exclusion_pattern = if (!all(sapply(out$exclusion, is.na))) {
           "Has exclusion pattern(s) specified"
         } else {
           "No exclusion pattern specified"
         }
         msg = "REDCap Configurations:\n---------------------------\n"
         invisible({
-          sapply(1 : length(out), function(idx) {
+          sapply(1:length(out), function(idx) {
             nameCnf = names(out)[idx]
             cnf = out[idx]
             msg = get("msg", envir = parent.frame(3))
@@ -101,23 +102,25 @@ RedcapConfig = setRefClass(
         cat("Invalid configurations!\n")
       }
     },
-
+    
     is_valid = function() {
       "Checks the validity of the object"
-
+      
       valid = TRUE
       msg = character()
-      if (!all(c(
-        "api_url",
-        "local",
-        "token",
-        "exclusion_pattern",
-        "custom_code",
-        "chunksize",
-        "chunked",
-        "date_var",
-        "hosp_var"
-      ) %in% ls(all = TRUE, envir = .self$configs))) {
+      if (!all(
+        c(
+          "api_url",
+          "local",
+          "token",
+          "exclusion_pattern",
+          "custom_code",
+          "chunksize",
+          "chunked",
+          "date_var",
+          "hosp_var"
+        ) %in% ls(all = TRUE, envir = .self$configs)
+      )) {
         msg = c(msg, "Some required configurations are not set")
         valid = FALSE
       }
@@ -212,14 +215,18 @@ RedcapConfig = setRefClass(
         if (!all("RedcapUpdate" %in% sapply(.self$updates, class))) {
           idx = which("RedcapUpdate" %in% sapply(.self$updates, class))
           upds = .self$updates[idx]
-          upds = sQuote(sapply(upds, function(up) up$name))
+          upds = sQuote(sapply(upds, function(up)
+            up$name))
           upds = paste0(upds, collapse = ", ")
           msg = c(msg, paste0("invalid updates <", upds, ">"))
           valid = FALSE
-        } else if (!all(sapply(.self$updates, function(x) x$is_valid()))) {
-          idx = which(all(!sapply(.self$updates, function(x) x$is_valid())))
+        } else if (!all(sapply(.self$updates, function(x)
+          x$is_valid()))) {
+          idx = which(all(!sapply(.self$updates, function(x)
+            x$is_valid())))
           upds = .self$updates[idx]
-          upds = sQuote(sapply(upds, function(up) up$name))
+          upds = sQuote(sapply(upds, function(up)
+            up$name))
           upds = paste0(upds, collapse = ", ")
           msg = c(msg, paste0("invalid updates <", upds, ">"))
           valid = FALSE
@@ -232,13 +239,14 @@ RedcapConfig = setRefClass(
       }
       return(valid)
     },
-
+    
     get_update_date = function(var_name, hospital_id) {
       "Get the date a specific variable was updated for a specific site"
-
+      
       value = as.Date(NA)
       if (length(.self$updates) > 0) {
-        if (!all(sapply(.self$updates, function(x) x$is_valid())))
+        if (!all(sapply(.self$updates, function(x)
+          x$is_valid())))
           stop("Some updates not valid")
         idx = which(sapply(.self$updates, function(x) {
           var_name %in% x$new_vars
@@ -251,7 +259,8 @@ RedcapConfig = setRefClass(
         }
       }
       value
-    })
+    }
+  )
 )
 
 #' @name RedcapUpdate
@@ -284,9 +293,8 @@ RedcapUpdate = setRefClass(
     site_info = "data.frame",
     new_vars = "character"
   ),
-
+  
   methods = list(
-
     show = function() {
       msg = "REDCap update info\n"
       msg = c(msg, paste0("Name: ", .self$name))
@@ -300,10 +308,10 @@ RedcapUpdate = setRefClass(
       msg = paste0("\n\n", msg, "\n\n")
       cat(msg)
     },
-
+    
     is_valid = function() {
       "Check validity of object"
-
+      
       msgs = character()
       valid = TRUE
       if (!is.data.frame(.self$site_info)) {
@@ -317,10 +325,10 @@ RedcapUpdate = setRefClass(
       }
       valid
     },
-
+    
     get_update_date = function(var_name, hospital_id) {
       "Get the date a specific variable was updated for a specific site"
-
+      
       if (!.self$is_valid())
         stop("invalid update!")
       value = as.Date(NA)

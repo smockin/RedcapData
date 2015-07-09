@@ -33,9 +33,11 @@ remove_tab = function(n = 1) {
 #' @rdname TabUtils
 #'
 
-reset_tab = function() assign(".__TAB__no", 0, envir = globalenv())
+reset_tab = function()
+  assign(".__TAB__no", 0, envir = globalenv())
 
 #' @rdname TabUtils
 #'
 
-get_tab = function() paste0(rep("\t", get(".__TAB__no", envir = globalenv())), collapse = "")
+get_tab = function()
+  paste0(rep("\t", get(".__TAB__no", envir = globalenv())), collapse = "")

@@ -49,11 +49,14 @@ load_updates = function(updates_data) {
   updates_data = data.frame(updates_data)
   if (!all(c("update", "site", "date", "new_vars") %in% names(updates_data)))
     stop("some column(s) missing")
-  if (any(is.na(updates_data$update) | str_trim(updates_data$update) == ""))
+  if (any(is.na(updates_data$update) |
+          str_trim(updates_data$update) == ""))
     stop("some updates(s) missing")
-  if (any(is.na(updates_data$site) | str_trim(updates_data$site) == ""))
+  if (any(is.na(updates_data$site) |
+          str_trim(updates_data$site) == ""))
     stop("some site(s) missing")
-  if (any(is.na(updates_data$date) | str_trim(updates_data$date) == ""))
+  if (any(is.na(updates_data$date) |
+          str_trim(updates_data$date) == ""))
     stop("some date(s) missing")
   if (!all(sapply(str_trim(updates_data$site), is_int)))
     stop("some site(s) are invalid")
@@ -189,41 +192,40 @@ load_configs = function(config_data = NULL, custom_code = NA, exclusion_pattern 
         ky = as.character(cnf$key)
         typ = as.character(cnf$type)
         val = as.character(cnf$value)
+        if (str_trim(ky) == "hosp_to_validate")
+          val = unlist(strsplit(val, ";"))
+        has_empty = sapply(str_trim(val), function(x)
+          x %in% c("NA", ""))
+        if (any(has_empty))
+          val[which(has_empty)] = NA
         val = if (typ == "date") {
-          if (str_trim(val) %in% c("NA", "")) {
-            as.Date(NA)
-          } else if (!is_date(val)) {
-            stop(paste0(sQuote(ky), " must be a date (format:yyyy-mm-dd)"))
+          if (!all(sapply(val, is_date))) {
+            stop(paste0(
+              sQuote(ky), " must be of type date (format:yyyy-mm-dd)"
+            ))
           }
           as.Date(val)
         } else if (typ == "number") {
-          if (str_trim(val) %in% c("NA", "")) {
-            NA_real_
-          } else if (!is_number(val)) {
-            stop(paste0(sQuote(ky), " must be a float"))
+          if (!all(sapply(val, is_number))) {
+            stop(paste0(sQuote(ky), " must be of type float"))
           }
           as.numeric(val)
         } else if (typ == "integer") {
-          if (str_trim(val) %in% c("NA", "")) {
-            NA_integer_
-          } else if (!is_int(val)) {
+          if (!all(sapply(val, is_int))) {
             stop(paste0(sQuote(ky), " must be an integer"))
           }
           as.integer(val)
         } else if (typ == "boolean") {
-          if (str_trim(val) %in% c("NA", "")) {
-            NA
-          } else if (!is_boolean(val)) {
+          if (!all(sapply(val, is_boolean))) {
             stop(paste0(sQuote(ky), " must be a boolean"))
           }
           as.logical(val)
         } else if (typ == "string") {
-          if (str_trim(val) %in% c("NA", ""))
-            NA_character_
-          else
-            as.character(val)
+          as.character(val)
         } else {
-          stop("config data type not supported!. must be either `string`, `date`, `integer`, `number` or `boolean`")
+          stop(
+            "config data type not supported!. must be either `string`, `date`, `integer`, `number` or `boolean`"
+          )
         }
         tmp = get("tmp", envir = parent.frame(n = 3))
         tmp[[ky]] = val
@@ -269,8 +271,8 @@ config_keys = list(
   chunksize = NA_integer_,
   hosp_var = "hosp_id",
   date_var = "date_today",
-  report_location = tempfile("Error_Report", fileext = ".csv"),
-  hosp_to_validate = NA_integer_
+  report_location = tempfile("DataVerification", fileext = ".csv"),
+  hosp_to_validate = NA_character_
 )
 
 #' @rdname GetConfigurationTypeFromVariable
@@ -294,11 +296,15 @@ config_keys = list(
 get_config_type_from_variable <- function(configs_list) {
   value <- sapply(configs_list, function(cnf) {
     value <- if (is_date(cnf))
-      "date" else if (is_int(cnf))
-        "integer" else if (is_number(cnf))
-          "number" else if (is_boolean(cnf))
-            "boolean" else
-              "string"
+      "date"
+    else if (is_int(cnf))
+      "integer"
+    else if (is_number(cnf))
+      "number"
+    else if (is_boolean(cnf))
+      "boolean"
+    else
+      "string"
     value
   })
   value

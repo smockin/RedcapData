@@ -53,10 +53,12 @@ Redcap = setRefClass(
   ),
   
   methods = list(
-    
     show = function() {
       www = gsub("/api/", "", .self$opts$configs$api_url)
-      if (.self$opts$configs$local) msg = "\nInstance:\nA local redcap instance\n" else msg = paste0("\nInstance:\nA remote redcap instance running at ", sQuote(www), "\n")
+      if (.self$opts$configs$local)
+        msg = "\nInstance:\nA local redcap instance\n"
+      else
+        msg = paste0("\nInstance:\nA remote redcap instance running at ", sQuote(www), "\n")
       if (length(ls(.self$.__cache)) == 0) {
         msg = c(msg, "Memory status:\nCache is empty\n")
       }
@@ -177,7 +179,7 @@ Redcap = setRefClass(
           )
         }
         tryCatch({
-          eval(parse(text=.self$.__cache$part_clean_cmd))
+          eval(parse(text = .self$.__cache$part_clean_cmd))
         },
         warning = function(w) {
           .self$log(w$message, 1, function_name = "partially_clean_records")
@@ -211,7 +213,7 @@ Redcap = setRefClass(
           )
         }
         tryCatch({
-          eval(parse(text=.self$.__cache$full_clean_cmd))
+          eval(parse(text = .self$.__cache$full_clean_cmd))
         },
         warning = function(w) {
           .self$log(w$message, 1, function_name = "fully_clean_records")
@@ -235,10 +237,10 @@ Redcap = setRefClass(
         cln_mt = .self$get_metadata()
         cln_mt = data.frame(sapply(cln_mt, as.character), stringsAsFactors = FALSE)
         cln_mt = data.table::data.table(cln_mt)
-        cln_mt = cln_mt[, key := .I]
+        cln_mt = cln_mt[, key:= .I]
         setkey(cln_mt, key)
         cln_mt = cln_mt[field_type != "descriptive"]
-        cln_mt = cln_mt[field_type == "checkbox", required_field := "y"]
+        cln_mt = cln_mt[field_type == "checkbox", required_field:= "y"]
         
         if (length(na.omit(.self$opts$configs$exclusion_pattern)) != 0) {
           to_exclude = as.character(.self$opts$configs$exclusion_pattern)
@@ -265,9 +267,10 @@ Redcap = setRefClass(
         if (!"fmt_cmd" %in% ls(all = T, envir = .self$.__cache))
           .self$.__cache$fmt_cmd = paste0(
             "\n# <Note: !! Do not edit this code as it may change in future code regenerations. !!>",
-            generate_formatting_code(.self$get_metadata(), dataset_name = "dataset"), sep = "\n")
+            generate_formatting_code(.self$get_metadata(), dataset_name = "dataset"), sep = "\n"
+          )
         tryCatch({
-          eval(parse(text=.self$.__cache$fmt_cmd))
+          eval(parse(text = .self$.__cache$fmt_cmd))
         }, warning = function(w) {
           .self$log(w$message, 1, function_name = "format_records")
         }, error = function(e) {
@@ -281,91 +284,90 @@ Redcap = setRefClass(
       }
     },
     
-    report_errors = function() {
-      "Create error report"
+    validate_data = function() {
+      "Create data validation dataset"
       
       dataset = .self$get_raw_data()
       if (!"data.table" %in% class(dataset))
         dataset = data.table(dataset)
       if (!haskey(dataset)) {
-        dataset = dataset[, key_x2014cin := .I]
+        dataset = dataset[, key_x2014cin:= .I]
         setkey(dataset, key_x2014cin)
       }
       upds = .self$opts$updates
       if (length(upds) == 0)
         upds = list()
-#      tryCatch({
-        if (!"validate_data_entry" %in% ls(all.names = T, envir = .self$.__cache)) {
-          message("generating error report code...")
-          tmp = generate_error_report_code(
-            .self$get_clean_metadata(),
-            date_var = .self$opts$configs$date_var,
-            hosp_var = .self$opts$configs$hosp_var,
-            custom_code = .self$opts$configs$custom_code,
-            updates = "upds",
-            updates_envir_depth = 2
-          )
-          message("error report code generated")
-          .self$log("error report code generated", 0, function_name = "report_errors")
-          eval(parse(text = tmp), envir = .self$.__cache)
-          .self$log("error report function in memory", 0, function_name = "report_errors")
-        }
-        message("generating report. This might take a while...")
-        if (.self$opts$configs$chunked) {
-          .counter = .self$opts$configs$chunksize
-          rpt = lapply(get_chunks(1 : nrow(dataset), .self$opts$configs$chunksize), function(chunk) {
-            ds_chunk = dataset[chunk, .__cache$validate_data_entry(.SD, hosp_to_validate = .self$opts$configs$hosp_to_validate, updates = upds), by = key_x2014cin]
-            message(paste0("validated ", min(100, round((.counter * 100) / nrow(dataset), 2)), "%", ifelse(.counter >= nrow(dataset), "", "...")))
-            assign(".counter", (.counter + .self$opts$configs$chunksize), envir = parent.frame(2))
-            ds_chunk
-          })
-          rpt = data.table::rbindlist(rpt)
-        } else {
-          rpt = dataset[, .__cache$validate_data_entry(.SD, hosp_to_validate = .self$opts$configs$hosp_to_validate, updates = upds), by = key_x2014cin]
-        }
-        rpt = rpt[, key_x2014cin := NULL]
-        if (nrow(rpt) == 0) {
-          rpt = data.table(Message = "No errors in data capture!")
-        }
-        message("report generated")
-        .self$log("error report created", 0, function_name = "report_errors")
-#     }, warning = function(w) {
-#       .self$log(w$message, 1, function_name = "report_errors")
-#       stop(w$message)
-#     }, error = function(e) {
-#       .self$log(e$message, 2, function_name = "report_errors")
-#       stop(e$message)
-#     })
-      .self$.__cache$err_rpt = rpt
+      if (!"validate_data_entry" %in% ls(all.names = T, envir = .self$.__cache)) {
+        message("generating data validation code...")
+        tmp = generate_data_validation_code(
+          .self$get_clean_metadata(),
+          date_var = .self$opts$configs$date_var,
+          hosp_var = .self$opts$configs$hosp_var,
+          custom_code = .self$opts$configs$custom_code,
+          updates = "upds",
+          updates_envir_depth = 2
+        )
+        message("data validation code generated")
+        .self$log("data validation code generated", 0, function_name = "validate_data")
+        eval(parse(text = tmp), envir = .self$.__cache)
+        .self$log("data validation function loaded into memory", 0, function_name = "validate_data")
+      }
+      message("generating report. This might take a while...")
+      if (.self$opts$configs$chunked) {
+        .counter = .self$opts$configs$chunksize
+        rpt = lapply(get_chunks(1:nrow(dataset), .self$opts$configs$chunksize), function(chunk) {
+          ds_chunk = dataset[chunk, .__cache$validate_data_entry(
+            .SD, hosp_to_validate = .self$opts$configs$hosp_to_validate, updates = upds
+          ), by = key_x2014cin]
+          message(paste0(
+            "validated ", min(100, round((.counter * 100) / nrow(dataset), 2)), "%", ifelse(.counter >= nrow(dataset), "", "...")
+          ))
+          assign(".counter", (.counter + .self$opts$configs$chunksize), envir = parent.frame(2))
+          ds_chunk
+        })
+        rpt = data.table::rbindlist(rpt)
+      } else {
+        rpt = dataset[, .__cache$validate_data_entry(
+          .SD, hosp_to_validate = .self$opts$configs$hosp_to_validate, updates = upds
+        ), by = key_x2014cin]
+      }
+      rpt = rpt[, key_x2014cin:= NULL]
+      if (nrow(rpt) == 0) {
+        rpt = data.table(Message = "No validation errors in data capture!")
+      }
+      message("report generated")
+      .self$log("data validation report created", 0, function_name = "validate_data")
+      .self$.__cache$valid_rpt = rpt
     },
     
-    get_error_report = function(pop = FALSE) {
-      "Get error report"
+    get_data_validation_report = function(pop = FALSE) {
+      "Get data validation report"
       
-      if (!"err_rpt" %in% ls(all = T, envir = .self$.__cache))
-        .self$report_errors()
-      errors = .self$.__cache$err_rpt
+      if (!"valid_rpt" %in% ls(all = T, envir = .self$.__cache))
+        .self$validate_data()
+      validation_data = .self$.__cache$valid_rpt
       tryCatch({
         tmp = gsub("\\\\", "/", .self$opts$configs$report_location)
-        tmpdir = unlist(strsplit(tmp, "/"))
-        tmpdir = paste0(tmpdir[-length(tmpdir)], collapse = "/")
+        tmpdir = dirname(tmp)
         if (!file.exists(tmpdir))
           dir.create(tmpdir, recursive = TRUE)
-        write.csv(errors, .self$opts$configs$report_location, row.names = FALSE)
+        write.csv(validation_data, .self$opts$configs$report_location, row.names = FALSE)
         if (pop)
           open_using_default_app(.self$opts$configs$report_location)
         else
-          message(paste0("Error report saved to ", sQuote(.self$opts$configs$report_location)))
+          message(paste0(
+            "Data validation report saved to ", sQuote(.self$opts$configs$report_location)
+          ))
       },
       warning = function(w) {
-        .self$log(w$message, 1, function_name = "get_error_report")
+        .self$log(w$message, 1, function_name = "get_data_validation_report")
         stop(w$message)
       },
       error = function(e) {
-        .self$log(e$message, 2, function_name = "get_error_report")
+        .self$log(e$message, 2, function_name = "get_data_validation_report")
         stop(e$message)
       })
-      .self$log("error report accessed", 0, function_name = "get_error_report")
+      .self$log("data validation report accessed", 0, function_name = "get_data_validation_report")
     },
     
     get_raw_data = function() {
@@ -431,11 +433,14 @@ Redcap = setRefClass(
       timestamp = format(Sys.time(), "%Y-%m-%d [%I:%M%p]")
       tolog = "\n"
       if (length(.self$.__log) == 0) {
-        tolog = paste0("Timestamp", paste0(rep("\t", 15), collapse = ""),
-                       "Level", paste0(rep("\t", 10), collapse = ""), "Message\n")
+        tolog = paste0(
+          "Timestamp", paste0(rep("\t", 15), collapse = ""),
+          "Level", paste0(rep("\t", 10), collapse = ""), "Message\n"
+        )
       }
-      tolog = paste0(tolog,
-                     timestamp, "\t\t***", tmp, "***\t\t", paste0("(FUN: ", function_name, ") ", message)
+      tolog = paste0(
+        tolog,
+        timestamp, "\t\t***", tmp, "***\t\t", paste0("(FUN: ", function_name, ") ", message)
       )
       .self$.__log = paste0(.__log, tolog)
       if (level == 1)
@@ -488,13 +493,11 @@ Redcap = setRefClass(
 #' @return A redcap class instance that can be used to interact with the data repository
 #'
 
-redcap_project = function(
-  ...,
-  configs_location,
-  custom_code_location = NA,
-  updates_location = NA,
-  exclusion_pattern = NA_character_
-) {
+redcap_project = function(...,
+                          configs_location,
+                          custom_code_location = NA,
+                          updates_location = NA,
+                          exclusion_pattern = NA_character_) {
   opts = list()
   if (missing(configs_location)) {
     configs_data <- list(...)
@@ -522,7 +525,9 @@ redcap_project = function(
     configs_data = read.csv(configs_location, as.is = TRUE)
   }
   if (!all(c("key", "value", "type") %in% names(configs_data)))
-    stop("invalid configurations data [must have `key`, `value` and `type` entries]. See help details.")
+    stop(
+      "invalid configurations data [must have `key`, `value` and `type` entries]. See help details."
+    )
   configs_data = configs_data[, c("key", "value", "type")]
   opts$config_data = configs_data
   if (!is.na(custom_code_location)) {

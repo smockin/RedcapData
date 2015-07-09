@@ -83,17 +83,15 @@ get_chunks = function(x, chunksize) {
 #'
 #' @family Data Input
 
-get_chunked_redcap_data = function(
-  api,
-  token,
-  local = TRUE,
-  chunksize = 100,
-  forms = NULL,
-  fields = NULL,
-  ids_to_pull = NULL,
-  dataset_name = "records",
-  metadataset_name = "meta"
-) {
+get_chunked_redcap_data = function(api,
+                                   token,
+                                   local = TRUE,
+                                   chunksize = 100,
+                                   forms = NULL,
+                                   fields = NULL,
+                                   ids_to_pull = NULL,
+                                   dataset_name = "records",
+                                   metadataset_name = "meta") {
   if (missing(api))
     stop("specify api url")
   if (missing(token))
@@ -108,7 +106,9 @@ get_chunked_redcap_data = function(
   
   outer_env = parent.frame(1)
   if (!exists(metadataset_name, envir = outer_env))
-    assign(metadataset_name, get_redcap_data(api, token, local, content = "metadata"), outer_env)
+    assign(
+      metadataset_name, get_redcap_data(api, token, local, content = "metadata"), outer_env
+    )
   id_name = get(metadataset_name, envir = outer_env)[1, 1]
   
   ids_specified = FALSE
@@ -129,8 +129,12 @@ get_chunked_redcap_data = function(
     message(paste0("downloading data from redcap... (", data_size, " rows!)"))
     counter = chunksize
     data_list = Map(function(ids) {
-      ds_chunk = get_redcap_data(api = api, token = token, local = local, fields = fields, forms = forms, ids_to_pull = ids)
-      message(paste0("downloaded ", min(100, round(counter * 100 / data_size, 2)), "%", ifelse(counter >= data_size, "", "...")))
+      ds_chunk = get_redcap_data(
+        api = api, token = token, local = local, fields = fields, forms = forms, ids_to_pull = ids
+      )
+      message(paste0(
+        "downloaded ", min(100, round(counter * 100 / data_size, 2)), "%", ifelse(counter >= data_size, "", "...")
+      ))
       assign("counter", counter + chunksize, envir = parent.env(environment()))
       ds_chunk
     }, ids_list)
@@ -173,15 +177,13 @@ get_chunked_redcap_data = function(
 #'
 #' @family Data Input
 
-get_redcap_data = function(
-  api,
-  token,
-  content = "record",
-  local = TRUE,
-  forms = NULL,
-  fields = NULL,
-  ids_to_pull = NULL
-) {
+get_redcap_data = function(api,
+                           token,
+                           content = "record",
+                           local = TRUE,
+                           forms = NULL,
+                           fields = NULL,
+                           ids_to_pull = NULL) {
   fun_env = environment()
   if (!RCurl::url.exists(gsub("/api/", "", api)))
     stop("invalid api url")
@@ -193,7 +195,7 @@ get_redcap_data = function(
     content = content,
     rawOrLabel = "raw",
     .opts = RCurl::curlOptions(ssl.verifypeer = !local)
- )
+  )
   if (!is.null(forms))
     opts$forms = paste0(forms, collapse = ",")
   if (!is.null(fields))
@@ -240,19 +242,21 @@ is_valid_metadata = function(metadata) {
   if (!is.data.frame(metadata))
     return(FALSE)
   value = FALSE
-  if (all(c(
-    "field_name",
-    "form_name",
-    "section_header",
-    "field_label",
-    "field_type",
-    "text_validation_type_or_show_slider_number",
-    "text_validation_min",
-    "text_validation_max",
-    "select_choices_or_calculations",
-    "branching_logic",
-    "required_field"
- ) %in% names(metadata)))
+  if (all(
+    c(
+      "field_name",
+      "form_name",
+      "section_header",
+      "field_label",
+      "field_type",
+      "text_validation_type_or_show_slider_number",
+      "text_validation_min",
+      "text_validation_max",
+      "select_choices_or_calculations",
+      "branching_logic",
+      "required_field"
+    ) %in% names(metadata)
+  ))
   value = TRUE
   value
 }
@@ -321,7 +325,7 @@ get_vars_in_data = function(metadata) {
 
 get_r_types_in_data = function(metadata) {
   metadata = data.table::data.table(metadata)
-  metadata = metadata[, key := .I]
+  metadata = metadata[, key:= .I]
   if (!is_valid_metadata(metadata))
     stop("metadata not valid")
   
@@ -373,20 +377,22 @@ generate_remove_missing_code = function(metadata, dataset_name = "data") {
   invalid_vals = c(
     "as.character(seq(as.Date(\"1910-01-01\"), as.Date(\"1950-01-01\"), by = \"year\"))",
     "\"-1\"", "\"Empty\"", "\"empty\"", "\"\""
- )
+  )
   invalid_vals = paste0(invalid_vals, collapse = ", ")
   invalid_vals = paste0("c(", invalid_vals, ")")
   
   cmd = stringr::str_trim(get_vars_in_data(metadata))
   if (length(cmd) == 0L)
     return("")
-  cmd = paste0(dataset_name, "$", cmd, "[stringr::str_trim(", dataset_name, "$", cmd, ") %in% ", invalid_vals, "] = NA")
+  cmd = paste0(
+    dataset_name, "$", cmd, "[stringr::str_trim(", dataset_name, "$", cmd, ") %in% ", invalid_vals, "] = NA"
+  )
   cmd = c(
     "\n\n# Recoding coded missing entries to NA\n",
     "library(stringr)",
     paste0(dataset_name, " = data.frame(", dataset_name, ")"),
     cmd
- )
+  )
   cmd = paste0(cmd, collapse = "\n")
   cmd
 }
@@ -472,10 +478,11 @@ generate_remove_outliers_code = function(metadata, dataset_name = "data") {
   }
   cmd = metadata[, generate_code_r(.SD), by = key]
   cmd = paste0(cmd[, V1], collapse = "\n")
-  cmd = paste0("\n\n# Recoding out of range entries to NA\n\n",
-               paste0(dataset_name, " = data.frame(", dataset_name, ")\n"),
-               cmd
- )
+  cmd = paste0(
+    "\n\n# Recoding out of range entries to NA\n\n",
+    paste0(dataset_name, " = data.frame(", dataset_name, ")\n"),
+    cmd
+  )
   cmd
 }
 
@@ -509,10 +516,11 @@ generate_date_conversion_code = function(metadata, dataset_name = "data") {
   cmd = get_vars_in_data(metadata)
   cmd = paste0(dataset_name, "$", cmd, " = as.Date(", dataset_name, "$", cmd, ")")
   cmd = paste0(cmd, collapse = "\n")
-  cmd = c("\n\n# Converting valid string representation of dates to R `Date` objects\n",
-          paste0(dataset_name, " = data.frame(", dataset_name, ")"),
-          cmd
- )
+  cmd = c(
+    "\n\n# Converting valid string representation of dates to R `Date` objects\n",
+    paste0(dataset_name, " = data.frame(", dataset_name, ")"),
+    cmd
+  )
   cmd = paste(cmd, collapse = "\n")
   cmd
 }
@@ -548,16 +556,15 @@ generate_formatting_code = function(metadata, dataset_name = "data") {
   metadata = metadata[!field_name %in% to_remove]
   reshape_labels = function(x) {
     if (tolower(x[, field_type]) %in% c("checkbox", "dropdown", "radio")) {
-      choices =  t(
-        sapply(
-          unlist(strsplit(x[, select_choices_or_calculations], "\\|")),
-          function(ch) {
-            ch_ls = stringr::str_trim(unlist(regmatches(ch, regexpr(",", ch), invert = TRUE)))
-            names(ch_ls) = c("level", "label")
-            ch_ls
-          }))
+      choices =  t(sapply(unlist(strsplit(x[, select_choices_or_calculations], "\\|")),
+                          function(ch) {
+                            ch_ls = stringr::str_trim(unlist(regmatches(ch, regexpr(",", ch), invert = TRUE)))
+                            names(ch_ls) = c("level", "label")
+                            ch_ls
+                          }))
       if (x[, field_type] == "checkbox") {
-        tmp = sapply(choices[, 1], function(x) gsub("\\-", "\\.", x))
+        tmp = sapply(choices[, 1], function(x)
+          gsub("\\-", "\\.", x))
         variable = paste0(x[, field_name], "___", tmp)
         label = paste0(gsub("\n", "", remove_html_tags(x[, field_label])), "(", choices[, 2], ")")
         if (length(label) == 0)
@@ -569,7 +576,8 @@ generate_formatting_code = function(metadata, dataset_name = "data") {
         label = gsub("\n", "", remove_html_tags(x[, field_label]))
         if (length(label) == 0)
           label = NA_character_
-        choices[, 2] = sapply(choices[, 2L], function(x) paste0("\"", x, "\""))
+        choices[, 2] = sapply(choices[, 2L], function(x)
+          paste0("\"", x, "\""))
         levels = paste0("c(", paste0(unique(choices[, 1L]), collapse = ", "), ")")
         labels_levels = paste0("c(", paste0(unique(choices[, 2L]), collapse = ", "), ")")
       }
@@ -581,25 +589,29 @@ generate_formatting_code = function(metadata, dataset_name = "data") {
       levels = "c(0, 1)"
       labels_levels = "c(\"No\", \"Yes\")"
     } else {
-      variable =x[, field_name]
+      variable = x[, field_name]
       label = gsub("\n", "", remove_html_tags(x[, field_label]))
       if (length(label) == 0)
         label = NA_character_
       levels = NA_character_
       labels_levels = NA_character_
     }
-    value = data.table::data.table(Variable = variable, Label = label, Levels = levels, Label_Levels = labels_levels)
+    value = data.table::data.table(
+      Variable = variable, Label = label, Levels = levels, Label_Levels = labels_levels
+    )
     value
   }
   
   labels_hash_table = metadata[, reshape_labels(.SD), by = key]
-  labels_f_hash_table = labels_hash_table[!is.na(Levels), ]
+  labels_f_hash_table = labels_hash_table[!is.na(Levels),]
   
   cmd = "\n\n# Convert categorical data to factors:\n\n"
-  tmp = paste0(dataset_name, "$", labels_f_hash_table[, Variable], " = factor(",
-               dataset_name, "$", labels_f_hash_table[, Variable], ", levels = ",
-               labels_f_hash_table[, Levels], ", labels = ",
-               labels_f_hash_table[, Label_Levels], ")")
+  tmp = paste0(
+    dataset_name, "$", labels_f_hash_table[, Variable], " = factor(",
+    dataset_name, "$", labels_f_hash_table[, Variable], ", levels = ",
+    labels_f_hash_table[, Levels], ", labels = ",
+    labels_f_hash_table[, Label_Levels], ")"
+  )
   cmd = c(cmd, tmp)
   cmd = paste0(cmd, collapse = "\n")
   cmd
@@ -636,13 +648,17 @@ generate_formatting_code = function(metadata, dataset_name = "data") {
 #' @include data_types.R
 #' @include script.R
 
-generate_error_report_code = function(metadata, date_var, hosp_var, custom_code = NA, updates = NULL, updates_envir_depth = 1) {
+generate_data_validation_code = function(metadata, date_var, hosp_var, custom_code = NA, updates = NULL, updates_envir_depth = 1) {
   metadata = prepare_metadata_for_code_generation(metadata)
   reset_tab()
   id_var = unlist(metadata[1, .SD, .SDcols = 1])[1]
   cmd = character()
   tmp = ""
-  tmp = c(tmp, paste0(get_tab(), "validate_data_entry = function(data_row, hosp_to_validate = NA, updates = list()) {"))
+  tmp = c(
+    tmp, paste0(
+      get_tab(), "validate_data_entry = function(data_row, hosp_to_validate = NA, updates = list()) {"
+    )
+  )
   add_tab()
   tmp = c(tmp, paste0(get_tab(), "if (!is.data.frame(data_row))"))
   add_tab()
@@ -660,19 +676,35 @@ generate_error_report_code = function(metadata, date_var, hosp_var, custom_code 
   tmp = c(tmp, paste0(get_tab(), "form__x2014cin = character()"))
   tmp = c(tmp, paste0(get_tab(), "sect__x2014cin = character()"))
   tmp = c(tmp, paste0(get_tab(), "msg__x2014cin = character()"))
-  tmp = c(tmp, paste0(get_tab(), "if (!date_can_be_validated(", date_var, ")) return(data.table("))
+  tmp = c(
+    tmp, paste0(
+      get_tab(), "if (!date_can_be_validated(", date_var, ")) return(data.table("
+    )
+  )
   add_tab()
   tmp = c(tmp, paste0(get_tab(), "RecordID = ", id_var))
   tmp = c(tmp, paste0(get_tab(), ",DateOfEntry = as.Date(NA)"))
   tmp = c(tmp, paste0(get_tab(), ",Hospital = ", hosp_var))
   tmp = c(tmp, paste0(get_tab(), ",Form = \"<< Before Data Evaluations >>\""))
   tmp = c(tmp, paste0(get_tab(), ",Section = \"<< Before Data Evaluations >>\""))
-  tmp = c(tmp, paste0(get_tab(), ",Message = \"<< Date variable [", date_var, "] missing. This is needed for error reporting >>\""))
+  tmp = c(
+    tmp, paste0(
+      get_tab(), ",Message = \"<< Date variable [", date_var, "] missing. This is needed for error reporting >>\""
+    )
+  )
   remove_tab()
   tmp = c(tmp, paste0(get_tab(), ")) else ", date_var, " = as.Date(", date_var,  ")"))
   if (!is.null(updates)) {
-    tmp = c(tmp, paste0(get_tab(), "if (!all(sapply(updates, function(u) \"RedcapUpdate\" %in% class(u)))) stop(\"invalid updates\")"))
-    tmp = c(tmp, paste0(get_tab(), "if (!all(sapply(updates, function(x) x$is_valid()))) stop(\"invalid updates\")"))
+    tmp = c(
+      tmp, paste0(
+        get_tab(), "if (!all(sapply(updates, function(u) \"RedcapUpdate\" %in% class(u)))) stop(\"invalid updates\")"
+      )
+    )
+    tmp = c(
+      tmp, paste0(
+        get_tab(), "if (!all(sapply(updates, function(x) x$is_valid()))) stop(\"invalid updates\")"
+      )
+    )
     tmp = c(tmp, paste0(get_tab(), ".__update = updates"))
   }
   tmp = paste0(tmp, collapse = "\n")
@@ -692,7 +724,7 @@ generate_error_report_code = function(metadata, date_var, hosp_var, custom_code 
       is.null(sectn_h_x2014cin),
       is.na(sectn_h_x2014cin),
       stringr::str_trim(sectn_h_x2014cin) == ""
-   ))) {
+    ))) {
       if (isTRUE(fname_x2014cin == get("rolling_fn_x2014cin", envir = parent.frame()))) {
         get("rolling_sc_x2014cin", envir = parent.frame())
       } else {
@@ -710,37 +742,49 @@ generate_error_report_code = function(metadata, date_var, hosp_var, custom_code 
     vlabel_x2014cin = stringr::str_trim(remove_html_tags(meta_r[, field_label]))
     vlabel_x2014cin = gsub("[\n\t]", "", vlabel_x2014cin)
     vtype_val_x2014cin = stringr::str_trim(meta_r[, text_validation_type_or_show_slider_number])
-    vtype_val_x2014cin = if (isTRUE(any(is.na(vtype_val_x2014cin), stringr::str_trim(vtype_val_x2014cin) == ""))) {
+    vtype_val_x2014cin = if (isTRUE(any(
+      is.na(vtype_val_x2014cin), stringr::str_trim(vtype_val_x2014cin) == ""
+    ))) {
       NA
     } else {
       stringr::str_trim(vtype_val_x2014cin)
     }
     choices_x2014cin = stringr::str_trim(meta_r[, select_choices_or_calculations])
-    choices_x2014cin = if (isTRUE(any(is.na(choices_x2014cin), stringr::str_trim(choices_x2014cin) == ""))) {
+    choices_x2014cin = if (isTRUE(any(
+      is.na(choices_x2014cin), stringr::str_trim(choices_x2014cin) == ""
+    ))) {
       NA
     } else {
       stringr::str_trim(choices_x2014cin)
     }
     min_val_x2014cin = stringr::str_trim(meta_r[, text_validation_min])
-    min_val_x2014cin = if (isTRUE(any(is.na(min_val_x2014cin), stringr::str_trim(min_val_x2014cin) == ""))) {
+    min_val_x2014cin = if (isTRUE(any(
+      is.na(min_val_x2014cin), stringr::str_trim(min_val_x2014cin) == ""
+    ))) {
       NA
     } else {
       stringr::str_trim(min_val_x2014cin)
     }
     max_val_x2014cin = stringr::str_trim(meta_r[, text_validation_max])
-    max_val_x2014cin = if (isTRUE(any(is.na(max_val_x2014cin), stringr::str_trim(max_val_x2014cin) == ""))) {
+    max_val_x2014cin = if (isTRUE(any(
+      is.na(max_val_x2014cin), stringr::str_trim(max_val_x2014cin) == ""
+    ))) {
       NA
     } else {
       stringr::str_trim(max_val_x2014cin)
     }
     logic_x2014cin = stringr::str_trim(meta_r[, branching_logic])
-    logic_x2014cin = if (isTRUE(any(is.na(logic_x2014cin), stringr::str_trim(logic_x2014cin) == ""))) {
+    logic_x2014cin = if (isTRUE(any(
+      is.na(logic_x2014cin), stringr::str_trim(logic_x2014cin) == ""
+    ))) {
       NA
     } else {
       convert_redcap2r(stringr::str_trim(logic_x2014cin))
     }
     req_x2014cin = stringr::str_trim(meta_r[, required_field])
-    req_x2014cin = if (isTRUE(any(is.na(req_x2014cin), stringr::str_trim(req_x2014cin) == ""))) {
+    req_x2014cin = if (isTRUE(any(
+      is.na(req_x2014cin), stringr::str_trim(req_x2014cin) == ""
+    ))) {
       NA
     } else {
       stringr::str_trim(req_x2014cin)
@@ -765,8 +809,10 @@ generate_error_report_code = function(metadata, date_var, hosp_var, custom_code 
     to_validate = isTRUE(any(
       isTRUE(tolower(req_x2014cin) == "y"),
       isTRUE(vtype_val_x2014cin %in% c("integer", "number", "date_ymd")),
-      isTRUE(any(!is.na(min_val_x2014cin), !is.na(max_val_x2014cin)))
-   ))
+      isTRUE(any(
+        !is.na(min_val_x2014cin),!is.na(max_val_x2014cin)
+      ))
+    ))
     if (!to_validate)
       return(data.table::data.table())
     if (!is.null(updates)) {
@@ -778,18 +824,32 @@ generate_error_report_code = function(metadata, date_var, hosp_var, custom_code 
           lev
         })
         tmp = paste0(vname_x2014cin, "___", tmp)
-        cmd_r = c(cmd_r, paste0(get_tab(), ".__update_date = c(", paste0("\n\t", get_tab()), paste0(
-          paste0("lapply(.__update, function (x) x$get_update_date(\"", tmp, "\", ", hosp_var, "))")
-          , collapse = paste0(",\n\t", get_tab())
-        ), ")"))
+        cmd_r = c(cmd_r, paste0(
+          get_tab(), ".__update_date = c(", paste0("\n\t", get_tab()), paste0(
+            paste0(
+              "lapply(.__update, function (x) x$get_update_date(\"", tmp, "\", ", hosp_var, "))"
+            )
+            , collapse = paste0(",\n\t", get_tab())
+          ), ")"
+        ))
       } else {
-        cmd_r = c(cmd_r, paste0(get_tab(), ".__update_date = lapply(.__update, function (x) x$get_update_date(\"", vname_x2014cin, "\", ", hosp_var, "))"))
+        cmd_r = c(
+          cmd_r, paste0(
+            get_tab(), ".__update_date = lapply(.__update, function (x) x$get_update_date(\"", vname_x2014cin, "\", ", hosp_var, "))"
+          )
+        )
       }
       cmd_r = c(cmd_r, paste0(get_tab(), ".__update_date = Reduce(c, .__update_date)"))
-      cmd_r = c(cmd_r, paste0(get_tab(), ".__update_date = if (is.null (.__update_date)) NA else .__update_date"))
+      cmd_r = c(
+        cmd_r, paste0(
+          get_tab(), ".__update_date = if (is.null (.__update_date)) NA else .__update_date"
+        )
+      )
       cmd_r = c(cmd_r, paste0(get_tab(), "if (length(na.omit(.__update_date)) > 0)"))
       add_tab()
-      cmd_r = c(cmd_r, paste0(get_tab(), ".__update_date = max(.__update_date, na.rm = T)"))
+      cmd_r = c(cmd_r, paste0(
+        get_tab(), ".__update_date = max(.__update_date, na.rm = T)"
+      ))
       remove_tab()
       cmd_r = c(cmd_r, paste0(get_tab(), "else"))
       add_tab()
@@ -803,17 +863,37 @@ generate_error_report_code = function(metadata, date_var, hosp_var, custom_code 
         add_tab()
       }
       if (isTRUE(stringr::str_trim(vtype_x2014cin) == "checkbox"))
-        cmd_r = c(cmd_r, paste0(get_tab(), "if (isTRUE(all(", get_checkbx_logic(), "))) {"))
+        cmd_r = c(cmd_r, paste0(
+          get_tab(), "if (isTRUE(all(", get_checkbx_logic(), "))) {"
+        ))
       else
-        cmd_r = c(cmd_r, paste0(get_tab(), "if (isTRUE(data_missing(", vname_x2014cin, "))) {"))
+        cmd_r = c(cmd_r, paste0(
+          get_tab(), "if (isTRUE(data_missing(", vname_x2014cin, "))) {"
+        ))
       add_tab()
       if (!is.null(updates)) {
-        cmd_r = c(cmd_r, paste0(get_tab(), "if (! isTRUE(.__is_update & ", date_var, " <= .__update_date)) {"))
+        cmd_r = c(
+          cmd_r, paste0(
+            get_tab(), "if (! isTRUE(.__is_update & ", date_var, " <= .__update_date)) {"
+          )
+        )
         add_tab()
       }
-      cmd_r = c(cmd_r, paste0(get_tab(), "form__x2014cin = c(form__x2014cin, \"", toproper(fname_x2014cin, all = T), "\")"))
-      cmd_r = c(cmd_r, paste0(get_tab(), "sect__x2014cin = c(sect__x2014cin, \"", toproper(sectn_h_x2014cin), "\")"))
-      cmd_r = c(cmd_r, paste0(get_tab(), "msg__x2014cin = c(msg__x2014cin, \"'", vlabel_x2014cin, "' is required!\")"))
+      cmd_r = c(
+        cmd_r, paste0(
+          get_tab(), "form__x2014cin = c(form__x2014cin, \"", toproper(fname_x2014cin, all = T), "\")"
+        )
+      )
+      cmd_r = c(
+        cmd_r, paste0(
+          get_tab(), "sect__x2014cin = c(sect__x2014cin, \"", toproper(sectn_h_x2014cin), "\")"
+        )
+      )
+      cmd_r = c(
+        cmd_r, paste0(
+          get_tab(), "msg__x2014cin = c(msg__x2014cin, \"'", vlabel_x2014cin, "' is required!\")"
+        )
+      )
       remove_tab()
       cmd_r = c(cmd_r, paste0(get_tab(), "}"))
       if (!is.null(updates)) {
@@ -830,38 +910,90 @@ generate_error_report_code = function(metadata, date_var, hosp_var, custom_code 
         cmd_r = c(cmd_r, paste0(get_tab(), "if (isTRUE(", logic_x2014cin, ")) {"))
         add_tab()
       }
-      cmd_r = c(cmd_r, paste0(get_tab(), "if (! isTRUE(data_missing(", vname_x2014cin, "))) {"))
+      cmd_r = c(cmd_r, paste0(
+        get_tab(), "if (! isTRUE(data_missing(", vname_x2014cin, "))) {"
+      ))
       add_tab()
-      cmd_r = c(cmd_r, paste0(get_tab(), "if ((data_can_be_validated(", vname_x2014cin, "))) {"))
+      cmd_r = c(
+        cmd_r, paste0(
+          get_tab(), "if ((data_can_be_validated(", vname_x2014cin, "))) {"
+        )
+      )
       add_tab()
       if (!is.null(updates)) {
-        cmd_r = c(cmd_r, paste0(get_tab(), "if (! isTRUE(.__is_update & ", date_var, " <= .__update_date)) {"))
+        cmd_r = c(
+          cmd_r, paste0(
+            get_tab(), "if (! isTRUE(.__is_update & ", date_var, " <= .__update_date)) {"
+          )
+        )
         add_tab()
       }
       if (isTRUE(tolower(vtype_val_x2014cin) == "date_ymd")) {
-        cmd_r = c(cmd_r, paste0(get_tab(), "if (! isTRUE(is_date(", vname_x2014cin, "))) {"))
+        cmd_r = c(cmd_r, paste0(
+          get_tab(), "if (! isTRUE(is_date(", vname_x2014cin, "))) {"
+        ))
         add_tab()
-        cmd_r = c(cmd_r, paste0(get_tab(), "form__x2014cin = c(form__x2014cin, \"", toproper(fname_x2014cin, all = T), "\")"))
-        cmd_r = c(cmd_r, paste0(get_tab(), "sect__x2014cin = c(sect__x2014cin, \"", toproper(sectn_h_x2014cin), "\")"))
-        cmd_r = c(cmd_r, paste0(get_tab(), "msg__x2014cin = c(msg__x2014cin, \"'", vlabel_x2014cin, "' must be a date!\")"))
+        cmd_r = c(
+          cmd_r, paste0(
+            get_tab(), "form__x2014cin = c(form__x2014cin, \"", toproper(fname_x2014cin, all = T), "\")"
+          )
+        )
+        cmd_r = c(
+          cmd_r, paste0(
+            get_tab(), "sect__x2014cin = c(sect__x2014cin, \"", toproper(sectn_h_x2014cin), "\")"
+          )
+        )
+        cmd_r = c(
+          cmd_r, paste0(
+            get_tab(), "msg__x2014cin = c(msg__x2014cin, \"'", vlabel_x2014cin, "' must be a date!\")"
+          )
+        )
         remove_tab()
         cmd_r = c(cmd_r, paste0(get_tab(), "}"))
       }
       else if (isTRUE(tolower(vtype_val_x2014cin) == "number")) {
-        cmd_r = c(cmd_r, paste0(get_tab(), "if (! isTRUE(is_number(", vname_x2014cin, "))) {"))
+        cmd_r = c(cmd_r, paste0(
+          get_tab(), "if (! isTRUE(is_number(", vname_x2014cin, "))) {"
+        ))
         add_tab()
-        cmd_r = c(cmd_r, paste0(get_tab(), "form__x2014cin = c(form__x2014cin, \"", toproper(fname_x2014cin, all = T), "\")"))
-        cmd_r = c(cmd_r, paste0(get_tab(), "sect__x2014cin = c(sect__x2014cin, \"", toproper(sectn_h_x2014cin), "\")"))
-        cmd_r = c(cmd_r, paste0(get_tab(), "msg__x2014cin = c(msg__x2014cin, \"'", vlabel_x2014cin, "' must be a number!\")"))
+        cmd_r = c(
+          cmd_r, paste0(
+            get_tab(), "form__x2014cin = c(form__x2014cin, \"", toproper(fname_x2014cin, all = T), "\")"
+          )
+        )
+        cmd_r = c(
+          cmd_r, paste0(
+            get_tab(), "sect__x2014cin = c(sect__x2014cin, \"", toproper(sectn_h_x2014cin), "\")"
+          )
+        )
+        cmd_r = c(
+          cmd_r, paste0(
+            get_tab(), "msg__x2014cin = c(msg__x2014cin, \"'", vlabel_x2014cin, "' must be a number!\")"
+          )
+        )
         remove_tab()
         cmd_r = c(cmd_r, paste0(get_tab(), "}"))
       }
       else if (isTRUE(tolower(vtype_val_x2014cin) == "integer")) {
-        cmd_r = c(cmd_r, paste0(get_tab(), "if (! isTRUE(is_int(", vname_x2014cin, "))) {"))
+        cmd_r = c(cmd_r, paste0(
+          get_tab(), "if (! isTRUE(is_int(", vname_x2014cin, "))) {"
+        ))
         add_tab()
-        cmd_r = c(cmd_r, paste0(get_tab(), "form__x2014cin = c(form__x2014cin, \"", toproper(fname_x2014cin, all = T), "\")"))
-        cmd_r = c(cmd_r, paste0(get_tab(), "sect__x2014cin = c(sect__x2014cin, \"", toproper(sectn_h_x2014cin), "\")"))
-        cmd_r = c(cmd_r, paste0(get_tab(), "msg__x2014cin = c(msg__x2014cin, \"'", vlabel_x2014cin, "' must be an integer!\")"))
+        cmd_r = c(
+          cmd_r, paste0(
+            get_tab(), "form__x2014cin = c(form__x2014cin, \"", toproper(fname_x2014cin, all = T), "\")"
+          )
+        )
+        cmd_r = c(
+          cmd_r, paste0(
+            get_tab(), "sect__x2014cin = c(sect__x2014cin, \"", toproper(sectn_h_x2014cin), "\")"
+          )
+        )
+        cmd_r = c(
+          cmd_r, paste0(
+            get_tab(), "msg__x2014cin = c(msg__x2014cin, \"'", vlabel_x2014cin, "' must be an integer!\")"
+          )
+        )
         remove_tab()
         cmd_r = c(cmd_r, paste0(get_tab(), "}"))
       }
@@ -880,7 +1012,7 @@ generate_error_report_code = function(metadata, date_var, hosp_var, custom_code 
         cmd_r = c(cmd_r, paste0(get_tab(), "}"))
       }
     }
-    if (isTRUE(any(!is.na(min_val_x2014cin), !is.na(max_val_x2014cin)))) {
+    if (isTRUE(any(!is.na(min_val_x2014cin),!is.na(max_val_x2014cin)))) {
       has_min_x2014cin = !is.na(min_val_x2014cin)
       has_max_x2014cin = !is.na(max_val_x2014cin)
       if (tolower(vtype_val_x2014cin) == "date_ymd") {
@@ -896,12 +1028,22 @@ generate_error_report_code = function(metadata, date_var, hosp_var, custom_code 
         cmd_r = c(cmd_r, paste0(get_tab(), "if (isTRUE(", logic_x2014cin, ")) {"))
         add_tab()
       }
-      cmd_r = c(cmd_r, paste0(get_tab(), "if (! isTRUE(data_missing(", vname_x2014cin, "))) {"))
+      cmd_r = c(cmd_r, paste0(
+        get_tab(), "if (! isTRUE(data_missing(", vname_x2014cin, "))) {"
+      ))
       add_tab()
-      cmd_r = c(cmd_r, paste0(get_tab(), "if (isTRUE(data_can_be_validated (", vname_x2014cin, "))) {"))
+      cmd_r = c(
+        cmd_r, paste0(
+          get_tab(), "if (isTRUE(data_can_be_validated (", vname_x2014cin, "))) {"
+        )
+      )
       add_tab()
       if (!is.null(updates)) {
-        cmd_r = c(cmd_r, paste0(get_tab(), "if (! isTRUE(.__is_update & ", date_var, " <= .__update_date)) {"))
+        cmd_r = c(
+          cmd_r, paste0(
+            get_tab(), "if (! isTRUE(.__is_update & ", date_var, " <= .__update_date)) {"
+          )
+        )
         add_tab()
       }
       range_code_x2014cin = "if (isTRUE("
@@ -914,9 +1056,21 @@ generate_error_report_code = function(metadata, date_var, hosp_var, custom_code 
       range_code_x2014cin = paste0(range_code_x2014cin, ")) {")
       cmd_r = c(cmd_r, paste0(get_tab(), range_code_x2014cin))
       add_tab()
-      cmd_r = c(cmd_r, paste0(get_tab(), "form__x2014cin = c(form__x2014cin, \"", toproper(fname_x2014cin, all = T), "\")"))
-      cmd_r = c(cmd_r, paste0(get_tab(), "sect__x2014cin = c(sect__x2014cin, \"", toproper(sectn_h_x2014cin), "\")"))
-      cmd_r = c(cmd_r, paste0(get_tab(), "msg__x2014cin = c(msg__x2014cin, \"'", vlabel_x2014cin, "' is out of range!\")"))
+      cmd_r = c(
+        cmd_r, paste0(
+          get_tab(), "form__x2014cin = c(form__x2014cin, \"", toproper(fname_x2014cin, all = T), "\")"
+        )
+      )
+      cmd_r = c(
+        cmd_r, paste0(
+          get_tab(), "sect__x2014cin = c(sect__x2014cin, \"", toproper(sectn_h_x2014cin), "\")"
+        )
+      )
+      cmd_r = c(
+        cmd_r, paste0(
+          get_tab(), "msg__x2014cin = c(msg__x2014cin, \"'", vlabel_x2014cin, "' is out of range!\")"
+        )
+      )
       remove_tab()
       cmd_r = c(cmd_r, paste0(get_tab(), "}"))
       if (!is.null(updates)) {
@@ -950,12 +1104,14 @@ generate_error_report_code = function(metadata, date_var, hosp_var, custom_code 
     tmp,
     paste0(get_tab(), "}"),
     paste0(get_tab(), "# <Autogenerated code ends here>")
- )
+  )
   tmp = paste0(tmp, collapse = "\n")
   cmd = c(cmd, tmp)
-  custom_code = custom_code[!is.na(custom_code) | stringr::str_trim(custom_code) == ""]
+  custom_code = custom_code[!is.na(custom_code) |
+                              stringr::str_trim(custom_code) == ""]
   if (length(na.omit(custom_code)) != 0) {
-    custom_code = custom_code[!is.na(custom_code) | stringr::str_trim(custom_code) == ""]
+    custom_code = custom_code[!is.na(custom_code) |
+                                stringr::str_trim(custom_code) == ""]
     if (length(custom_code) > 0) {
       custom_code = sapply(custom_code, convert_space2tab)
       add_tab()
@@ -968,7 +1124,7 @@ generate_error_report_code = function(metadata, date_var, hosp_var, custom_code 
         custom_code,
         paste0(get_tab(), "}"),
         paste0(get_tab(), "# <Custom code ends here>\n")
-     )
+      )
       custom_code = paste0(custom_code, collapse = "\n")
       cmd = c(cmd, custom_code)
     }
@@ -976,10 +1132,20 @@ generate_error_report_code = function(metadata, date_var, hosp_var, custom_code 
   tmp = character()
   tmp = c(tmp, paste0(get_tab(), "if (length(msg__x2014cin) > 0L) {"))
   add_tab()
-  tmp = c(tmp, paste0(get_tab(), "id_x2014cin = rep(", id_var, ", length(msg__x2014cin))"))
-  tmp = c(tmp, paste0(get_tab(), "date_x2014cin = rep(", date_var, ", length(msg__x2014cin))"))
-  tmp = c(tmp, paste0(get_tab(), "hosp_x2014cin = rep(", hosp_var, ", length(msg__x2014cin))"))
-  tmp = c(tmp, paste0(get_tab(), "value_x2014cin = data.table::data.table(RecordID = id_x2014cin, DateOfEntry = date_x2014cin, Hospital = hosp_x2014cin, Form = form__x2014cin, Section = sect__x2014cin, Message = msg__x2014cin)"))
+  tmp = c(tmp, paste0(
+    get_tab(), "id_x2014cin = rep(", id_var, ", length(msg__x2014cin))"
+  ))
+  tmp = c(tmp, paste0(
+    get_tab(), "date_x2014cin = rep(", date_var, ", length(msg__x2014cin))"
+  ))
+  tmp = c(tmp, paste0(
+    get_tab(), "hosp_x2014cin = rep(", hosp_var, ", length(msg__x2014cin))"
+  ))
+  tmp = c(
+    tmp, paste0(
+      get_tab(), "value_x2014cin = data.table::data.table(RecordID = id_x2014cin, DateOfEntry = date_x2014cin, Hospital = hosp_x2014cin, Form = form__x2014cin, Section = sect__x2014cin, Message = msg__x2014cin)"
+    )
+  )
   remove_tab()
   tmp = c(tmp, paste0(get_tab(), "}"))
   tmp = c(tmp, paste0(get_tab(), "else {"))
@@ -993,7 +1159,9 @@ generate_error_report_code = function(metadata, date_var, hosp_var, custom_code 
   tmp = c(tmp, paste0(get_tab(), "}"))
   tmp = paste0(tmp, collapse = "\n")
   reset_tab()
-  cmd = c("\n# <Note: !! Do not modify this function as it may change in future code regenerations !!>\n", cmd, tmp)
+  cmd = c(
+    "\n# <Note: !! Do not modify this function as it may change in future code regenerations !!>\n", cmd, tmp
+  )
   cmd = paste0(cmd, collapse = "\n")
   cmd
 }
@@ -1029,15 +1197,23 @@ get_status = function(cache_objects, pretty = FALSE) {
   if ("raw_meta" %in% cache_objects)
     message = c(message, "metadata loaded. (hint) use `obj`$get_metadata() to get metadata.")
   if ("fmt_records" %in% cache_objects)
-    message = c(message, "records formatted. (hint) use `obj`$get_formatted_data() to get data with data labels plugged in (factors).")
+    message = c(
+      message, "records formatted. (hint) use `obj`$get_formatted_data() to get data with data labels plugged in (factors)."
+    )
   if ("clean_records" %in% cache_objects)
-    message = c(message, "records cleaned. (hint) use `obj`$get_clean_data() to get formatted data with coded missing values set to NA.")
+    message = c(
+      message, "records cleaned. (hint) use `obj`$get_clean_data() to get formatted data with coded missing values set to NA."
+    )
   if ("clean_meta" %in% cache_objects)
     message = c(message, "metadata munged. (for internal use - code generation)")
   if ("validate_data_entry" %in% cache_objects)
-    message = c(message, "error report code in memory.  (hint) use `obj`$get_error_report() to get error report.")
+    message = c(
+      message, "error report code in memory.  (hint) use `obj`$get_error_report() to get error report."
+    )
   if ("err_rpt" %in% cache_objects)
-    message = c(message, "error report created. (hint) use `obj`$get_error_report() to get error report.")
+    message = c(
+      message, "error report created. (hint) use `obj`$get_error_report() to get error report."
+    )
   if (pretty) {
     message = paste0(">> ", message)
     message = paste0(message, collapse = "\n")
@@ -1068,7 +1244,7 @@ prepare_metadata_for_code_generation = function(metadata) {
     stop("invalid metadata")
   metadata = data.frame(sapply(metadata, as.character), stringsAsFactors = FALSE)
   metadata = data.table::data.table(metadata)
-  metadata = metadata[, key := .I]
+  metadata = metadata[, key:= .I]
   setkey(metadata, key)
   metadata = metadata[tolower(field_type) != "descriptive"]
   metadata = metadata[tolower(field_type) == "checkbox", required_field:= "Y", by = key]

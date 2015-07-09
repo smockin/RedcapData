@@ -17,7 +17,11 @@
 #' @return A string free of html tags and elements.
 #'
 #'
-remove_html_tags <- function(x) Reduce(c, Map(function(s) { gsub("<[^>]*>", "", s) }, x))
+remove_html_tags <-
+  function(x)
+    Reduce(c, Map(function(s) {
+      gsub("<[^>]*>", "", s)
+    }, x))
 
 #' @name logical_xpressions_red2r
 #'
@@ -43,15 +47,18 @@ remove_html_tags <- function(x) Reduce(c, Map(function(s) { gsub("<[^>]*>", "", 
 #'
 
 logical_xpressions_red2r <- function(x) {
-  pattern_match <- regexpr("[ \t]*((==)|(!=))[ \t]*'[\\-]*[a-zA-Z0-9]*'", x)
+  pattern_match <-
+    regexpr("[ \t]*((==)|(!=))[ \t]*'[\\-]*[a-zA-Z0-9]*'", x)
   if (pattern_match > 0L) {
     len_match <- attr(pattern_match, "match.length") + pattern_match
     start_part <- substr(x, 1L, pattern_match - 1L)
-    var_part <- gregexpr("[ \t]*[\\-]*[a-zA-Z0-9_]+[ \t]*", start_part)[[1L]]
+    var_part <-
+      gregexpr("[ \t]*[\\-]*[a-zA-Z0-9_]+[ \t]*", start_part)[[1L]]
     len_part <- attr(var_part, "match.length")
     len_part <- len_part[length(len_part)]
     var_part <- var_part[length(var_part)]
-    var_part <- str_trim(substr(start_part, var_part, len_part + var_part + 1L))
+    var_part <-
+      str_trim(substr(start_part, var_part, len_part + var_part + 1L))
     match_part <- substr(x, pattern_match, len_match - 1L)
     end_part = substr(x, len_match, nchar(x))
     has_value = regexpr("'[\\-]*[a-zA-Z0-9]+'", match_part)
@@ -59,18 +66,22 @@ logical_xpressions_red2r <- function(x) {
     value_2_chk = substr(match_part, has_value + 1L, (has_value + has_value_len - 2L))
     if (has_value_len > 2L) {
       if (is_number(value_2_chk))
-        match_part = gsub("'", "", match_part) else
-          match_part = gsub("'", "\"", match_part)
+        match_part = gsub("'", "", match_part)
+      else
+        match_part = gsub("'", "\"", match_part)
     }
     else {
       test_eq <- grepl("==", match_part)
       if (test_eq) {
-        match_part <- paste0("(any(is.na(", var_part, "), str_trim(", var_part, ") == \"\"))")
+        match_part <-
+          paste0("(any(is.na(", var_part, "), str_trim(", var_part, ") == \"\"))")
       }
       else {
-        match_part <- paste0("(all(!is.na(", var_part, "), str_trim(", var_part, ") != \"\"))")
+        match_part <-
+          paste0("(all(!is.na(", var_part, "), str_trim(", var_part, ") != \"\"))")
       }
-      start_part <- substr(start_part, 1L, nchar(start_part) - len_part)
+      start_part <-
+        substr(start_part, 1L, nchar(start_part) - len_part)
     }
     x <- paste0(start_part, match_part, end_part)
     if (regexpr("[ \t]*((==)|(!=))[ \t]*'[\\-]*[a-zA-Z0-9]*'", x) > 0L)
@@ -111,8 +122,11 @@ convert_missing_red2r <- function(x) {
     ._i <- as.integer(regexpr("[^a-zA-Z0-9_]", name_part) - 1)
     name_part <- substr(name_part, 1, ._i)
     if ((regexpr("!=", name_part)) > 0L)
-      cmd <- paste("(!any(is.na(", name_part , "),", name_part , ' == ""))') else
-      cmd <- paste0("(any(is.na(", name_part ,"),", name_part , ' == ""))')
+      cmd <-
+      paste("(!any(is.na(", name_part , "),", name_part , ' == ""))')
+    else
+      cmd <-
+      paste0("(any(is.na(", name_part ,"),", name_part , ' == ""))')
     paste0(start_part, cmd)
   }
   string_xtract <- strsplit(x, "'")[[1]]
@@ -120,19 +134,26 @@ convert_missing_red2r <- function(x) {
   idx <- idx[idx %% 2L == 0]
   string_xtract_chkd <- string_xtract[idx]
   string_xtract_chkd <- Reduce(c, Map(function(x) {
-    if (x == "") { value <- NA } else {
+    if (x == "") {
+      value <- NA
+    } else {
       value <- suppressWarnings(as.numeric(x))
-      value <- if (is.na(value)) paste('"', x, '"', sep = "") else x
+      value <- if (is.na(value))
+        paste('"', x, '"', sep = "")
+      else
+        x
     }
     value
   }, string_xtract_chkd))
   if (isTRUE(any(is.na(string_xtract_chkd)))) {
     idx_change <- which(is.na(string_xtract_chkd))
     idx_change <- (2L * idx_change) - 1L
-    string_xtract[idx_change] <- Reduce(c, Map(reshape_na_red2r, string_xtract[idx_change]))
+    string_xtract[idx_change] <-
+      Reduce(c, Map(reshape_na_red2r, string_xtract[idx_change]))
   }
   string_xtract[idx] <- string_xtract_chkd
-  if (isTRUE(any(is.na(string_xtract)))) string_xtract <- string_xtract[-which(is.na(string_xtract))]
+  if (isTRUE(any(is.na(string_xtract))))
+    string_xtract <- string_xtract[-which(is.na(string_xtract))]
   string_xtract <- paste0(string_xtract, collapse = "")
   string_xtract
 }
@@ -165,7 +186,8 @@ xtend_chb_names <- function(x) {
   pattern_start_pos_bckp <- as.numeric(pattern_match)
   pattern_len <- attr(pattern_match, "match.length") - 3
   pattern_len <- pattern_len + pattern_start_pos
-  pattern_len_bckp <- pattern_start_pos_bckp + attr(pattern_match, "match.length")
+  pattern_len_bckp <-
+    pattern_start_pos_bckp + attr(pattern_match, "match.length")
   x <- rep(x, length(pattern_start_pos))
   replace_numeric_match <- function(a, b, c) {
     value <- substr(a, b, c)
@@ -229,15 +251,18 @@ convert_space2tab <- function(x) {
 #' @family RedcapToR
 
 convert_dates_red2r <- function(x) {
-  pattern_match <- regexpr("'[0-9]{4}[/\\-]{1}[0-9]{2}[/\\-]{1}[0-9]{2}'", x)
+  pattern_match <-
+    regexpr("'[0-9]{4}[/\\-]{1}[0-9]{2}[/\\-]{1}[0-9]{2}'", x)
   if (pattern_match > 0) {
     tmp <- substr(x, pattern_match, (pattern_match + 11))
-    newVal <- paste0("as.Date(\"", substr(tmp, 2, nchar(tmp) - 1), "\")")
+    newVal <-
+      paste0("as.Date(\"", substr(tmp, 2, nchar(tmp) - 1), "\")")
     start_part <- substr(x, 1, pattern_match - 1)
     end_part <- substr(x, pattern_match + 12, nchar(x))
     x <- paste0(start_part, newVal, end_part)
   }
-  if (regexpr("'[0-9]{4}[/\\-]{1}[0-9]{2}[/\\-]{1}[0-9]{2}'", x) > 0) x <- convert_dates_red2r(x)
+  if (regexpr("'[0-9]{4}[/\\-]{1}[0-9]{2}[/\\-]{1}[0-9]{2}'", x) > 0)
+    x <- convert_dates_red2r(x)
   x
 }
 
@@ -266,11 +291,12 @@ toproper <- function(x, all = FALSE) {
     last <- tolower(substr(w, 2, nchar(w)))
     paste0(first, last)
   }
-  if (is.na(x)) return(NA)
-  if (!all) { 
-    x = to_proper_case(x) 
-    } else {
-    x <- Reduce(c, Map( function(w) {
+  if (is.na(x))
+    return(NA)
+  if (!all) {
+    x = to_proper_case(x)
+  } else {
+    x <- Reduce(c, Map(function(w) {
       w <- to_proper_case(w)
     }, unlist(strsplit(x, " "))))
     x <- paste0(x, collapse = " ")
