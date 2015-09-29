@@ -323,6 +323,7 @@ Redcap = setRefClass(
             "validated ", min(100, round((.counter * 100) / nrow(dataset), 2)), "%", ifelse(.counter >= nrow(dataset), "", "...")
           ))
           assign(".counter", (.counter + .self$opts$configs$chunksize), envir = parent.frame(2))
+          if (0 == length(unlist(ds_chunk))) ds_chunk <- data.table()
           ds_chunk
         })
         rpt = data.table::rbindlist(rpt)

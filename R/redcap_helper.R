@@ -619,9 +619,9 @@ generate_formatting_code = function(metadata, dataset_name = "data") {
 
 #' @rdname GenerateCodeForDataEntryValidation
 #'
-#' @name generate_error_report_code
+#' @name generate_data_validation_code
 #'
-#' @title Autogenerate code for error reporting
+#' @title Autogenerate code for data validation
 #'
 #' @description This is a utility function that employs code generation to produce R code that validates data entry workflow for errors of omission and commision.
 #'
