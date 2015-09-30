@@ -332,7 +332,8 @@ Redcap = setRefClass(
           .SD, hosp_to_validate = .self$opts$configs$hosp_to_validate, updates = upds
         ), by = key_x2014cin]
       }
-      rpt = rpt[, key_x2014cin:= NULL]
+      if (is.element('key_x2014cin', colnames(rpt)))
+        rpt = rpt[, key_x2014cin:= NULL]
       if (nrow(rpt) == 0) {
         rpt = data.table(Message = "No validation errors in data capture!")
       }
