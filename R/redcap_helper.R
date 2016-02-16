@@ -634,6 +634,7 @@ generate_formatting_code = function(metadata, dataset_name = "data") {
 #' @param metadata REDCap metadata
 #' @param date_var Name of variable that captures the date of entry
 #' @param hosp_var Name of variable that holds the hospital code
+#' @param surrogate_id_var Name of variable that holds a surrogate identifier that is easier to reference
 #' @param custom_code Any code that is appended for custom plugin of special validation checks.
 #' @param updates Name of a list of RedcapUpdate(s) to be used for plugging functionality that abstracts the introduction of new variables during the projects lifecycle. See \code{\link{RedcapUpdate}}
 #' @param updates_envir_depth Integer of what parent frame contains updates. Default is immediate parent of calling environment (1) ie one level deep.
@@ -648,7 +649,7 @@ generate_formatting_code = function(metadata, dataset_name = "data") {
 #' @include data_types.R
 #' @include script.R
 
-generate_data_validation_code = function(metadata, date_var, hosp_var, custom_code = NA, updates = NULL, updates_envir_depth = 1) {
+generate_data_validation_code = function(metadata, date_var, hosp_var, surrogate_id_var, custom_code = NA, updates = NULL, updates_envir_depth = 1) {
   metadata = prepare_metadata_for_code_generation(metadata)
   reset_tab()
   id_var = unlist(metadata[1, .SD, .SDcols = 1])[1]
@@ -675,6 +676,9 @@ generate_data_validation_code = function(metadata, date_var, hosp_var, custom_co
   tmp = c(tmp, paste0(get_tab(), "attach(data_row)"))
   tmp = c(tmp, paste0(get_tab(), "form__x2014cin = character()"))
   tmp = c(tmp, paste0(get_tab(), "sect__x2014cin = character()"))
+  tmp = c(tmp, paste0(get_tab(), "name__x2014cin = character()"))
+  tmp = c(tmp, paste0(get_tab(), "entry__x2014cin = character()"))
+  tmp = c(tmp, paste0(get_tab(), "type__x2014cin = character()"))
   tmp = c(tmp, paste0(get_tab(), "msg__x2014cin = character()"))
   tmp = c(
     tmp, paste0(
@@ -683,10 +687,12 @@ generate_data_validation_code = function(metadata, date_var, hosp_var, custom_co
   )
   add_tab()
   tmp = c(tmp, paste0(get_tab(), "RecordID = ", id_var))
+  if (!is.na(surrogate_id_var))
+    tmp = c(tmp, paste0(get_tab(), ",Identifier = ", surrogate_id_var))
   tmp = c(tmp, paste0(get_tab(), ",DateOfEntry = as.Date(NA)"))
   tmp = c(tmp, paste0(get_tab(), ",Hospital = ", hosp_var))
   tmp = c(tmp, paste0(get_tab(), ",Form = \"<< Before Data Evaluations >>\""))
-  tmp = c(tmp, paste0(get_tab(), ",Section = \"<< Before Data Evaluations >>\""))
+  tmp = c(tmp, paste0(get_tab(), ",Name = \"<< Before Data Evaluations >>\""))
   tmp = c(
     tmp, paste0(
       get_tab(), ",Message = \"<< Date variable [", date_var, "] missing. This is needed for error reporting >>\""
@@ -891,9 +897,25 @@ generate_data_validation_code = function(metadata, date_var, hosp_var, custom_co
       )
       cmd_r = c(
         cmd_r, paste0(
+          get_tab(), "name__x2014cin = c(name__x2014cin, \"", vname_x2014cin, "\")"
+        )
+      )
+      cmd_r = c(
+        cmd_r, paste0(
+          get_tab(), "entry__x2014cin = c(entry__x2014cin, as.character(", vname_x2014cin, "))"
+        )
+      )
+      cmd_r = c(
+        cmd_r, paste0(
+          get_tab(), "type__x2014cin = c(type__x2014cin, \"Required Entry\")"
+        )
+      )
+      cmd_r = c(
+        cmd_r, paste0(
           get_tab(), "msg__x2014cin = c(msg__x2014cin, \"'", vlabel_x2014cin, "' is required!\")"
         )
       )
+      
       remove_tab()
       cmd_r = c(cmd_r, paste0(get_tab(), "}"))
       if (!is.null(updates)) {
@@ -945,9 +967,25 @@ generate_data_validation_code = function(metadata, date_var, hosp_var, custom_co
         )
         cmd_r = c(
           cmd_r, paste0(
+            get_tab(), "name__x2014cin = c(name__x2014cin, \"", vname_x2014cin, "\")"
+          )
+        )
+        cmd_r = c(
+          cmd_r, paste0(
+            get_tab(), "entry__x2014cin = c(entry__x2014cin, as.character(", vname_x2014cin, "))"
+          )
+        )
+        cmd_r = c(
+          cmd_r, paste0(
+            get_tab(), "type__x2014cin = c(type__x2014cin, \"Invalid Data Type\")"
+          )
+        )
+        cmd_r = c(
+          cmd_r, paste0(
             get_tab(), "msg__x2014cin = c(msg__x2014cin, \"'", vlabel_x2014cin, "' must be a date!\")"
           )
         )
+        
         remove_tab()
         cmd_r = c(cmd_r, paste0(get_tab(), "}"))
       }
@@ -968,9 +1006,26 @@ generate_data_validation_code = function(metadata, date_var, hosp_var, custom_co
         )
         cmd_r = c(
           cmd_r, paste0(
+            get_tab(), "name__x2014cin = c(name__x2014cin, \"", vname_x2014cin, "\")"
+          )
+        )
+        cmd_r = c(
+          cmd_r, paste0(
+            get_tab(), "entry__x2014cin = c(entry__x2014cin, as.character(", vname_x2014cin, "))"
+          )
+        )
+        cmd_r = c(
+          cmd_r, paste0(
+            get_tab(), "type__x2014cin = c(type__x2014cin, \"Invalid Data Type\")"
+          )
+        )
+        cmd_r = c(
+          cmd_r, paste0(
             get_tab(), "msg__x2014cin = c(msg__x2014cin, \"'", vlabel_x2014cin, "' must be a number!\")"
           )
         )
+        
+        
         remove_tab()
         cmd_r = c(cmd_r, paste0(get_tab(), "}"))
       }
@@ -991,9 +1046,25 @@ generate_data_validation_code = function(metadata, date_var, hosp_var, custom_co
         )
         cmd_r = c(
           cmd_r, paste0(
+            get_tab(), "name__x2014cin = c(name__x2014cin, \"", vname_x2014cin, "\")"
+          )
+        )
+        cmd_r = c(
+          cmd_r, paste0(
+            get_tab(), "entry__x2014cin = c(entry__x2014cin, as.character(", vname_x2014cin, "))"
+          )
+        )
+        cmd_r = c(
+          cmd_r, paste0(
+            get_tab(), "type__x2014cin = c(type__x2014cin, \"Invalid Data Type\")"
+          )
+        )
+        cmd_r = c(
+          cmd_r, paste0(
             get_tab(), "msg__x2014cin = c(msg__x2014cin, \"'", vlabel_x2014cin, "' must be an integer!\")"
           )
         )
+        
         remove_tab()
         cmd_r = c(cmd_r, paste0(get_tab(), "}"))
       }
@@ -1068,9 +1139,25 @@ generate_data_validation_code = function(metadata, date_var, hosp_var, custom_co
       )
       cmd_r = c(
         cmd_r, paste0(
+          get_tab(), "name__x2014cin = c(name__x2014cin, \"", vname_x2014cin, "\")"
+        )
+      )
+      cmd_r = c(
+        cmd_r, paste0(
+          get_tab(), "entry__x2014cin = c(entry__x2014cin, as.character(", vname_x2014cin, "))"
+        )
+      )
+      cmd_r = c(
+        cmd_r, paste0(
+          get_tab(), "type__x2014cin = c(type__x2014cin, \"Out of Range\")"
+        )
+      )
+      cmd_r = c(
+        cmd_r, paste0(
           get_tab(), "msg__x2014cin = c(msg__x2014cin, \"'", vlabel_x2014cin, "' is out of range!\")"
         )
       )
+      
       remove_tab()
       cmd_r = c(cmd_r, paste0(get_tab(), "}"))
       if (!is.null(updates)) {
@@ -1135,6 +1222,10 @@ generate_data_validation_code = function(metadata, date_var, hosp_var, custom_co
   tmp = c(tmp, paste0(
     get_tab(), "id_x2014cin = rep(", id_var, ", length(msg__x2014cin))"
   ))
+  if (!is.na(surrogate_id_var))
+    tmp = c(tmp, paste0(
+      get_tab(), "surr_id_x2014cin = rep(", surrogate_id_var, ", length(msg__x2014cin))"
+    ))
   tmp = c(tmp, paste0(
     get_tab(), "date_x2014cin = rep(", date_var, ", length(msg__x2014cin))"
   ))
@@ -1143,7 +1234,11 @@ generate_data_validation_code = function(metadata, date_var, hosp_var, custom_co
   ))
   tmp = c(
     tmp, paste0(
-      get_tab(), "value_x2014cin = data.table::data.table(RecordID = id_x2014cin, DateOfEntry = date_x2014cin, Hospital = hosp_x2014cin, Form = form__x2014cin, Section = sect__x2014cin, Message = msg__x2014cin)"
+      get_tab(), paste0(
+        "value_x2014cin = data.table::data.table(RecordID = id_x2014cin,",
+        ifelse(is.na(surrogate_id_var), "", " Identifier = surr_id_x2014cin,"),
+        " DateOfEntry = date_x2014cin, Hospital = hosp_x2014cin, Form = form__x2014cin, Section = sect__x2014cin, Variable = name__x2014cin, Type = type__x2014cin, Entry = entry__x2014cin, Message = msg__x2014cin )"
+      )
     )
   )
   remove_tab()
