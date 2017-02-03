@@ -272,7 +272,9 @@ config_keys = list(
   hosp_var = "hosp_id",
   date_var = "date_today",
   report_location = tempfile("DataVerification", fileext = ".csv"),
-  hosp_to_validate = NA_character_
+  hosp_to_validate = NA_character_,
+  verbose = FALSE,
+  surrogate_id_var = NA
 )
 
 #' @rdname GetConfigurationTypeFromVariable

@@ -118,7 +118,8 @@ RedcapConfig = setRefClass(
           "chunksize",
           "chunked",
           "date_var",
-          "hosp_var"
+          "hosp_var",
+          "surrogate_id_var"
         ) %in% ls(all = TRUE, envir = .self$configs)
       )) {
         msg = c(msg, "Some required configurations are not set")

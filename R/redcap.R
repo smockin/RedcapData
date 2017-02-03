@@ -49,7 +49,8 @@ Redcap = setRefClass(
   fields = list(
     .__cache = "environment",
     .__log = "character",
-    opts = "RedcapConfig"
+    opts = "RedcapConfig",
+    version = "list"
   ),
   
   methods = list(
@@ -59,6 +60,8 @@ Redcap = setRefClass(
         msg = "\nInstance:\nA local redcap instance\n"
       else
         msg = paste0("\nInstance:\nA remote redcap instance running at ", sQuote(www), "\n")
+      if (all(c("major", "minor", "release") %in% names(.self$version)))
+        msg = c(msg, sprintf("Version:\n%s\n", do.call(paste0, list(.self$version, collapse="."))))
       if (length(ls(.self$.__cache)) == 0) {
         msg = c(msg, "Memory status:\nCache is empty\n")
       }
@@ -66,8 +69,8 @@ Redcap = setRefClass(
         msg = c(msg, paste0("Memory status:\nCache contains ", length(ls(.self$.__cache)), " items\n"))
       }
       msg = c(msg, paste0("Events:", get_status(ls(.self$.__cache), pretty = TRUE)))
-      if (length(.self$.__log) > 0)
-        msg = c(msg, paste0("Log:\n", .self$.__log, "\n"))
+      if (.self$opts$configs$verbose && length(.self$.__log) > 0) 
+          msg = c(msg, paste0("Log:\n", .self$.__log, "\n"))
       msg = paste0(msg, collapse = "\n")
       msg = paste0(msg, "\n")
       cat(msg)
@@ -173,8 +176,16 @@ Redcap = setRefClass(
         if (!"part_clean_cmd" %in% ls(all = T, envir = .self$.__cache)) {
           .self$.__cache$part_clean_cmd = paste0(
             "\n# <Note: !! Do not edit this code as it may change in future code regenerations. !!>",
-            generate_remove_missing_code(.self$get_metadata(), "dataset"),
-            generate_date_conversion_code(.self$get_metadata(), "dataset"),
+            generate_remove_missing_code(
+              .self$get_metadata(), 
+              "dataset",
+              negative_char = .self$get_negative_char()
+            ),
+            generate_date_conversion_code(
+              .self$get_metadata(), 
+              "dataset",
+              negative_char = .self$get_negative_char()
+            ),
             sep = "\n"
           )
         }
@@ -267,7 +278,11 @@ Redcap = setRefClass(
         if (!"fmt_cmd" %in% ls(all = T, envir = .self$.__cache))
           .self$.__cache$fmt_cmd = paste0(
             "\n# <Note: !! Do not edit this code as it may change in future code regenerations. !!>",
-            generate_formatting_code(.self$get_metadata(), dataset_name = "dataset"), sep = "\n"
+            generate_formatting_code(
+              .self$get_metadata(), 
+              dataset_name = "dataset",
+              negative_char = .self$get_negative_char()
+            ), sep = "\n"
           )
         tryCatch({
           eval(parse(text = .self$.__cache$fmt_cmd))
@@ -305,7 +320,9 @@ Redcap = setRefClass(
           hosp_var = .self$opts$configs$hosp_var,
           custom_code = .self$opts$configs$custom_code,
           updates = "upds",
-          updates_envir_depth = 2
+          updates_envir_depth = 2.,
+          negative_char = .self$get_negative_char(),
+          surrogate_id_var = .self$opts$configs$surrogate_id_var
         )
         message("data validation code generated")
         .self$log("data validation code generated", 0, function_name = "validate_data")
@@ -449,6 +466,19 @@ Redcap = setRefClass(
         warning(sQuote(message), call. = FALSE)
       if (level == 2)
         stop(sQuote(message), call. = FALSE)
+    },
+    
+    get_negative_char = function() {
+      "Get negative character for metaprogramming for checkbox levels with negative levels  <internal use>"
+      
+      if (!".negative_char" %in% ls(.self$.__cache, all.names=T)) {
+        if ("major" %in% names(.self$version))
+          if (.self$version$major > 5)
+            .self$.__cache$.negative_char = "_"
+          else
+            .self$.__cache$.negative_char = "."
+      }
+      return(.self$.__cache$.negative_char)
     }
   )
 )
@@ -512,7 +542,9 @@ redcap_project = function(...,
       "hosp_var",
       "date_var",
       "report_location",
-      "hosp_to_validate"
+      "hosp_to_validate",
+      "surrogate_id_var",
+      "verbose"
     )
     configs_data = configs_data[configs_valid]
     configs_data = data.frame(
@@ -556,6 +588,7 @@ redcap_project = function(...,
   configs$updates = updates
   if (!configs$is_valid())
     stop("invalid configs")
-  obj = Redcap$new(opts = configs)
+  version = get_redcap_version(gsub("/api(/)?", "", configs$configs$api_url))
+  obj = Redcap$new(opts = configs, version=version)
   obj
 }

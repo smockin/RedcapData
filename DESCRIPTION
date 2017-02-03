@@ -20,9 +20,10 @@ Collate:
     'branching_logic.R'
     'data_checks.R'
     'generic_helper.R'
-    'script.R'
-    'redcap_helper.R'
     'redcap_config.R'
     'redcap_config_helper.R'
+    'script.R'
+    'redcap_helper.R'
     'redcap.R'
     'zzz.R'
+RoxygenNote: 6.0.0

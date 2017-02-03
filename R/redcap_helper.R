@@ -276,10 +276,11 @@ is_valid_metadata = function(metadata) {
 #' Useful for metaprogramming.
 #'
 #' @param metadata REDCap metadata
+#' @param negative_char checkbox expansion character for a negative checkbox level
 #'
 #' @return a character vector of the variable names in the dataset
 
-get_vars_in_data = function(metadata) {
+get_vars_in_data = function(metadata, negative_char=".") {
   metadata = prepare_metadata_for_code_generation(metadata)
   get_vars_r = function(r) {
     var = r$field_name
@@ -289,7 +290,7 @@ get_vars_in_data = function(metadata) {
       choices = stringr::str_trim(unlist(strsplit(choices, "\\|")))
       choices = sapply(choices, function(ch) {
         lev = stringr::str_trim(unlist(strsplit(ch, ",")))[1L]
-        lev = gsub("\\-", "\\.", lev)
+        lev = gsub("\\-", sprintf("\\%s", negative_char), lev)
         lev
       })
       value = data.table::data.table(var = paste0(var, "___", choices))
@@ -318,12 +319,13 @@ get_vars_in_data = function(metadata) {
 #' Useful for metaprogramming.
 #'
 #' @param metadata REDCap metadata
+#' @param negative_char checkbox expansion character for a negative checkbox level
 #'
 #' @return The R data types of the variables in the dataset
 #'
 #'
 
-get_r_types_in_data = function(metadata) {
+get_r_types_in_data = function(metadata, negative_char=".") {
   metadata = data.table::data.table(metadata)
   metadata = metadata[, key:= .I]
   if (!is_valid_metadata(metadata))
@@ -335,7 +337,7 @@ get_r_types_in_data = function(metadata) {
       choices = r$select_choices_or_calculations
       choices = sapply(strsplit(choices, "\\|"), function(ch) {
         lev = stringr::str_trim(unlist(strsplit(ch, ",")))[1L]
-        lev = gsub("\\-", "\\.", lev)
+        lev = gsub("\\-", sprintf("\\%s", negative_char), lev)
         lev
       })
       value = paste0(widget, "___", choices)
@@ -365,6 +367,7 @@ get_r_types_in_data = function(metadata) {
 #'
 #' @param metadata REDCap metadata
 #' @param dataset_name Name of the dataset that will be recorded in place
+#' @param negative_char checkbox expansion character for a negative checkbox level
 #'
 #' @export
 #'
@@ -372,7 +375,7 @@ get_r_types_in_data = function(metadata) {
 #'
 #' @family Code Generators
 
-generate_remove_missing_code = function(metadata, dataset_name = "data") {
+generate_remove_missing_code = function(metadata, dataset_name = "data", negative_char=".") {
   metadata = prepare_metadata_for_code_generation(metadata)
   invalid_vals = c(
     "as.character(seq(as.Date(\"1910-01-01\"), as.Date(\"1950-01-01\"), by = \"year\"))",
@@ -381,7 +384,7 @@ generate_remove_missing_code = function(metadata, dataset_name = "data") {
   invalid_vals = paste0(invalid_vals, collapse = ", ")
   invalid_vals = paste0("c(", invalid_vals, ")")
   
-  cmd = stringr::str_trim(get_vars_in_data(metadata))
+  cmd = stringr::str_trim(get_vars_in_data(metadata, negative_char))
   if (length(cmd) == 0L)
     return("")
   cmd = paste0(
@@ -501,6 +504,7 @@ generate_remove_outliers_code = function(metadata, dataset_name = "data") {
 #'
 #' @param metadata REDCap metadata
 #' @param dataset_name Name of the dataset that will be recorded in place.
+#' @param negative_char checkbox expansion character for a negative checkbox level
 #'
 #' @export
 #'
@@ -508,12 +512,12 @@ generate_remove_outliers_code = function(metadata, dataset_name = "data") {
 #'
 #' @family Code Generators
 
-generate_date_conversion_code = function(metadata, dataset_name = "data") {
+generate_date_conversion_code = function(metadata, dataset_name = "data", negative_char=".") {
   metadata = prepare_metadata_for_code_generation(metadata)
   metadata = metadata[stringr::str_trim(text_validation_type_or_show_slider_number) == "date_ymd"]
   if (nrow(metadata) < 1L)
     return("")
-  cmd = get_vars_in_data(metadata)
+  cmd = get_vars_in_data(metadata, negative_char)
   cmd = paste0(dataset_name, "$", cmd, " = as.Date(", dataset_name, "$", cmd, ")")
   cmd = paste0(cmd, collapse = "\n")
   cmd = c(
@@ -541,6 +545,7 @@ generate_date_conversion_code = function(metadata, dataset_name = "data") {
 #'
 #' @param metadata REDCap metadata
 #' @param dataset_name Name of the dataset that will be recorded in place.
+#' @param negative_char checkbox expansion character for a negative checkbox level
 #'
 #' @export
 #'
@@ -550,7 +555,7 @@ generate_date_conversion_code = function(metadata, dataset_name = "data") {
 #'
 #' @include branching_logic.R
 
-generate_formatting_code = function(metadata, dataset_name = "data") {
+generate_formatting_code = function(metadata, dataset_name = "data", negative_char=".") {
   metadata = prepare_metadata_for_code_generation(metadata)
   to_remove = paste0(unique(metadata[, form_name]),"_complete")
   metadata = metadata[!field_name %in% to_remove]
@@ -564,7 +569,7 @@ generate_formatting_code = function(metadata, dataset_name = "data") {
                           }))
       if (x[, field_type] == "checkbox") {
         tmp = sapply(choices[, 1], function(x)
-          gsub("\\-", "\\.", x))
+          gsub("\\-", negative_char, x))
         variable = paste0(x[, field_name], "___", tmp)
         label = paste0(gsub("\n", "", remove_html_tags(x[, field_label])), "(", choices[, 2], ")")
         if (length(label) == 0)
@@ -638,6 +643,7 @@ generate_formatting_code = function(metadata, dataset_name = "data") {
 #' @param custom_code Any code that is appended for custom plugin of special validation checks.
 #' @param updates Name of a list of RedcapUpdate(s) to be used for plugging functionality that abstracts the introduction of new variables during the projects lifecycle. See \code{\link{RedcapUpdate}}
 #' @param updates_envir_depth Integer of what parent frame contains updates. Default is immediate parent of calling environment (1) ie one level deep.
+#' @param negative_char checkbox expansion character for a negative checkbox level
 #'
 #' @export
 #'
@@ -649,7 +655,15 @@ generate_formatting_code = function(metadata, dataset_name = "data") {
 #' @include data_types.R
 #' @include script.R
 
-generate_data_validation_code = function(metadata, date_var, hosp_var, surrogate_id_var, custom_code = NA, updates = NULL, updates_envir_depth = 1) {
+generate_data_validation_code = function(
+  metadata, 
+  date_var, 
+  hosp_var, 
+  surrogate_id_var, 
+  custom_code = NA, 
+  updates = NULL, 
+  updates_envir_depth = 1, 
+  negative_char=".") {
   metadata = prepare_metadata_for_code_generation(metadata)
   reset_tab()
   id_var = unlist(metadata[1, .SD, .SDcols = 1])[1]
@@ -800,7 +814,7 @@ generate_data_validation_code = function(metadata, date_var, hosp_var, surrogate
       chk_tmp = sapply(chk_tmp, function(chk) {
         value = as.numeric(stringr::str_trim(unlist(strsplit(chk, ",")))[1])
         if (value < 0)
-          value = gsub("\\-", "\\.", as.character(value))
+          value = gsub("\\-", sprintf("\\%s", negative_char), as.character(value))
         value = as.character(value)
       })
       chk_cmd = paste0(vname_x2014cin, "___", chk_tmp)
@@ -826,7 +840,7 @@ generate_data_validation_code = function(metadata, date_var, hosp_var, surrogate
         tmp = stringr::str_trim(unlist(strsplit(choices_x2014cin, "\\|")))
         tmp = sapply(tmp, function(ch) {
           lev = stringr::str_trim(unlist(strsplit(ch, ",")))[1]
-          lev = gsub("\\-", "\\.", lev)
+          lev = gsub("\\-", sprintf("\\%s", negative_char), lev)
           lev
         })
         tmp = paste0(vname_x2014cin, "___", tmp)
@@ -1337,11 +1351,54 @@ get_status = function(cache_objects, pretty = FALSE) {
 prepare_metadata_for_code_generation = function(metadata) {
   if (!is_valid_metadata(metadata))
     stop("invalid metadata")
-  metadata = data.frame(sapply(metadata, as.character), stringsAsFactors = FALSE)
+  metadata = data.frame(lapply(metadata, as.character), stringsAsFactors = FALSE)
   metadata = data.table::data.table(metadata)
   metadata = metadata[, key:= .I]
   setkey(metadata, key)
   metadata = metadata[tolower(field_type) != "descriptive"]
   metadata = metadata[tolower(field_type) == "checkbox", required_field:= "Y", by = key]
   metadata
+}
+
+#' @rdname GetRedcapVersion
+#'
+#' @name get_redcap_version
+#'
+#' @title Get REDCap version
+#'
+#' @description Get the version of REDCap associated with a specific url
+#'
+#' @return A list containing the version info
+#' 
+#' This includes the major, minor and release number version information for the REDCap instance 
+#'
+#' @details This function gets the REDCap version number by web scraping the specific instance's index page.
+#' 
+#' The footer is extracted which contains the version number.
+#' 
+#' This is then wranged into the final version information.
+#'
+#' @param url The url of the REDCap instance
+#'
+#' @seealso \code{\link{redcap_project}}
+#'
+#' @export
+#'
+
+get_redcap_version <- function(url = "http://localhost/redcap") {
+  if (!url.exists(url) || !grepl("/redcap(/)?", url))
+    stop(sprintf("invalid redcap url %s", sQuote(url)))
+  pattern <- "REDCap([[:space:][:alpha:]\\-])+[[:digit:]]+.[[:digit:]]+.[[:digit:]]"
+  page <- readLines(url, warn=F)
+  version <- page[sapply(page, regexpr, pattern=pattern) > 0]
+  if (0 == length(version))
+    stop(sprintf("cannot get version info from index page %s", sQuote(url)))
+  version <- regmatches(version[1], regexpr(pattern, version))
+  version <- regmatches(
+    version, 
+    regexpr("[[:digit:]]+.[[:digit:]]+.[[:digit:]]", version)
+    )
+  setNames(
+    lapply(unlist(strsplit(version, "\\.")), as.integer), 
+    c("major", "minor", "release"))
 }
