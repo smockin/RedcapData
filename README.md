@@ -45,7 +45,7 @@
 ```r
 if (!is.element("devtools", .packages(all.available = T))) install.packages("devtools")
 library(devtools)
-devtools::install_github("smockin/RedcapData", ref = "devel")
+devtools::install_github("smockin/RedcapData", ref = "v1.1.1")
 ```
 
 ## Configuration
