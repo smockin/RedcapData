@@ -4,10 +4,12 @@
 \alias{get_r_types_in_data}
 \title{Get the R data types of variables in dataset from REDCap metadata}
 \usage{
-get_r_types_in_data(metadata)
+get_r_types_in_data(metadata, negative_char = "_")
 }
 \arguments{
 \item{metadata}{REDCap metadata}
+
+\item{negative_char}{checkbox expansion character for a negative checkbox level}
 }
 \value{
 The R data types of the variables in the dataset

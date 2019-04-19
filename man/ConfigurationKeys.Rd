@@ -4,7 +4,7 @@
 \name{config_keys}
 \alias{config_keys}
 \title{Default Configuration Keys}
-\format{An object of class \code{list} of length 9.}
+\format{An object of class \code{list} of length 11.}
 \usage{
 config_keys
 }

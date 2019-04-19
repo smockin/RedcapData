@@ -24,6 +24,7 @@ This requires conversion to facilitate date-based operations.
 }
 \seealso{
 Other RedcapToR: \code{\link{convert_missing_red2r}},
+  \code{\link{format_branching_logics}},
   \code{\link{logical_xpressions_red2r}},
   \code{\link{xtend_chb_names}}
 }

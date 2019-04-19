@@ -25,5 +25,6 @@ This function helps map logical expressions from REDCap to R
 \seealso{
 Other RedcapToR: \code{\link{convert_dates_red2r}},
   \code{\link{convert_missing_red2r}},
+  \code{\link{format_branching_logics}},
   \code{\link{xtend_chb_names}}
 }

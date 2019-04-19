@@ -1,7 +1,8 @@
 Package: RedcapData
 Title: Data management utility support for REDCap repositories
-Version: 1.0.1
+Version: 1.1.1
 Authors@R: "Boniface Makone <bonifacemakone@gmail.com> [aut, cre]"
+Maintainer@R: "Morris Ogero <smockinmorris@gmail.com> [aut, cre]"
 Description: This package contains utility and helper functions that support
     data management tasks of REDCap repositories. These tasks include data
     input, formatting, cleaning and error report generation.
@@ -13,17 +14,21 @@ Imports:
     data.table,
     RCurl,
     stringr,
-    methods
-URL: https://github.com/bonmac/RedcapData
+    methods,
+    purrr,
+    compiler
+URL: https://github.com/smockin/RedcapData
 Collate:
     'data_types.R'
     'branching_logic.R'
     'data_checks.R'
+    'expand_branching_logic.R'
     'generic_helper.R'
     'redcap_config.R'
     'redcap_config_helper.R'
     'script.R'
     'redcap_helper.R'
     'redcap.R'
+    'validate_fields_without_ranges.R'
     'zzz.R'
-RoxygenNote: 6.0.0
+RoxygenNote: 6.0.1

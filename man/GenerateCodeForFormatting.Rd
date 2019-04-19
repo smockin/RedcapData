@@ -4,12 +4,15 @@
 \alias{generate_formatting_code}
 \title{Autogenerate code for data formatting (variable and data labelling)}
 \usage{
-generate_formatting_code(metadata, dataset_name = "data")
+generate_formatting_code(metadata, dataset_name = "data",
+  negative_char = "_")
 }
 \arguments{
 \item{metadata}{REDCap metadata}
 
 \item{dataset_name}{Name of the dataset that will be recorded in place.}
+
+\item{negative_char}{checkbox expansion character for a negative checkbox level}
 }
 \value{
 Code that can be evaluated to format data.

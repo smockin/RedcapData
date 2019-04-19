@@ -48,6 +48,8 @@ Show the object to view status.
 
 \item{\code{get_metadata()}}{Get raw metadata from memory}
 
+\item{\code{get_negative_char()}}{Get negative character for metaprogramming for checkbox levels with negative levels  <internal use>}
+
 \item{\code{get_partially_cleaned_data()}}{Get partially cleaned records from memory}
 
 \item{\code{get_raw_data()}}{Get raw records from memory.

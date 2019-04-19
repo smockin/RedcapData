@@ -4,12 +4,15 @@
 \alias{generate_date_conversion_code}
 \title{Autogenerate code for date conversion from valid string date representations}
 \usage{
-generate_date_conversion_code(metadata, dataset_name = "data")
+generate_date_conversion_code(metadata, dataset_name = "data",
+  negative_char = "_")
 }
 \arguments{
 \item{metadata}{REDCap metadata}
 
 \item{dataset_name}{Name of the dataset that will be recorded in place.}
+
+\item{negative_char}{checkbox expansion character for a negative checkbox level}
 }
 \value{
 Code that can be evaluated to recode apppropriate strings to R dates

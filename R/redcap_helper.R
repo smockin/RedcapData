@@ -216,9 +216,11 @@ get_redcap_data = function(api,
     rm("redcap__err", envir = fun_env)
     stop(paste0("data could not be downloaded [details: ", msg, "]"))
   } else {
-    value = data.frame(read.csv(textConnection(redcap_conn), stringsAsFactors = FALSE))
+    value = try(data.frame(read.csv(textConnection(redcap_conn), stringsAsFactors = FALSE)), silent = T)
+    }
+  if(class(value)!='try-error'){
+    value
   }
-  value
 }
 
 #' @rdname IsMetadataValid
@@ -280,7 +282,7 @@ is_valid_metadata = function(metadata) {
 #'
 #' @return a character vector of the variable names in the dataset
 
-get_vars_in_data = function(metadata, negative_char=".") {
+get_vars_in_data = function(metadata, negative_char="_") {
   metadata = prepare_metadata_for_code_generation(metadata)
   get_vars_r = function(r) {
     var = r$field_name
@@ -290,7 +292,7 @@ get_vars_in_data = function(metadata, negative_char=".") {
       choices = stringr::str_trim(unlist(strsplit(choices, "\\|")))
       choices = sapply(choices, function(ch) {
         lev = stringr::str_trim(unlist(strsplit(ch, ",")))[1L]
-        lev = gsub("\\-", sprintf("\\%s", negative_char), lev)
+        lev = gsub("\\-|\\.", sprintf("\\%s", negative_char), lev)
         lev
       })
       value = data.table::data.table(var = paste0(var, "___", choices))
@@ -325,7 +327,7 @@ get_vars_in_data = function(metadata, negative_char=".") {
 #'
 #'
 
-get_r_types_in_data = function(metadata, negative_char=".") {
+get_r_types_in_data = function(metadata, negative_char="_") {
   metadata = data.table::data.table(metadata)
   metadata = metadata[, key:= .I]
   if (!is_valid_metadata(metadata))
@@ -337,7 +339,7 @@ get_r_types_in_data = function(metadata, negative_char=".") {
       choices = r$select_choices_or_calculations
       choices = sapply(strsplit(choices, "\\|"), function(ch) {
         lev = stringr::str_trim(unlist(strsplit(ch, ",")))[1L]
-        lev = gsub("\\-", sprintf("\\%s", negative_char), lev)
+        lev = gsub("\\-|\\.", sprintf("\\%s", negative_char), lev)
         lev
       })
       value = paste0(widget, "___", choices)
@@ -375,7 +377,7 @@ get_r_types_in_data = function(metadata, negative_char=".") {
 #'
 #' @family Code Generators
 
-generate_remove_missing_code = function(metadata, dataset_name = "data", negative_char=".") {
+generate_remove_missing_code = function(metadata, dataset_name = "data", negative_char="_") {
   metadata = prepare_metadata_for_code_generation(metadata)
   invalid_vals = c(
     "as.character(seq(as.Date(\"1910-01-01\"), as.Date(\"1950-01-01\"), by = \"year\"))",
@@ -512,7 +514,7 @@ generate_remove_outliers_code = function(metadata, dataset_name = "data") {
 #'
 #' @family Code Generators
 
-generate_date_conversion_code = function(metadata, dataset_name = "data", negative_char=".") {
+generate_date_conversion_code = function(metadata, dataset_name = "data", negative_char="_") {
   metadata = prepare_metadata_for_code_generation(metadata)
   metadata = metadata[stringr::str_trim(text_validation_type_or_show_slider_number) == "date_ymd"]
   if (nrow(metadata) < 1L)
@@ -555,7 +557,7 @@ generate_date_conversion_code = function(metadata, dataset_name = "data", negati
 #'
 #' @include branching_logic.R
 
-generate_formatting_code = function(metadata, dataset_name = "data", negative_char=".") {
+generate_formatting_code = function(metadata, dataset_name = "data", negative_char="_") {
   metadata = prepare_metadata_for_code_generation(metadata)
   to_remove = paste0(unique(metadata[, form_name]),"_complete")
   metadata = metadata[!field_name %in% to_remove]
@@ -567,9 +569,9 @@ generate_formatting_code = function(metadata, dataset_name = "data", negative_ch
                             names(ch_ls) = c("level", "label")
                             ch_ls
                           }))
-      if (x[, field_type] == "checkbox") {
+      if (x[, field_type] == "checkbox") { 
         tmp = sapply(choices[, 1], function(x)
-          gsub("\\-", negative_char, x))
+          gsub("\\-|\\.", negative_char, x))
         variable = paste0(x[, field_name], "___", tmp)
         label = paste0(gsub("\n", "", remove_html_tags(x[, field_label])), "(", choices[, 2], ")")
         if (length(label) == 0)
@@ -585,7 +587,10 @@ generate_formatting_code = function(metadata, dataset_name = "data", negative_ch
           paste0("\"", x, "\""))
         levels = paste0("c(", paste0(unique(choices[, 1L]), collapse = ", "), ")")
         labels_levels = paste0("c(", paste0(unique(choices[, 2L]), collapse = ", "), ")")
-      }
+        if(length(unique(choices[, 1L]))!=length(unique(choices[, 2L]))){
+        labels_levels = paste0("c(", paste0((choices[, 2L]), collapse = ", "), ")")
+          }
+        }
     } else if (tolower(x[, field_type]) == "yesno") {
       variable = x[, field_name]
       label = gsub("\n", "", remove_html_tags(x[, field_label]))
@@ -636,7 +641,7 @@ generate_formatting_code = function(metadata, dataset_name = "data", negative_ch
 #'
 #' The result is a dataset containing the resultant errors.
 #'
-#' @param metadata REDCap metadata
+#' @param metadata REDCap metadata with a formatted branching logic variable \emph{f.branching_logic}. See \code{\link{ExpandBranchingLogic}} 
 #' @param date_var Name of variable that captures the date of entry
 #' @param hosp_var Name of variable that holds the hospital code
 #' @param surrogate_id_var Name of variable that holds a surrogate identifier that is easier to reference
@@ -654,6 +659,7 @@ generate_formatting_code = function(metadata, dataset_name = "data", negative_ch
 #' @include branching_logic.R
 #' @include data_types.R
 #' @include script.R
+#' @include expand_branching_logic.R
 
 generate_data_validation_code = function(
   metadata, 
@@ -663,7 +669,7 @@ generate_data_validation_code = function(
   custom_code = NA, 
   updates = NULL, 
   updates_envir_depth = 1, 
-  negative_char=".") {
+  negative_char="_") {
   metadata = prepare_metadata_for_code_generation(metadata)
   reset_tab()
   id_var = unlist(metadata[1, .SD, .SDcols = 1])[1]
@@ -694,6 +700,7 @@ generate_data_validation_code = function(
   tmp = c(tmp, paste0(get_tab(), "entry__x2014cin = character()"))
   tmp = c(tmp, paste0(get_tab(), "type__x2014cin = character()"))
   tmp = c(tmp, paste0(get_tab(), "msg__x2014cin = character()"))
+  tmp = c(tmp, paste0(get_tab(), "logic_x2014cin = character()"))
   tmp = c(
     tmp, paste0(
       get_tab(), "if (!date_can_be_validated(", date_var, ")) return(data.table("
@@ -793,13 +800,13 @@ generate_data_validation_code = function(
     } else {
       stringr::str_trim(max_val_x2014cin)
     }
-    logic_x2014cin = stringr::str_trim(meta_r[, branching_logic])
+    logic_x2014cin = stringr::str_trim(meta_r[, f.branching_logic])
     logic_x2014cin = if (isTRUE(any(
       is.na(logic_x2014cin), stringr::str_trim(logic_x2014cin) == ""
     ))) {
       NA
     } else {
-      convert_redcap2r(stringr::str_trim(logic_x2014cin))
+      stringr::str_trim(logic_x2014cin)
     }
     req_x2014cin = stringr::str_trim(meta_r[, required_field])
     req_x2014cin = if (isTRUE(any(
@@ -814,7 +821,7 @@ generate_data_validation_code = function(
       chk_tmp = sapply(chk_tmp, function(chk) {
         value = as.numeric(stringr::str_trim(unlist(strsplit(chk, ",")))[1])
         if (value < 0)
-          value = gsub("\\-", sprintf("\\%s", negative_char), as.character(value))
+          value = gsub("\\-|\\.", sprintf("\\%s", negative_char), as.character(value))
         value = as.character(value)
       })
       chk_cmd = paste0(vname_x2014cin, "___", chk_tmp)
@@ -840,7 +847,7 @@ generate_data_validation_code = function(
         tmp = stringr::str_trim(unlist(strsplit(choices_x2014cin, "\\|")))
         tmp = sapply(tmp, function(ch) {
           lev = stringr::str_trim(unlist(strsplit(ch, ",")))[1]
-          lev = gsub("\\-", sprintf("\\%s", negative_char), lev)
+          lev = gsub("\\-|\\.", sprintf("\\%s", negative_char), lev)
           lev
         })
         tmp = paste0(vname_x2014cin, "___", tmp)
@@ -929,7 +936,19 @@ generate_data_validation_code = function(
           get_tab(), "msg__x2014cin = c(msg__x2014cin, \"'", vlabel_x2014cin, "' is required!\")"
         )
       )
-      
+      if(is.na(logic_x2014cin)){
+        cmd_r = c(
+          cmd_r, paste0(
+            get_tab(), "logic_x2014cin = c(logic_x2014cin,", logic_x2014cin, ")"
+          )
+        )
+      }else{
+        cmd_r = c(
+          cmd_r, paste0(
+            get_tab(), "logic_x2014cin = c(logic_x2014cin, \"", logic_x2014cin, "\" )"
+          )
+        )
+      }
       remove_tab()
       cmd_r = c(cmd_r, paste0(get_tab(), "}"))
       if (!is.null(updates)) {
@@ -999,7 +1018,19 @@ generate_data_validation_code = function(
             get_tab(), "msg__x2014cin = c(msg__x2014cin, \"'", vlabel_x2014cin, "' must be a date!\")"
           )
         )
-        
+        if(is.na(logic_x2014cin)){
+          cmd_r = c(
+            cmd_r, paste0(
+              get_tab(), "logic_x2014cin = c(logic_x2014cin,", logic_x2014cin, ")"
+            )
+          )
+        }else{
+          cmd_r = c(
+            cmd_r, paste0(
+              get_tab(), "logic_x2014cin = c(logic_x2014cin, \"", logic_x2014cin, "\" )"
+            )
+          )
+        }
         remove_tab()
         cmd_r = c(cmd_r, paste0(get_tab(), "}"))
       }
@@ -1038,7 +1069,19 @@ generate_data_validation_code = function(
             get_tab(), "msg__x2014cin = c(msg__x2014cin, \"'", vlabel_x2014cin, "' must be a number!\")"
           )
         )
-        
+        if(is.na(logic_x2014cin)){
+          cmd_r = c(
+            cmd_r, paste0(
+              get_tab(), "logic_x2014cin = c(logic_x2014cin,", logic_x2014cin, ")"
+            )
+          )
+        }else{
+          cmd_r = c(
+            cmd_r, paste0(
+              get_tab(), "logic_x2014cin = c(logic_x2014cin, \"", logic_x2014cin, "\" )"
+            )
+          )
+        }
         
         remove_tab()
         cmd_r = c(cmd_r, paste0(get_tab(), "}"))
@@ -1078,7 +1121,19 @@ generate_data_validation_code = function(
             get_tab(), "msg__x2014cin = c(msg__x2014cin, \"'", vlabel_x2014cin, "' must be an integer!\")"
           )
         )
-        
+        if(is.na(logic_x2014cin)){
+          cmd_r = c(
+            cmd_r, paste0(
+              get_tab(), "logic_x2014cin = c(logic_x2014cin,", logic_x2014cin, ")"
+            )
+          )
+        }else{
+          cmd_r = c(
+            cmd_r, paste0(
+              get_tab(), "logic_x2014cin = c(logic_x2014cin, \"", logic_x2014cin, "\" )"
+            )
+          )
+        }
         remove_tab()
         cmd_r = c(cmd_r, paste0(get_tab(), "}"))
       }
@@ -1133,12 +1188,12 @@ generate_data_validation_code = function(
       }
       range_code_x2014cin = "if (isTRUE("
       if (has_min_x2014cin)
-        range_code_x2014cin = paste0(range_code_x2014cin, tmp_var, " < ", min_val_x2014cin)
+        range_code_x2014cin = paste0(range_code_x2014cin, tmp_var, "!=-1 & (",tmp_var, " < ", min_val_x2014cin)
       if (has_min_x2014cin & has_max_x2014cin)
         range_code_x2014cin = paste0(range_code_x2014cin, " | ")
       if (has_max_x2014cin)
         range_code_x2014cin = paste0(range_code_x2014cin, tmp_var, " > ", max_val_x2014cin)
-      range_code_x2014cin = paste0(range_code_x2014cin, ")) {")
+      range_code_x2014cin = paste0(range_code_x2014cin, "))) {")
       cmd_r = c(cmd_r, paste0(get_tab(), range_code_x2014cin))
       add_tab()
       cmd_r = c(
@@ -1171,6 +1226,19 @@ generate_data_validation_code = function(
           get_tab(), "msg__x2014cin = c(msg__x2014cin, \"'", vlabel_x2014cin, "' is out of range!\")"
         )
       )
+    if(is.na(logic_x2014cin)){
+      cmd_r = c(
+        cmd_r, paste0(
+          get_tab(), "logic_x2014cin = c(logic_x2014cin,", logic_x2014cin, ")"
+        )
+      )
+    }else{
+      cmd_r = c(
+        cmd_r, paste0(
+          get_tab(), "logic_x2014cin = c(logic_x2014cin, \"", logic_x2014cin, "\" )"
+        )
+      )
+    }
       
       remove_tab()
       cmd_r = c(cmd_r, paste0(get_tab(), "}"))
@@ -1231,7 +1299,9 @@ generate_data_validation_code = function(
     }
   }
   tmp = character()
-  tmp = c(tmp, paste0(get_tab(), "if (length(msg__x2014cin) > 0L) {"))
+  tmp = c(tmp, paste0(get_tab(), "flush.console()
+           cat(paste('Record ID:', data_row$",id_var, ", 'validated\n'))
+                      if (length(msg__x2014cin) > 0L) {"))
   add_tab()
   tmp = c(tmp, paste0(
     get_tab(), "id_x2014cin = rep(", id_var, ", length(msg__x2014cin))"
@@ -1251,7 +1321,8 @@ generate_data_validation_code = function(
       get_tab(), paste0(
         "value_x2014cin = data.table::data.table(RecordID = id_x2014cin,",
         ifelse(is.na(surrogate_id_var), "", " Identifier = surr_id_x2014cin,"),
-        " DateOfEntry = date_x2014cin, Hospital = hosp_x2014cin, Form = form__x2014cin, Section = sect__x2014cin, Variable = name__x2014cin, Type = type__x2014cin, Entry = entry__x2014cin, Message = msg__x2014cin )"
+        " DateOfEntry = date_x2014cin, Hospital = hosp_x2014cin, Form = form__x2014cin, Section = sect__x2014cin, Variable = name__x2014cin, Type = type__x2014cin, Entry = entry__x2014cin, Message = msg__x2014cin, Logic=logic_x2014cin
+        )"
       )
     )
   )

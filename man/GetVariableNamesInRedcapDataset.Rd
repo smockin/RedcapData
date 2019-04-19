@@ -4,10 +4,12 @@
 \alias{get_vars_in_data}
 \title{Get the names of variables in a dataset based on REDCap metadata}
 \usage{
-get_vars_in_data(metadata)
+get_vars_in_data(metadata, negative_char = "_")
 }
 \arguments{
 \item{metadata}{REDCap metadata}
+
+\item{negative_char}{checkbox expansion character for a negative checkbox level}
 }
 \value{
 a character vector of the variable names in the dataset

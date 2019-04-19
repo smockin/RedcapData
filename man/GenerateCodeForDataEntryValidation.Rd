@@ -5,10 +5,11 @@
 \title{Autogenerate code for data validation}
 \usage{
 generate_data_validation_code(metadata, date_var, hosp_var, surrogate_id_var,
-  custom_code = NA, updates = NULL, updates_envir_depth = 1)
+  custom_code = NA, updates = NULL, updates_envir_depth = 1,
+  negative_char = "_")
 }
 \arguments{
-\item{metadata}{REDCap metadata}
+\item{metadata}{REDCap metadata with a formatted branching logic variable \emph{f.branching_logic}. See \code{\link{ExpandBranchingLogic}}}
 
 \item{date_var}{Name of variable that captures the date of entry}
 
@@ -21,6 +22,8 @@ generate_data_validation_code(metadata, date_var, hosp_var, surrogate_id_var,
 \item{updates}{Name of a list of RedcapUpdate(s) to be used for plugging functionality that abstracts the introduction of new variables during the projects lifecycle. See \code{\link{RedcapUpdate}}}
 
 \item{updates_envir_depth}{Integer of what parent frame contains updates. Default is immediate parent of calling environment (1) ie one level deep.}
+
+\item{negative_char}{checkbox expansion character for a negative checkbox level}
 }
 \value{
 A function that can be evaluated to validate data entry workflow for a single record.

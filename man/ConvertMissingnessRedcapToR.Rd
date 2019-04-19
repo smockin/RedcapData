@@ -24,6 +24,7 @@ This function helps map missingness expressions from REDCap to R
 }
 \seealso{
 Other RedcapToR: \code{\link{convert_dates_red2r}},
+  \code{\link{format_branching_logics}},
   \code{\link{logical_xpressions_red2r}},
   \code{\link{xtend_chb_names}}
 }
