@@ -21,7 +21,7 @@
 #' @family RedcapToR
 #' @return Transformed metadata with a formatted branching logic in the column name \emph{f.branching_logic} 
 format_branching_logics<- function(metadata=stop('Provide metadata')
-                                    ,data=stop('Provide data')){
+                                   ,data=stop('Provide data')){
   force(metadata)
   force(data)
   if(!is.data.frame(metadata))

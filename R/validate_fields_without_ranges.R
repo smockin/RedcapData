@@ -43,19 +43,19 @@ vectorHasNoData <- compiler::cmpfun(function(x) {
 #' @family Redcap-to-R parlance converters
 
 validate_data_in_branching_logic<- compiler::cmpfun(function(rec
-                                                   ,metadataName='metadata.formatted'
-                                                   ,dataName='data.raw'
-                                                   ,ipno_var=stop("Provide variable name for IP Number")
-                                                   ,dateOfEntry_var=stop("Provide variable name for date of entry")
-                                                   ,recordID_var=stop("Provide variable name for record ID")
-                                                   ,hospitalID_var=stop("Provide variable name for hospitals")
-                                                   ,individual.vars=stop("Provide a list of variables to be validated individually")
-                                                   ,n.groups=NULL
-                                                   ,group.names=NULL
-                                                   ,validateTreatmentDates=F
-                                                   ,treatmentFormName=NULL
-                                                   ,dischargeDateVar=NULL
-                                                   ,admissionDateVar=NULL
+                                                             ,metadataName='metadata.formatted'
+                                                             ,dataName='data.raw'
+                                                             ,ipno_var=stop("Provide variable name for IP Number")
+                                                             ,dateOfEntry_var=stop("Provide variable name for date of entry")
+                                                             ,recordID_var=stop("Provide variable name for record ID")
+                                                             ,hospitalID_var=stop("Provide variable name for hospitals")
+                                                             ,individual.vars=stop("Provide a list of variables to be validated individually")
+                                                             ,n.groups=NULL
+                                                             ,group.names=NULL
+                                                             ,validateTreatmentDates=F
+                                                             ,treatmentFormName=NULL
+                                                             ,dischargeDateVar=NULL
+                                                             ,admissionDateVar=NULL
 ){
   force(individual.vars)
   force(ipno_var)
@@ -142,7 +142,7 @@ validate_data_in_branching_logic<- compiler::cmpfun(function(rec
     }
   }else{
     flush.console()
-    cat("*=*")
+    cat(paste0('Record ID: ',rec[,recordID_var, with=F], ' validated\n'))
     return(
       get_errors(listOfVariables=get(individual.vars
                                      , envir = parent.frame()
@@ -156,18 +156,32 @@ validate_data_in_branching_logic<- compiler::cmpfun(function(rec
 #____________________________________________________________
 
 get_errors<- compiler::cmpfun(function(listOfVariables=NA
-                             , GroupVariable=NA){
+                                       , GroupVariable=NA){
   rec=get("rec", parent.frame())
   ipno_var=get("ipno_var", parent.frame())
   dateOfEntry_var=get("dateOfEntry_var", parent.frame())
   recordID_var=get("recordID_var", parent.frame())
   hospitalID_var=get("hospitalID_var", parent.frame())
   metadata=get("metadata", parent.frame())
+  dischargeDateVar=get('dischargeDateVar',
+                       envir = parent.frame()
+  )
+  
+  admissionDateVar=get('admissionDateVar',
+                       envir = parent.frame()
+  )
+  
+  treatmentFormName=get('treatmentFormName',
+                        envir = parent.frame()
+  )
+  validateTreatmentDates=get("validateTreatmentDates", envir = parent.frame())
+  
   ipn_=rec[,ipno_var, with=F][[1L]]
   id_=rec[,recordID_var, with=F][[1L]]
   datetoday=rec[, dateOfEntry_var, with=F][[1L]]
   hspId=rec[, hospitalID_var, with=F][[1L]]
   msg=NA_character_
+  Entry<<-NA_character_
   
   if(all(!is.na(
     GroupVariable
@@ -210,7 +224,7 @@ get_errors<- compiler::cmpfun(function(listOfVariables=NA
                            ,Variable=xx
                            # ,Label=remove_html_tags(lab_)
                            ,Type="No Entry"
-                           ,Entry=NA
+                           ,Entry=Entry
                            ,Message=remove_html_tags(msg)
                            ,Logic=cond_
                            
@@ -304,7 +318,7 @@ get_errors<- compiler::cmpfun(function(listOfVariables=NA
                                ,Variable=xx
                                # ,Label=remove_html_tags(lab_)
                                ,Type="No Entry"
-                               ,Entry=NA
+                               ,Entry=Entry
                                ,Message=remove_html_tags(msg)
                                ,Logic=cond_
                                
@@ -382,13 +396,27 @@ is_hidden<-compiler::cmpfun(
 # Assess if cell has data
 #____________________________________
 
-determine_if_cell_has_value<- compiler::cmpfun(function(){ #browser()
+determine_if_cell_has_value<- compiler::cmpfun(function(){ 
   isCheckbox=get('isCheckbox', envir = parent.frame())
   variable_toCheck=get('variable_toCheck', envir = parent.frame())
   cond_=get('cond_', envir = parent.frame())
   lab_=get('lab_', envir = parent.frame())
   rec=get("rec", envir = parent.frame())
   xx=get("xx", envir = parent.frame())
+  validateTreatmentDates=get("validateTreatmentDates", envir = parent.frame())
+  
+  dischargeDateVar=get('dischargeDateVar',
+                       envir = parent.frame()
+  )
+  
+  admissionDateVar=get('admissionDateVar',
+                       envir = parent.frame()
+  )
+  
+  treatmentFormName=get('treatmentFormName',
+                        envir = parent.frame()
+  )
+  
   metadata=get("metadata", envir = parent.frame())
   if(isCheckbox) {
     cellValue=
@@ -434,6 +462,7 @@ determine_if_cell_has_value<- compiler::cmpfun(function(){ #browser()
           isDate=get("isDate"
                      , envir = parent.frame())
           if(isDate){
+            
             msg=get_logical_dates()
             return(msg)
           }
@@ -476,6 +505,8 @@ get_logical_dates<- function(){
   lab_=get('lab_',
            envir = parent.frame()
   )
+  rec=get("rec", envir = parent.frame())
+  validateTreatmentDates=get("validateTreatmentDates", envir = parent.frame())
   if(isTRUE(
     all(
       !is.element("try-error",
@@ -487,18 +518,20 @@ get_logical_dates<- function(){
     if(isTRUE(
       as.character(dateDischarged) !='' &&
       !is.na(as.character(dateDischarged)) && 
-      (as.Date.character(cellValue) > as.Date.character(dateDischarged))
+      (as.Date.character(cellValue) > as.Date.character(dateDischarged) & as.Date.character(dateDischarged) >as.Date.character("1950-01-01"))
     )){
       msg<- paste0("`" ,lab_,"` cannot be after the date of discharge")
+      Entry<<-cellValue
       return(msg)
     } else if(!is.na(dateAdmitted) &&
               as.character(dateAdmitted)!=''){
       if(class(treatmentFormName) != 'try-error'){
         isTreatment=grepl(treatmentFormName, metadata[field_name==xx  , form_name], ignore.case = T)
         if(validateTreatmentDates & isTreatment){
-          if(as.Date.character(cellValue) < as.Date.character(dateAdmitted)){
+          if(as.Date.character(cellValue) < as.Date.character(dateAdmitted) & as.Date.character(dateAdmitted) >as.Date.character("1950-01-01")){
             if(as.Date.character(cellValue)> as.Date.character("1950-01-01")){
               msg<- paste0("`" ,lab_,"` cannot be earlier than the date of admission")
+              Entry<<-cellValue
               return(msg)
             }
           }
@@ -513,6 +546,7 @@ get_logical_dates<- function(){
           as.Date.character(dateDischarged) < as.Date.character(dateAdmitted)
       ){
         msg<- paste0("Date of discharge cannot be earlier than the date of admission")
+        Entry<<-dateDischarged
         return(msg)
       }
     } 
