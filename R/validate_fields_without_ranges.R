@@ -518,9 +518,13 @@ get_logical_dates<- function(){
     if(isTRUE(
       as.character(dateDischarged) !='' &&
       !is.na(as.character(dateDischarged)) && 
-      (as.Date.character(cellValue) > as.Date.character(dateDischarged) & as.Date.character(dateDischarged) >as.Date.character("1950-01-01"))
+      any(
+        (as.Date.character(cellValue) > as.Date.character(dateDischarged) &
+         as.Date.character(dateDischarged) >as.Date.character("1950-01-01"))|
+        (as.Date.character(cellValue) > Sys.Date() )
+        )
     )){
-      msg<- paste0("`" ,lab_,"` cannot be after the date of discharge")
+      msg<- paste0("`" ,lab_,"` cannot be after discharge date or in the future")
       Entry<<-cellValue
       return(msg)
     } else if(!is.na(dateAdmitted) &&
@@ -528,7 +532,8 @@ get_logical_dates<- function(){
       if(class(treatmentFormName) != 'try-error'){
         isTreatment=grepl(treatmentFormName, metadata[field_name==xx  , form_name], ignore.case = T)
         if(validateTreatmentDates & isTreatment){
-          if(as.Date.character(cellValue) < as.Date.character(dateAdmitted) & as.Date.character(dateAdmitted) >as.Date.character("1950-01-01")){
+          if(as.Date.character(cellValue) < as.Date.character(dateAdmitted) &
+             as.Date.character(dateAdmitted) >as.Date.character("1950-01-01")){
             if(as.Date.character(cellValue)> as.Date.character("1950-01-01")){
               msg<- paste0("`" ,lab_,"` cannot be earlier than the date of admission")
               Entry<<-cellValue
@@ -538,14 +543,28 @@ get_logical_dates<- function(){
         }
       }
       
-    }else{
+    }else if( !is.na(as.character(dateAdmitted)) && 
+              as.character(dateAdmitted) !='' &&
+              any(as.Date.character(dateAdmitted)> Sys.Date() |
+                  (as.Date.character(dateDischarged)> as.Date.character("1950-01-01") &&
+                   as.Date.character(dateAdmitted)> as.Date.character("1950-01-01") &&
+                   as.Date.character(dateAdmitted) > as.Date.character(dateDischarged))
+                  )
+    ){
+      msg<- paste0("Admission Date cannot be in the future or ealier than date of discharge!")
+      Entry<<-dateAdmitted
+      return(msg)
+    } else {
       if( as.character(dateDischarged) !='' &&
           !is.na(as.character(dateDischarged)) &&
           !is.na(as.character(dateAdmitted)) &&
-          as.Date.character(dateDischarged)> as.Date.character("1950-01-01") &&
-          as.Date.character(dateDischarged) < as.Date.character(dateAdmitted)
+          any(
+            (as.Date.character(dateDischarged)> as.Date.character("1950-01-01") &&
+          as.Date.character(dateDischarged) < as.Date.character(dateAdmitted)) |
+          as.Date.character(dateDischarged) > Sys.Date()
+          )
       ){
-        msg<- paste0("Date of discharge cannot be earlier than the date of admission")
+        msg<- paste0("Date of discharge cannot be in the future or earlier than the date of admission")
         Entry<<-dateDischarged
         return(msg)
       }
