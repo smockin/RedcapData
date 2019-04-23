@@ -189,21 +189,19 @@ get_errors<- compiler::cmpfun(function(listOfVariables=NA
   )){
     xx=variable_toCheck=GroupVariable
     cond_=metadata[is.element(field_name, xx)
-                   , f.branching_logic][1L]
+                   , f.branching_logic]
     
     form_=lab_=metadata[is.element(field_name, xx)
                         , form_name][1L]
-    
-    cellValue=
-      paste0(
-        'rec[',cond_,'
-        , variable_toCheck
-        , with=F]'
-      ) %>% 
+    cellValue=paste("c(",paste0(
+      'rec[',cond_,'
+      ,', variable_toCheck,
+      ']'
+      , collapse = ","), ")") %>% 
       parse(text=.) %>%
       eval()
     
-    if(nrow(cellValue)!=0 && !is_empty(cellValue) 
+    if(length(cellValue)!=0 && !is_empty(cellValue) 
     ){
       if(
         isTRUE(
@@ -211,29 +209,27 @@ get_errors<- compiler::cmpfun(function(listOfVariables=NA
             vectorHasNoData (as.character(cellValue))
           )
         )){
-        msg<- paste0('Provide at least one `', sect_ ,'`')
+        msg<- paste0('Provide at least one `', form_ ,'`')
       }
     }
-    if(!is.na(msg)){
+    if(!is.na(msg) && !is_empty(msg)){
       err.ds<-  data.table(RecordID=id_
                            ,Identifier=ipn_
                            ,DateOfEntry=datetoday
                            ,Hospital=hspId
                            ,Form=form_
-                           ,Section=sect_
-                           ,Variable=xx
-                           # ,Label=remove_html_tags(lab_)
+                           ,Section=NA_character_
+                           ,Variable=form_
                            ,Type="No Entry"
                            ,Entry=Entry
                            ,Message=remove_html_tags(msg)
-                           ,Logic=cond_
+                           ,Logic=NA_character_
                            
       )
+      Entry<<-NA_character_
       return(err.ds)
+      
     }
-    
-    
-    
   }else{
     listOfVariables %>% 
       map(function(xx){ 
@@ -316,14 +312,13 @@ get_errors<- compiler::cmpfun(function(listOfVariables=NA
                                ,Form=form_
                                ,Section=sect_
                                ,Variable=xx
-                               # ,Label=remove_html_tags(lab_)
                                ,Type="No Entry"
                                ,Entry=Entry
                                ,Message=remove_html_tags(msg)
                                ,Logic=cond_
                                
           )
-          
+          Entry<<-NA_character_
           return(err.ds)
           
         }
@@ -545,6 +540,8 @@ get_logical_dates<- function(){
       
     }else if( !is.na(as.character(dateAdmitted)) && 
               as.character(dateAdmitted) !='' &&
+              !is.na(as.character(dateDischarged)) && 
+              as.character(dateDischarged) !='' &&
               any(as.Date.character(dateAdmitted)> Sys.Date() |
                   (as.Date.character(dateDischarged)> as.Date.character("1950-01-01") &&
                    as.Date.character(dateAdmitted)> as.Date.character("1950-01-01") &&
@@ -556,6 +553,7 @@ get_logical_dates<- function(){
       return(msg)
     } else {
       if( as.character(dateDischarged) !='' &&
+          as.character(dateAdmitted) !='' &&
           !is.na(as.character(dateDischarged)) &&
           !is.na(as.character(dateAdmitted)) &&
           any(
