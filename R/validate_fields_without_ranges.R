@@ -182,6 +182,7 @@ get_errors<- compiler::cmpfun(function(listOfVariables=NA
   hspId=rec[, hospitalID_var, with=F][[1L]]
   msg=NA_character_
   Entry<<-NA_character_
+  Type<<-"No Entry"
   
   if(all(!is.na(
     GroupVariable
@@ -220,13 +221,14 @@ get_errors<- compiler::cmpfun(function(listOfVariables=NA
                            ,Form=form_
                            ,Section=NA_character_
                            ,Variable=form_
-                           ,Type="No Entry"
+                           ,Type=Type
                            ,Entry=Entry
                            ,Message=remove_html_tags(msg)
                            ,Logic=NA_character_
                            
       )
       Entry<<-NA_character_
+      Type<<-NA_character_
       return(err.ds)
       
     }
@@ -312,13 +314,14 @@ get_errors<- compiler::cmpfun(function(listOfVariables=NA
                                ,Form=form_
                                ,Section=sect_
                                ,Variable=xx
-                               ,Type="No Entry"
+                               ,Type=Type
                                ,Entry=Entry
                                ,Message=remove_html_tags(msg)
                                ,Logic=cond_
                                
           )
           Entry<<-NA_character_
+          Type<<-NA_character_
           return(err.ds)
           
         }
@@ -521,6 +524,7 @@ get_logical_dates<- function(){
     )){
       msg<- paste0("`" ,lab_,"` cannot be after discharge date or in the future")
       Entry<<-cellValue
+      Type<<-"Invalid date"
       return(msg)
     } else if(!is.na(dateAdmitted) &&
               as.character(dateAdmitted)!=''){
@@ -532,6 +536,7 @@ get_logical_dates<- function(){
             if(as.Date.character(cellValue)> as.Date.character("1950-01-01")){
               msg<- paste0("`" ,lab_,"` cannot be earlier than the date of admission")
               Entry<<-cellValue
+              Type<<-"Invalid date"
               return(msg)
             }
           }
@@ -550,6 +555,7 @@ get_logical_dates<- function(){
     ){
       msg<- paste0("Admission Date cannot be in the future or ealier than date of discharge!")
       Entry<<-dateAdmitted
+      Type<<-"Invalid date"
       return(msg)
     } else {
       if( as.character(dateDischarged) !='' &&
@@ -564,6 +570,7 @@ get_logical_dates<- function(){
       ){
         msg<- paste0("Date of discharge cannot be in the future or earlier than the date of admission")
         Entry<<-dateDischarged
+        Type<<-"Invalid date"
         return(msg)
       }
     } 
