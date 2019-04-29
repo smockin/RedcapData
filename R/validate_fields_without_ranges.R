@@ -182,7 +182,7 @@ get_errors<- compiler::cmpfun(function(listOfVariables=NA
   hspId=rec[, hospitalID_var, with=F][[1L]]
   msg=NA_character_
   Entry<<-NA_character_
-  Type<<-"No Entry"
+  Type<<-NA_character_
   
   if(all(!is.na(
     GroupVariable
@@ -211,6 +211,7 @@ get_errors<- compiler::cmpfun(function(listOfVariables=NA
           )
         )){
         msg<- paste0('Provide at least one `', form_ ,'`')
+        Type<<-"No Entry"
       }
     }
     if(!is.na(msg) && !is_empty(msg)){
@@ -228,7 +229,6 @@ get_errors<- compiler::cmpfun(function(listOfVariables=NA
                            
       )
       Entry<<-NA_character_
-      Type<<-NA_character_
       return(err.ds)
       
     }
@@ -321,7 +321,6 @@ get_errors<- compiler::cmpfun(function(listOfVariables=NA
                                
           )
           Entry<<-NA_character_
-          Type<<-NA_character_
           return(err.ds)
           
         }
@@ -435,6 +434,7 @@ determine_if_cell_has_value<- compiler::cmpfun(function(){
           )
         )){
         msg<- paste0("`" ,lab_,"` has no data!")
+        Type<<-"No Entry"
         return(msg)
       }
     }
@@ -455,6 +455,7 @@ determine_if_cell_has_value<- compiler::cmpfun(function(){
             cellValue
           )){
           msg<- paste0("`" ,lab_,"` has no data!")
+          Type<<-"No Entry"
           return(msg)
         }else{
           isDate=get("isDate"
