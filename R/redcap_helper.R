@@ -719,6 +719,7 @@ generate_data_validation_code = function(
       get_tab(), ",Message = \"<< Date variable [", date_var, "] missing. This is needed for error reporting >>\""
     )
   )
+  tmp = c(tmp, paste0(get_tab(), ",Logic = NA_character_"))
   remove_tab()
   tmp = c(tmp, paste0(get_tab(), ")) else ", date_var, " = as.Date(", date_var,  ")"))
   if (!is.null(updates)) {
