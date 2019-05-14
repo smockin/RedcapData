@@ -28,6 +28,7 @@ This function helps map logical expressions from REDCap to R
 \seealso{
 Other RedcapToR: \code{\link{convert_dates_red2r}},
   \code{\link{convert_missing_red2r}},
+  \code{\link{is_hidden}},
   \code{\link{logical_xpressions_red2r}},
   \code{\link{xtend_chb_names}}
 }

@@ -301,7 +301,7 @@ get_errors<- compiler::cmpfun(function(listOfVariables=NA
         
         if(
           isTRUE(
-            !is_hidden(b.logic = cond_)
+            !is_hidden(cond_,xx,metadata )
           )
         ){
           msg=determine_if_cell_has_value()
@@ -334,10 +334,29 @@ get_errors<- compiler::cmpfun(function(listOfVariables=NA
 # detertermine if field is hidden: no data expected
 #___________________________________________________________
 
+#' @rdname IsHidden
+#'
+#' @name is_hidden
+#'
+#' @title Evaluate if the field name is hidden in REDCap data collection tool
+#'
+#' @description Determines if the fieldname is hidden based on branching logics and REDCap hidden functionality.
+#'
+#' @param b_logic Formatted branching logic associated with the variable name
+#' @param fieldname Variable name
+#' @param metadata REDCap metadata
+#'
+#' @export
+#' 
+#' @family RedcapToR
+#' @return TRUE if the fieldname is hidden in REDCap 
 is_hidden<-compiler::cmpfun(
-  function(b.logic){
-    has.hidden.fun=get('has.hidden.fun', envir = parent.frame())
-    if(has.hidden.fun) {
+  function(b.logic, fieldname=NA_character_, metadata){
+    has.hidden.fun<- grepl("hidden"
+                           , metadata[field_name==fieldname
+                                      , field_annotation]
+                           , ignore.case = T)
+     if(has.hidden.fun) {
       return(T)  
     }else{
       if(grepl("&", b.logic)){

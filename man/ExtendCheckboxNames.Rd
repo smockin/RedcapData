@@ -26,5 +26,6 @@ This function helps expand REDCap checkbox syntax eg chk(1) to the underlying da
 Other RedcapToR: \code{\link{convert_dates_red2r}},
   \code{\link{convert_missing_red2r}},
   \code{\link{format_branching_logics}},
+  \code{\link{is_hidden}},
   \code{\link{logical_xpressions_red2r}}
 }

@@ -677,7 +677,7 @@ generate_data_validation_code = function(
   tmp = ""
   tmp = c(
     tmp, paste0(
-      get_tab(), "validate_data_entry = function(data_row, hosp_to_validate = NA, updates = list()) {"
+      get_tab(), "validate_data_entry = function(data_row, hosp_to_validate = NA, updates = list(), metadata) {"
     )
   )
   add_tab()
@@ -967,7 +967,9 @@ generate_data_validation_code = function(
         add_tab()
       }
       cmd_r = c(cmd_r, paste0(
-        get_tab(), "if (! isTRUE(data_missing(", vname_x2014cin, "))) {"
+        get_tab(), "if (isTRUE(
+    !is_hidden(\"",logic_x2014cin,"\",'",vname_x2014cin,"',metadata )
+      ) & ! isTRUE(data_missing(", vname_x2014cin, "))) {"
       ))
       add_tab()
       cmd_r = c(
@@ -986,7 +988,9 @@ generate_data_validation_code = function(
       }
       if (isTRUE(tolower(vtype_val_x2014cin) == "date_ymd")) {
         cmd_r = c(cmd_r, paste0(
-          get_tab(), "if (! isTRUE(is_date(", vname_x2014cin, "))) {"
+          get_tab(), "if (isTRUE(
+    !is_hidden(\"",logic_x2014cin,"\",'",vname_x2014cin,"',metadata )
+        ) & ! isTRUE(is_date(", vname_x2014cin, "))) {"
         ))
         add_tab()
         cmd_r = c(
@@ -1037,7 +1041,9 @@ generate_data_validation_code = function(
       }
       else if (isTRUE(tolower(vtype_val_x2014cin) == "number")) {
         cmd_r = c(cmd_r, paste0(
-          get_tab(), "if (! isTRUE(is_number(", vname_x2014cin, "))) {"
+          get_tab(), "if (isTRUE(
+    !is_hidden(\"",logic_x2014cin,"\",'",vname_x2014cin,"',metadata )
+        ) & ! isTRUE(is_number(", vname_x2014cin, "))) {"
         ))
         add_tab()
         cmd_r = c(
@@ -1166,7 +1172,9 @@ generate_data_validation_code = function(
         tmp_var = paste0("suppressWarnings(as.numeric(", vname_x2014cin, "))")
       }
       if (!is.na(logic_x2014cin)) {
-        cmd_r = c(cmd_r, paste0(get_tab(), "if (isTRUE(", logic_x2014cin, ")) {"))
+        cmd_r = c(cmd_r, paste0(get_tab(), "if (isTRUE(
+    !is_hidden(\"",logic_x2014cin,"\",'",vname_x2014cin,"',metadata )
+        ) & isTRUE(", logic_x2014cin, ")) {"))
         add_tab()
       }
       cmd_r = c(cmd_r, paste0(
