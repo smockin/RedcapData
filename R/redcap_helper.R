@@ -700,7 +700,7 @@ generate_data_validation_code = function(
   tmp = c(tmp, paste0(get_tab(), "entry__x2014cin = character()"))
   tmp = c(tmp, paste0(get_tab(), "type__x2014cin = character()"))
   tmp = c(tmp, paste0(get_tab(), "msg__x2014cin = character()"))
-  tmp = c(tmp, paste0(get_tab(), "logic_x2014cin = character()"))
+  tmp = c(tmp, paste0(get_tab(), "logic_x2014cin = NA_character_"))
   tmp = c(
     tmp, paste0(
       get_tab(), "if (!date_can_be_validated(", date_var, ")) return(data.table("
