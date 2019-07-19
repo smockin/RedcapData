@@ -588,12 +588,13 @@ generate_formatting_code = function(metadata, dataset_name = "data", negative_ch
         levels = paste0("c(", paste0(unique(choices[, 1L]), collapse = ", "), ")")
         labels_levels = paste0("c(", paste0(unique(choices[, 2L]), collapse = ", "), ")")
         if(length(unique(choices[, 1L]))!=length(unique(choices[, 2L]))){
-        labels_levels = paste0("c(", paste0((choices[, 2L]), collapse = ", "), ")")
+          dups=(gsub("\"", '', (choices[, 2L]) ))
+        labels_levels = paste0("c(", paste0(handleDuplicatedLevels(dups), collapse = ", "), ")")
           }
         }
     } else if (tolower(x[, field_type]) == "yesno") {
       variable = x[, field_name]
-      label = gsub("\n", "", remove_html_tags(x[, field_label]))
+     label = gsub("\n", "", remove_html_tags(x[, field_label]))
       if (length(label) == 0)
         label = NA_character_
       levels = "c(0, 1)"
@@ -606,6 +607,7 @@ generate_formatting_code = function(metadata, dataset_name = "data", negative_ch
       levels = NA_character_
       labels_levels = NA_character_
     }
+  
     value = data.table::data.table(
       Variable = variable, Label = label, Levels = levels, Label_Levels = labels_levels
     )
@@ -625,6 +627,21 @@ generate_formatting_code = function(metadata, dataset_name = "data", negative_ch
   cmd = c(cmd, tmp)
   cmd = paste0(cmd, collapse = "\n")
   cmd
+}
+
+handleDuplicatedLevels<- function(dups){
+  dupsnames<- names(dups)
+  dups<- as.character(dups)
+  nm=names(which(table(dups)>1))
+  tx=max(table(dups))
+ touse= as.character(sapply(1:tx, function(xx){
+    paste0(nm,paste0(rep(" ", xx), collapse = ""))
+  }))
+ dups[grep(nm, dups)]<-touse
+ retV=sapply(dups, function(x)
+   paste0("\"", x, "\""))
+ names(retV)<- dupsnames
+ retV
 }
 
 #' @rdname GenerateCodeForDataEntryValidation

@@ -269,7 +269,7 @@ Redcap = setRefClass(
       .self$.__cache$clean_meta
     },
     
-    format_records = function() { 
+    format_records = function() {
       "Format records to add Hmisc labels and create factors"
       
       if (!"fmt_records" %in% ls(all = T, envir = .self$.__cache)) {
@@ -419,7 +419,7 @@ Redcap = setRefClass(
       .self$.__cache$part_clean_records
     },
     
-    get_formatted_data = function() {
+    get_formatted_data = function() { 
       "Get formatted records from memory"
       
       if (!"fmt_records" %in% ls(all = T, envir = .self$.__cache))
