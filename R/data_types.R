@@ -68,3 +68,28 @@ is_boolean = function(x) {
     return(TRUE)
   isTRUE(x %in% c("T", "F", "TRUE", "FALSE"))
 }
+
+
+#'
+#' @rdname DataTypeChecks
+#' @export
+
+is_checkbox = function(varName, metadataName) {
+  meta=try(as.data.frame(get(metadataName)), silent=T)
+  if(class(meta)=="try-error"){
+    meta=data.frame(metadataName)
+  }
+  setDT(meta)
+  if(!(all(c("field_name", 'field_type') %in% names(meta)))){
+    stop("Metadata must have `field_name` and `field_type`")
+  }
+  varName = as.character(varName)
+  if(
+    isTRUE(
+      meta[field_name==varName, field_type=='checkbox']
+    )){
+    return(T)
+  }else{
+    F
+  }
+}

@@ -717,7 +717,7 @@ generate_data_validation_code = function(
   tmp = c(tmp, paste0(get_tab(), "entry__x2014cin = character()"))
   tmp = c(tmp, paste0(get_tab(), "type__x2014cin = character()"))
   tmp = c(tmp, paste0(get_tab(), "msg__x2014cin = character()"))
-  tmp = c(tmp, paste0(get_tab(), "logic_x2014cin = NA_character_"))
+  tmp = c(tmp, paste0(get_tab(), "logic_x2014cin = character()"))
   tmp = c(
     tmp, paste0(
       get_tab(), "if (!date_can_be_validated(", date_var, ")) return(data.table("
@@ -941,7 +941,7 @@ generate_data_validation_code = function(
       )
       cmd_r = c(
         cmd_r, paste0(
-          get_tab(), "entry__x2014cin = c(entry__x2014cin, as.character(", vname_x2014cin, "))"
+          get_tab(), "entry__x2014cin = c(entry__x2014cin, as.character( ifelse(RedcapData:::is_checkbox(varName = '",vname_x2014cin, "', metadataName =metadata), ' ', ", vname_x2014cin, ")))"
         )
       )
       cmd_r = c(
@@ -1345,7 +1345,8 @@ generate_data_validation_code = function(
   tmp = c(
     tmp, paste0(
       get_tab(), paste0(
-        "value_x2014cin = data.table::data.table(RecordID = id_x2014cin,",
+        "
+        value_x2014cin = data.table::data.table(RecordID = id_x2014cin,",
         ifelse(is.na(surrogate_id_var), "", " Identifier = surr_id_x2014cin,"),
         " DateOfEntry = date_x2014cin, Hospital = hosp_x2014cin, Form = form__x2014cin, Section = sect__x2014cin, Variable = name__x2014cin, Type = type__x2014cin, Entry = entry__x2014cin, Message = msg__x2014cin, Logic=logic_x2014cin
         )"
