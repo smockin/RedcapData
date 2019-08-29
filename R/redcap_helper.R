@@ -838,7 +838,7 @@ generate_data_validation_code = function(
       chk_tmp = stringr::str_trim(unlist(strsplit(choices_x2014cin, "\\|")))
       chk_tmp = sapply(chk_tmp, function(chk) {
         value = as.numeric(stringr::str_trim(unlist(strsplit(chk, ",")))[1])
-        if (value < 0)
+        if (isTRUE(value < 0))
           value = gsub("\\-|\\.", sprintf("\\%s", negative_char), as.character(value))
         value = as.character(value)
       })
