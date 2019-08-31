@@ -295,7 +295,7 @@ get_vars_in_data = function(metadata, negative_char="_") {
         lev = gsub("\\-|\\.", sprintf("\\%s", negative_char), lev)
         lev
       })
-      value = data.table::data.table(var = paste0(var, "___", choices))
+      value = data.table::data.table(var = paste0(var, "___", tolower(choices)))
     } else if (widget == "descripive") {
       value = data.table::data.table()
     } else {
@@ -572,7 +572,7 @@ generate_formatting_code = function(metadata, dataset_name = "data", negative_ch
       if (x[, field_type] == "checkbox") { 
         tmp = sapply(choices[, 1], function(x)
           gsub("\\-|\\.", negative_char, x))
-        variable = paste0(x[, field_name], "___", tmp)
+        variable = tolower(paste0(x[, field_name], "___", tmp))
         label = paste0(gsub("\n", "", remove_html_tags(x[, field_label])), "(", choices[, 2], ")")
         if (length(label) == 0)
           label = NA_character_
