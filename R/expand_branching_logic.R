@@ -53,6 +53,8 @@ format_branching_logics<- function(metadata=stop('Provide metadata')
 get_evaluated_branching_logics<- compiler::cmpfun(function(br){
   records=get("data", parent.frame())
   toformat<- br %>% 
+    gsub("and\\[", " & ", .) %>%
+    gsub("and[ \t]+\\[", " & ", .) %>%
     gsub("\\[|\\]", "", .) %>% 
     gsub("[ \t]and[ \t]|[ \t]+((AND)|(and))[ \t]+", " & ", .) %>% 
     gsub("[ \t]or[ \t]|[ \t]+((OR)|(or))[ \t]+", " | ", .) %>% 
