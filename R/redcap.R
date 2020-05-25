@@ -81,7 +81,19 @@ Redcap = setRefClass(
       Clears the cache and loads data.
       < NOTE: Do this only for initial loading or when you are sure there are changes in the data repo >.
       "
-      
+      ids_to_pull<-if(
+        all(
+          !is.na(
+            .self$opts$configs$ids_to_pull
+          ))){
+        str_trim(gsub("c", ""
+                      ,(gsub("\\(|\\)",""
+                             ,unlist(str_split(
+                               .self$opts$configs$ids_to_pull,
+                               ","))))))
+      }else{
+        .self$opts$configs$ids_to_pull
+      }
       if (length(ls(.self$.__cache)))
         message("NOTE: cache has been cleared")
       rm(list = ls(.self$.__cache), envir = .self$.__cache)
@@ -91,6 +103,7 @@ Redcap = setRefClass(
         if (.self$opts$configs$chunksize < 1)
           .self$log("specify a valid chunksize", 2, function_name = "load_data")
         message("loading chunked data...")
+        ids_to_pull<-ids_to_pull
         tryCatch({
           get_chunked_redcap_data(
             api = .self$opts$configs$api_url,
@@ -99,7 +112,8 @@ Redcap = setRefClass(
             chunksize = .self$opts$configs$chunksize,
             forms = NULL,
             fields = NULL,
-            ids_to_pull = NULL,
+            ids_to_pull = ids_to_pull
+            ,
             dataset_name = "records",
             metadataset_name = "meta"
           )
@@ -122,11 +136,13 @@ Redcap = setRefClass(
             content = "metadata",
             local = .self$opts$configs$local
           )
+        
           records = get_redcap_data(
             api = .self$opts$configs$api_url,
             token = .self$opts$configs$token,
             content = "record",
-            local = .self$opts$configs$local
+            local = .self$opts$configs$local,
+            ids_to_pull=ids_to_pull
           )
         },
         warning = function(w) {
@@ -544,15 +560,26 @@ redcap_project = function(...,
       "report_location",
       "hosp_to_validate",
       "surrogate_id_var",
-      "verbose"
+      "verbose",
+      'ids_to_pull'
     )
     configs_data = configs_data[configs_valid]
-    configs_data = data.frame(
-      key = names(configs_data),
-      value = Reduce(c, configs_data),
-      type = get_config_type_from_variable(Reduce(c, configs_data)),
-      stringsAsFactors = TRUE
-    )
+    other.cnfs=data.frame(
+      key =names(configs_data)[names(configs_data)!="ids_to_pull"],
+      value = Reduce(c, configs_data[names(configs_data)!="ids_to_pull"]),
+      type = get_config_type_from_variable(Reduce(c, configs_data[names(configs_data)!="ids_to_pull"])),
+      stringsAsFactors = T)
+    
+    id.cnf=configs_data[names(configs_data)=="ids_to_pull"]
+    id.cnf=data.frame(key='ids_to_pull',value=paste0(id.cnf, collapse = ",") ,type="string") 
+    configs_data= as.data.frame(rbind(other.cnfs, id.cnf),)
+    
+    # configs_data = data.frame(
+    #   key = names(configs_data),
+    #   value = Reduce(c, configs_data),
+    #   type = get_config_type_from_variable(Reduce(c, configs_data)),
+    #   stringsAsFactors = TRUE
+    # )
   } else {
     if (!file.exists(configs_location))
       stop("configurations file not found")

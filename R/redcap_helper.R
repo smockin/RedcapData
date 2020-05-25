@@ -112,8 +112,8 @@ get_chunked_redcap_data = function(api,
   id_name = get(metadataset_name, envir = outer_env)[1, 1]
   
   ids_specified = FALSE
-  if (!is.null(ids_to_pull)) {
-    if (!is.na(ids_to_pull)) {
+  if (all(!is.null(ids_to_pull))) {
+    if (all(!is.na(ids_to_pull))) {
       ids_list = as.character(unlist(unclass(ids_to_pull)))
       ids_specified = TRUE
     }
