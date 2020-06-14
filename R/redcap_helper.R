@@ -86,6 +86,7 @@ get_chunks = function(x, chunksize) {
 get_chunked_redcap_data = function(api,
                                    token,
                                    local = TRUE,
+                                   verifySSL=F,
                                    chunksize = 100,
                                    forms = NULL,
                                    fields = NULL,
@@ -107,7 +108,7 @@ get_chunked_redcap_data = function(api,
   outer_env = parent.frame(1)
   if (!exists(metadataset_name, envir = outer_env))
     assign(
-      metadataset_name, get_redcap_data(api, token, local, content = "metadata"), outer_env
+      metadataset_name, get_redcap_data(api, token, local, content = "metadata", verifySSL = verifySSL), outer_env
     )
   id_name = get(metadataset_name, envir = outer_env)[1, 1]
   
@@ -119,7 +120,7 @@ get_chunked_redcap_data = function(api,
     }
   }
   if (!ids_specified) {
-    ids_list = as.character(unlist(get_redcap_data(api, token, fields = id_name)))
+    ids_list = as.character(unlist(get_redcap_data(api, token, fields = id_name, verifySSL = verifySSL)))
   }
   
   data_size = length(ids_list)
@@ -130,7 +131,7 @@ get_chunked_redcap_data = function(api,
     counter = chunksize
     data_list = Map(function(ids) {
       ds_chunk = get_redcap_data(
-        api = api, token = token, local = local, fields = fields, forms = forms, ids_to_pull = ids
+        api = api, token = token, local = local, fields = fields, forms = forms, ids_to_pull = ids, verifySSL = verifySSL
       )
       message(paste0(
         "downloaded ", min(100, round(counter * 100 / data_size, 2)), "%", ifelse(counter >= data_size, "", "...")
@@ -181,11 +182,12 @@ get_redcap_data = function(api,
                            token,
                            content = "record",
                            local = TRUE,
+                           verifySSL=F,
                            forms = NULL,
                            fields = NULL,
                            ids_to_pull = NULL) {
   fun_env = environment()
-  if (!RCurl::url.exists(gsub("/api/", "", api)))
+  if (!RCurl::url.exists(gsub("/api/", "", api), .opts = list(ssl.verifypeer = verifySSL)))
     stop("invalid api url")
   opts = list(
     uri = api,
@@ -194,7 +196,7 @@ get_redcap_data = function(api,
     format = "csv",
     content = content,
     rawOrLabel = "raw",
-    .opts = RCurl::curlOptions(ssl.verifypeer = !local)
+    .opts = RCurl::curlOptions(ssl.verifypeer = verifySSL)
   )
   if (!is.null(forms))
     opts$forms = paste0(forms, collapse = ",")
@@ -1483,20 +1485,25 @@ prepare_metadata_for_code_generation = function(metadata) {
 #' @export
 #'
 
-get_redcap_version <- function(url = "http://localhost/redcap") {
-  if (!url.exists(url) || !grepl("/redcap(/)?", url))
+get_redcap_version <- function(url = "http://localhost/redcap", ssl.verify=F) {
+  if (!url.exists(url,  .opts = list(ssl.verifypeer = ssl.verify)) || !grepl("/redcap(/)?", url))
     stop(sprintf("invalid redcap url %s", sQuote(url)))
   pattern <- "REDCap([[:space:][:alpha:]\\-])+[[:digit:]]+.[[:digit:]]+.[[:digit:]]"
-  page <- readLines(url, warn=F)
-  version <- page[sapply(page, regexpr, pattern=pattern) > 0]
-  if (0 == length(version))
-    stop(sprintf("cannot get version info from index page %s", sQuote(url)))
-  version <- regmatches(version[1], regexpr(pattern, version))
-  version <- regmatches(
-    version, 
-    regexpr("[[:digit:]]+.[[:digit:]]+.[[:digit:]]", version)
+  
+  page <- try(readLines(url, warn=F), silent = T)
+  if(class(page)!="try-error"){
+    version <- page[sapply(page, regexpr, pattern=pattern) > 0]
+    if (0 == length(version))
+      stop(sprintf("cannot get version info from index page %s", sQuote(url)))
+    version <- regmatches(version[1], regexpr(pattern, version))
+    version <- regmatches(
+      version, 
+      regexpr("[[:digit:]]+.[[:digit:]]+.[[:digit:]]", version)
     )
-  setNames(
-    lapply(unlist(strsplit(version, "\\.")), as.integer), 
-    c("major", "minor", "release"))
+    setNames(
+      lapply(unlist(strsplit(version, "\\.")), as.integer), 
+      c("major", "minor", "release"))
+  }else{
+    list(major=' . ',minor=' . ',release=' . ')
+  }
 }

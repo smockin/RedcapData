@@ -112,8 +112,8 @@ Redcap = setRefClass(
             chunksize = .self$opts$configs$chunksize,
             forms = NULL,
             fields = NULL,
-            ids_to_pull = ids_to_pull
-            ,
+            ids_to_pull = ids_to_pull,
+            verifySSL=.self$opts$configs$verifySSL,
             dataset_name = "records",
             metadataset_name = "meta"
           )
@@ -134,7 +134,8 @@ Redcap = setRefClass(
             api = .self$opts$configs$api_url,
             token = .self$opts$configs$token,
             content = "metadata",
-            local = .self$opts$configs$local
+            local = .self$opts$configs$local,
+            verifySSL=.self$opts$configs$verifySSL
           )
         
           records = get_redcap_data(
@@ -142,7 +143,8 @@ Redcap = setRefClass(
             token = .self$opts$configs$token,
             content = "record",
             local = .self$opts$configs$local,
-            ids_to_pull=ids_to_pull
+            ids_to_pull=ids_to_pull,
+            verifySSL=.self$opts$configs$verifySSL
           )
         },
         warning = function(w) {
@@ -166,7 +168,8 @@ Redcap = setRefClass(
           api = .self$opts$configs$api_url,
           token = .self$opts$configs$token,
           content = "metadata",
-          local = .self$opts$configs$local
+          local = .self$opts$configs$local,
+          verifySSL=.self$opts$configs$verifySSL
         )
       },
       warning = function(w) {
@@ -489,7 +492,7 @@ Redcap = setRefClass(
       
       if (!".negative_char" %in% ls(.self$.__cache, all.names=T)) {
         if ("major" %in% names(.self$version))
-          if (.self$version$major > 5)
+          if (.self$version$major > 5 | .self$version$major==" . ")
             .self$.__cache$.negative_char = "_"
           else
             .self$.__cache$.negative_char = "."
@@ -561,7 +564,8 @@ redcap_project = function(...,
       "hosp_to_validate",
       "surrogate_id_var",
       "verbose",
-      'ids_to_pull'
+      'ids_to_pull',
+      'verifySSL'
     )
     configs_data = configs_data[configs_valid]
     other.cnfs=data.frame(
@@ -615,7 +619,7 @@ redcap_project = function(...,
   configs$updates = updates
   if (!configs$is_valid())
     stop("invalid configs")
-  version = get_redcap_version(gsub("/api(/)?", "", configs$configs$api_url))
+  version = get_redcap_version(gsub("/api(/)?", "", configs$configs$api_url),configs$configs$verifySSL)
   obj = Redcap$new(opts = configs, version=version)
   obj
 }
