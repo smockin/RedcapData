@@ -115,7 +115,8 @@ Redcap = setRefClass(
             ids_to_pull = ids_to_pull,
             verifySSL=.self$opts$configs$verifySSL,
             dataset_name = "records",
-            metadataset_name = "meta"
+            metadataset_name = "meta",
+            parallel=.self$opts$configs$parallel
           )
         },
         warning = function(w) {
@@ -144,7 +145,8 @@ Redcap = setRefClass(
             content = "record",
             local = .self$opts$configs$local,
             ids_to_pull=ids_to_pull,
-            verifySSL=.self$opts$configs$verifySSL
+            verifySSL=.self$opts$configs$verifySSL,
+            parallel=.self$opts$configs$parallel
           )
         },
         warning = function(w) {
@@ -565,7 +567,8 @@ redcap_project = function(...,
       "surrogate_id_var",
       "verbose",
       'ids_to_pull',
-      'verifySSL'
+      'verifySSL',
+      'parallel'
     )
     configs_data = configs_data[configs_valid]
     other.cnfs=data.frame(

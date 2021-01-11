@@ -76,7 +76,8 @@ get_chunks = function(x, chunksize) {
 #' @param ids_to_pull A character vector of the specific record itentifiers to pull from.
 #' @param dataset_name Name of the resultant dataset
 #' @param metadataset_name Name of the resultant metadata
-#'
+#' @param parallel Whether to export records in parallel- plan(multsession) is used is set to TRUE
+
 #' @seealso \code{\link{get_chunks}}, \code{\link{Redcap}}
 #'
 #' @export
