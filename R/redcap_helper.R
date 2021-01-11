@@ -92,7 +92,8 @@ get_chunked_redcap_data = function(api,
                                    fields = NULL,
                                    ids_to_pull = NULL,
                                    dataset_name = "records",
-                                   metadataset_name = "meta") {
+                                   metadataset_name = "meta", 
+                                   parallel=F) {
   if (missing(api))
     stop("specify api url")
   if (missing(token))
@@ -128,17 +129,46 @@ get_chunked_redcap_data = function(api,
   
   tryCatch({
     message(paste0("downloading data from redcap... (", data_size, " rows!)"))
-    counter = chunksize
-    data_list = Map(function(ids) {
-      ds_chunk = get_redcap_data(
-        api = api, token = token, local = local, fields = fields, forms = forms, ids_to_pull = ids, verifySSL = verifySSL
-      )
-      message(paste0(
-        "downloaded ", min(100, round(counter * 100 / data_size, 2)), "%", ifelse(counter >= data_size, "", "...")
-      ))
-      assign("counter", counter + chunksize, envir = parent.env(environment()))
-      ds_chunk
-    }, ids_list)
+    # counter = chunksize
+    # data_list = Map(function(ids) {
+    #   ds_chunk = get_redcap_data(
+    #     api = api, token = token, local = local, fields = fields, forms = forms, ids_to_pull = ids, verifySSL = verifySSL
+    #   )
+    #   message(paste0(
+    #     "downloaded ", min(100, round(counter * 100 / data_size, 2)), "%", ifelse(counter >= data_size, "", "...")
+    #   ))
+    #   assign("counter", counter + chunksize, envir = parent.env(environment()))
+    #   ds_chunk
+    # }, ids_list)
+    
+    if(parallel){
+      library(doFuture)
+      registerDoFuture()
+      # cl<-parallel::makeCluster(100)
+      # plan(cluster,workers=cl)
+      plan(multisession,workers=100)
+      time=system.time(data_list<- foreach(ids = ids_list) %dopar% {
+        get_redcap_data(
+          api = api, token = token, local = local, fields = fields, forms = forms, ids_to_pull = ids, verifySSL = verifySSL
+        )
+      })
+      
+    }else{
+      time=system.time(data_list <- lapply(ids_list, function(ids) {
+        ds_chunk = get_redcap_data(
+          api = api, token = token, local = local, fields = fields, forms = forms, ids_to_pull = ids, verifySSL = verifySSL
+        )
+        # message(paste0(
+        #   "downloaded ", min(100, round(counter * 100 / data_size, 2)), "%", ifelse(counter >= data_size, "", "...")
+        # ))
+        # assign("counter", counter + chunksize, envir = parent.env(environment()))
+        ds_chunk
+      }))
+    }
+    
+    message(sprintf("Download took %.0f seconds",time[['elapsed']]))
+    
+    
     assign(dataset_name, data.frame(data.table::rbindlist(data_list)), envir = outer_env)
   },
   error = function(e) {
@@ -147,6 +177,8 @@ get_chunked_redcap_data = function(api,
   warning = function(w) {
     warning("chunked download failed: [details: ", sQuote(w$message), "]")
   })
+  
+  
 }
 
 #' @rdname GetBulkRedcapData
