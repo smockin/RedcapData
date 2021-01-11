@@ -1,7 +1,7 @@
 Package: RedcapData
 Title: Data management utility support for REDCap repositories
 Version: 1.1.1
-Authors@R: "Boniface Makone <bonifacemakone@gmail.com> [aut, cre]"
+Authors@R: "Morris Ogero <smockinmorris@gmail.com> [aut, cre]"
 Maintainer@R: "Morris Ogero <smockinmorris@gmail.com> [aut, cre]"
 Description: This package contains utility and helper functions that support
     data management tasks of REDCap repositories. These tasks include data
@@ -16,7 +16,8 @@ Imports:
     stringr,
     methods,
     purrr,
-    compiler
+    compiler,
+    doFuture
 URL: https://github.com/smockin/RedcapData
 Collate:
     'data_types.R'
