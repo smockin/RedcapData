@@ -27,7 +27,7 @@ RedcapConfig = setRefClass(
   "RedcapConfig",
   fields = list(updates = "list",
                 configs = "environment"),
-  
+
   methods = list(
     show = function() {
       if (.self$is_valid()) {
@@ -68,10 +68,10 @@ RedcapConfig = setRefClass(
         cat("Invalid configurations!\n")
       }
     },
-    
+
     list_configs = function() {
       "Display the configurations for the REDCap session/object"
-      
+
       if (.self$is_valid()) {
         out = as.list(.self$configs)
         out$custom_code = if (!all(sapply(out$custom_code, is.na))) {
@@ -102,10 +102,10 @@ RedcapConfig = setRefClass(
         cat("Invalid configurations!\n")
       }
     },
-    
+
     is_valid = function() {
       "Checks the validity of the object"
-      
+
       valid = TRUE
       msg = character()
       if (!all(
@@ -240,10 +240,10 @@ RedcapConfig = setRefClass(
       }
       return(valid)
     },
-    
+
     get_update_date = function(var_name, hospital_id) {
       "Get the date a specific variable was updated for a specific site"
-      
+
       value = as.Date(NA)
       if (length(.self$updates) > 0) {
         if (!all(sapply(.self$updates, function(x)
@@ -294,7 +294,7 @@ RedcapUpdate = setRefClass(
     site_info = "data.frame",
     new_vars = "character"
   ),
-  
+
   methods = list(
     show = function() {
       msg = "REDCap update info\n"
@@ -309,10 +309,10 @@ RedcapUpdate = setRefClass(
       msg = paste0("\n\n", msg, "\n\n")
       cat(msg)
     },
-    
+
     is_valid = function() {
       "Check validity of object"
-      
+
       msgs = character()
       valid = TRUE
       if (!is.data.frame(.self$site_info)) {
@@ -326,10 +326,10 @@ RedcapUpdate = setRefClass(
       }
       valid
     },
-    
+
     get_update_date = function(var_name, hospital_id) {
       "Get the date a specific variable was updated for a specific site"
-      
+
       if (!.self$is_valid())
         stop("invalid update!")
       value = as.Date(NA)

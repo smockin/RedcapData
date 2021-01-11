@@ -93,7 +93,7 @@ get_chunked_redcap_data = function(api,
                                    fields = NULL,
                                    ids_to_pull = NULL,
                                    dataset_name = "records",
-                                   metadataset_name = "meta", 
+                                   metadataset_name = "meta",
                                    parallel=F) {
   if (missing(api))
     stop("specify api url")
@@ -106,14 +106,14 @@ get_chunked_redcap_data = function(api,
   chunksize = abs(as.integer(chunksize))
   if (chunksize < 1)
     stop("invalid chunksize")
-  
+
   outer_env = parent.frame(1)
   if (!exists(metadataset_name, envir = outer_env))
     assign(
       metadataset_name, get_redcap_data(api, token, local, content = "metadata", verifySSL = verifySSL), outer_env
     )
   id_name = get(metadataset_name, envir = outer_env)[1, 1]
-  
+
   ids_specified = FALSE
   if (all(!is.null(ids_to_pull))) {
     if (all(!is.na(ids_to_pull))) {
@@ -124,52 +124,47 @@ get_chunked_redcap_data = function(api,
   if (!ids_specified) {
     ids_list = as.character(unlist(get_redcap_data(api, token, fields = id_name, verifySSL = verifySSL)))
   }
-  
+
   data_size = length(ids_list)
   ids_list = get_chunks(ids_list, chunksize)
-  
+
   tryCatch({
     message(paste0("downloading data from redcap... (", data_size, " rows!)"))
-    # counter = chunksize
-    # data_list = Map(function(ids) {
-    #   ds_chunk = get_redcap_data(
-    #     api = api, token = token, local = local, fields = fields, forms = forms, ids_to_pull = ids, verifySSL = verifySSL
-    #   )
-    #   message(paste0(
-    #     "downloaded ", min(100, round(counter * 100 / data_size, 2)), "%", ifelse(counter >= data_size, "", "...")
-    #   ))
-    #   assign("counter", counter + chunksize, envir = parent.env(environment()))
-    #   ds_chunk
-    # }, ids_list)
-    
+    counter = chunksize
+
+   if(is.null(parallel)){
+     parallel<-F
+   }
     if(parallel){
       library(doFuture)
       registerDoFuture()
-      # cl<-parallel::makeCluster(100)
-      # plan(cluster,workers=cl)
+
+      message("Exporting records in parallel(multisession plan)...\n")
       plan(multisession,workers=100)
       time=system.time(data_list<- foreach(ids = ids_list) %dopar% {
         get_redcap_data(
           api = api, token = token, local = local, fields = fields, forms = forms, ids_to_pull = ids, verifySSL = verifySSL
         )
       })
-      
+      future:::ClusterRegistry("stop")
+
+
     }else{
       time=system.time(data_list <- lapply(ids_list, function(ids) {
         ds_chunk = get_redcap_data(
           api = api, token = token, local = local, fields = fields, forms = forms, ids_to_pull = ids, verifySSL = verifySSL
         )
-        # message(paste0(
-        #   "downloaded ", min(100, round(counter * 100 / data_size, 2)), "%", ifelse(counter >= data_size, "", "...")
-        # ))
-        # assign("counter", counter + chunksize, envir = parent.env(environment()))
+        message(paste0(
+          "downloaded ", min(100, round(counter * 100 / data_size, 2)), "%", ifelse(counter >= data_size, "", "...")
+        ))
+        assign("counter", counter + chunksize, envir = parent.env(environment()))
         ds_chunk
       }))
     }
-    
-    message(sprintf("Download took %.0f seconds",time[['elapsed']]))
-    
-    
+
+    message(sprintf("\nDownload took %.0f seconds",time[['elapsed']]))
+
+
     assign(dataset_name, data.frame(data.table::rbindlist(data_list)), envir = outer_env)
   },
   error = function(e) {
@@ -178,8 +173,8 @@ get_chunked_redcap_data = function(api,
   warning = function(w) {
     warning("chunked download failed: [details: ", sQuote(w$message), "]")
   })
-  
-  
+
+
 }
 
 #' @rdname GetBulkRedcapData
@@ -338,7 +333,7 @@ get_vars_in_data = function(metadata, negative_char="_") {
     }
     value
   }
-  
+
   value = na.omit(metadata[, get_vars_r(.SD), by = key][, var])
   value
 }
@@ -367,7 +362,7 @@ get_r_types_in_data = function(metadata, negative_char="_") {
   metadata = metadata[, key:= .I]
   if (!is_valid_metadata(metadata))
     stop("metadata not valid")
-  
+
   get_r_type_r = function(r) {
     widget = r$field_type
     if (widget == "checkbox") {
@@ -385,7 +380,7 @@ get_r_types_in_data = function(metadata, negative_char="_") {
     }
     value
   }
-  
+
   value = na.omit(metadata[, get_vars_r(.SD), by = key][, V1])
   value
 }
@@ -420,7 +415,7 @@ generate_remove_missing_code = function(metadata, dataset_name = "data", negativ
   )
   invalid_vals = paste0(invalid_vals, collapse = ", ")
   invalid_vals = paste0("c(", invalid_vals, ")")
-  
+
   cmd = stringr::str_trim(get_vars_in_data(metadata, negative_char))
   if (length(cmd) == 0L)
     return("")
@@ -469,7 +464,7 @@ generate_remove_outliers_code = function(metadata, dataset_name = "data") {
   if (length(has_valid) == 0L)
     return("")
   metadata = metadata[has_valid]
-  
+
   generate_code_r = function(r) {
     cmd = character(0L)
     var_r = stringr::str_trim(r$field_name)
@@ -495,7 +490,7 @@ generate_remove_outliers_code = function(metadata, dataset_name = "data") {
       ""
     has_min_r = all(!is.na(min_r), stringr::str_trim(min_r) != "")
     has_max_r = all(!is.na(max_r), stringr::str_trim(max_r) != "")
-    
+
     if (any(has_min_r, has_max_r)) {
       if (has_min_r) {
         tmp = min_r
@@ -604,7 +599,7 @@ generate_formatting_code = function(metadata, dataset_name = "data", negative_ch
                             names(ch_ls) = c("level", "label")
                             ch_ls
                           }))
-      if (x[, field_type] == "checkbox") { 
+      if (x[, field_type] == "checkbox") {
         tmp = sapply(choices[, 1], function(x)
           gsub("\\-|\\.", negative_char, x))
         variable = tolower(paste0(x[, field_name], "___", tmp))
@@ -642,16 +637,16 @@ generate_formatting_code = function(metadata, dataset_name = "data", negative_ch
       levels = NA_character_
       labels_levels = NA_character_
     }
-  
+
     value = data.table::data.table(
       Variable = variable, Label = label, Levels = levels, Label_Levels = labels_levels
     )
     value
   }
-  
+
   labels_hash_table = metadata[, reshape_labels(.SD), by = key]
   labels_f_hash_table = labels_hash_table[!is.na(Levels),]
-  
+
   cmd = "\n\n# Convert categorical data to factors:\n\n"
   tmp = paste0(
     dataset_name, "$", labels_f_hash_table[, Variable], " = factor(",
@@ -693,7 +688,7 @@ handleDuplicatedLevels<- function(dups){
 #'
 #' The result is a dataset containing the resultant errors.
 #'
-#' @param metadata REDCap metadata with a formatted branching logic variable \emph{f.branching_logic}. See \code{\link{ExpandBranchingLogic}} 
+#' @param metadata REDCap metadata with a formatted branching logic variable \emph{f.branching_logic}. See \code{\link{ExpandBranchingLogic}}
 #' @param date_var Name of variable that captures the date of entry
 #' @param hosp_var Name of variable that holds the hospital code
 #' @param surrogate_id_var Name of variable that holds a surrogate identifier that is easier to reference
@@ -714,13 +709,13 @@ handleDuplicatedLevels<- function(dups){
 #' @include expand_branching_logic.R
 
 generate_data_validation_code = function(
-  metadata, 
-  date_var, 
-  hosp_var, 
-  surrogate_id_var, 
-  custom_code = NA, 
-  updates = NULL, 
-  updates_envir_depth = 1, 
+  metadata,
+  date_var,
+  hosp_var,
+  surrogate_id_var,
+  custom_code = NA,
+  updates = NULL,
+  updates_envir_depth = 1,
   negative_char="_") {
   metadata = prepare_metadata_for_code_generation(metadata)
   reset_tab()
@@ -1141,7 +1136,7 @@ generate_data_validation_code = function(
             )
           )
         }
-        
+
         remove_tab()
         cmd_r = c(cmd_r, paste0(get_tab(), "}"))
       }
@@ -1300,7 +1295,7 @@ generate_data_validation_code = function(
         )
       )
     }
-      
+
       remove_tab()
       cmd_r = c(cmd_r, paste0(get_tab(), "}"))
       if (!is.null(updates)) {
@@ -1502,13 +1497,13 @@ prepare_metadata_for_code_generation = function(metadata) {
 #' @description Get the version of REDCap associated with a specific url
 #'
 #' @return A list containing the version info
-#' 
-#' This includes the major, minor and release number version information for the REDCap instance 
+#'
+#' This includes the major, minor and release number version information for the REDCap instance
 #'
 #' @details This function gets the REDCap version number by web scraping the specific instance's index page.
-#' 
+#'
 #' The footer is extracted which contains the version number.
-#' 
+#'
 #' This is then wranged into the final version information.
 #'
 #' @param url The url of the REDCap instance
@@ -1522,7 +1517,7 @@ get_redcap_version <- function(url = "http://localhost/redcap", ssl.verify=F) {
   if (!url.exists(url,  .opts = list(ssl.verifypeer = ssl.verify)) || !grepl("/redcap(/)?", url))
     stop(sprintf("invalid redcap url %s", sQuote(url)))
   pattern <- "REDCap([[:space:][:alpha:]\\-])+[[:digit:]]+.[[:digit:]]+.[[:digit:]]"
-  
+
   page <- try(readLines(url, warn=F), silent = T)
   if(class(page)!="try-error"){
     version <- page[sapply(page, regexpr, pattern=pattern) > 0]
@@ -1530,11 +1525,11 @@ get_redcap_version <- function(url = "http://localhost/redcap", ssl.verify=F) {
       stop(sprintf("cannot get version info from index page %s", sQuote(url)))
     version <- regmatches(version[1], regexpr(pattern, version))
     version <- regmatches(
-      version, 
+      version,
       regexpr("[[:digit:]]+.[[:digit:]]+.[[:digit:]]", version)
     )
     setNames(
-      lapply(unlist(strsplit(version, "\\.")), as.integer), 
+      lapply(unlist(strsplit(version, "\\.")), as.integer),
       c("major", "minor", "release"))
   }else{
     list(major=' . ',minor=' . ',release=' . ')

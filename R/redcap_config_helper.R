@@ -275,7 +275,8 @@ config_keys = list(
   hosp_to_validate = NA_character_,
   verbose = FALSE,
   surrogate_id_var = NA,
-  ids_to_pull=NULL
+  ids_to_pull=NULL,
+  parallel=FALSE
 )
 
 #' @rdname GetConfigurationTypeFromVariable

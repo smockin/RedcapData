@@ -52,7 +52,7 @@ Redcap = setRefClass(
     opts = "RedcapConfig",
     version = "list"
   ),
-  
+
   methods = list(
     show = function() {
       www = gsub("/api/", "", .self$opts$configs$api_url)
@@ -69,13 +69,13 @@ Redcap = setRefClass(
         msg = c(msg, paste0("Memory status:\nCache contains ", length(ls(.self$.__cache)), " items\n"))
       }
       msg = c(msg, paste0("Events:", get_status(ls(.self$.__cache), pretty = TRUE)))
-      if (.self$opts$configs$verbose && length(.self$.__log) > 0) 
+      if (.self$opts$configs$verbose && length(.self$.__log) > 0)
           msg = c(msg, paste0("Log:\n", .self$.__log, "\n"))
       msg = paste0(msg, collapse = "\n")
       msg = paste0(msg, "\n")
       cat(msg)
     },
-    
+
     load_data = function() {
       "Stream data from REDCap.
       Clears the cache and loads data.
@@ -138,7 +138,7 @@ Redcap = setRefClass(
             local = .self$opts$configs$local,
             verifySSL=.self$opts$configs$verifySSL
           )
-        
+
           records = get_redcap_data(
             api = .self$opts$configs$api_url,
             token = .self$opts$configs$token,
@@ -161,10 +161,10 @@ Redcap = setRefClass(
       }
       .self$log("records and metadata loaded", 0, function_name = "load_data")
     },
-    
+
     load_metadata = function() {
       "Stream metadata only from REDCap"
-      
+
       tryCatch({
         meta = get_redcap_data(
           api = .self$opts$configs$api_url,
@@ -183,10 +183,10 @@ Redcap = setRefClass(
       .self$.__cache$raw_meta = meta
       .self$log("metadata downloaded", 0, function_name = "load_metadata")
     },
-    
+
     partially_clean_records = function() {
       "Clean records removing coded missing values"
-      
+
       if (!"part_clean_records" %in% ls(all = T, envir = .self$.__cache)) {
         if (!"fmt_records" %in% ls(all = T, envir = .self$.__cache)) {
           message("formatted data not in cache, attempting to format raw data...")
@@ -198,12 +198,12 @@ Redcap = setRefClass(
           .self$.__cache$part_clean_cmd = paste0(
             "\n# <Note: !! Do not edit this code as it may change in future code regenerations. !!>",
             generate_remove_missing_code(
-              .self$get_metadata(), 
+              .self$get_metadata(),
               "dataset",
               negative_char = .self$get_negative_char()
             ),
             generate_date_conversion_code(
-              .self$get_metadata(), 
+              .self$get_metadata(),
               "dataset",
               negative_char = .self$get_negative_char()
             ),
@@ -226,10 +226,10 @@ Redcap = setRefClass(
         message("data already partially cleaned")
       }
     },
-    
+
     fully_clean_records = function() {
       "Clean records removing out of range values"
-      
+
       if (!"full_clean_records" %in% ls(all = T, envir = .self$.__cache)) {
         if (!"part_clean_records" %in% ls(all = T, envir = .self$.__cache)) {
           message("partially cleaned data not in cache, attempting to partially clean data...")
@@ -260,10 +260,10 @@ Redcap = setRefClass(
         message("data already fully cleaned")
       }
     },
-    
+
     get_clean_metadata = function() {
       "Clean meta data for autogeneration of error report code"
-      
+
       if (!"clean_meta" %in% ls(all = T, envir = .self$.__cache)) {
         message("cleaning metadata...")
         cln_mt = .self$get_metadata()
@@ -273,7 +273,7 @@ Redcap = setRefClass(
         setkey(cln_mt, key)
         cln_mt = cln_mt[field_type != "descriptive"]
         cln_mt = cln_mt[field_type == "checkbox", required_field:= "y"]
-        
+
         if (length(na.omit(.self$opts$configs$exclusion_pattern)) != 0) {
           to_exclude = as.character(.self$opts$configs$exclusion_pattern)
           to_exclude = sapply(to_exclude, function(pt) {
@@ -289,10 +289,10 @@ Redcap = setRefClass(
       .self$log("clean metadata accessed", 0, function_name = "get_clean_metadata")
       .self$.__cache$clean_meta
     },
-    
+
     format_records = function() {
       "Format records to add Hmisc labels and create factors"
-      
+
       if (!"fmt_records" %in% ls(all = T, envir = .self$.__cache)) {
         dataset = .self$get_raw_data()
         message("formatting data...")
@@ -300,7 +300,7 @@ Redcap = setRefClass(
           .self$.__cache$fmt_cmd = paste0(
             "\n# <Note: !! Do not edit this code as it may change in future code regenerations. !!>",
             generate_formatting_code(
-              .self$get_metadata(), 
+              .self$get_metadata(),
               dataset_name = "dataset",
               negative_char = .self$get_negative_char()
             ), sep = "\n"
@@ -319,10 +319,10 @@ Redcap = setRefClass(
         message("data already formatted")
       }
     },
-    
+
     validate_data = function() {
       "Create data validation dataset"
-      
+
       dataset = .self$get_raw_data()
       if (!"data.table" %in% class(dataset))
         dataset = data.table(dataset)
@@ -379,10 +379,10 @@ Redcap = setRefClass(
       .self$log("data validation report created", 0, function_name = "validate_data")
       .self$.__cache$valid_rpt = rpt
     },
-    
+
     get_data_validation_report = function(pop = FALSE) {
       "Get data validation report"
-      
+
       if (!"valid_rpt" %in% ls(all = T, envir = .self$.__cache))
         .self$validate_data()
       validation_data = .self$.__cache$valid_rpt
@@ -409,58 +409,58 @@ Redcap = setRefClass(
       })
       .self$log("data validation report accessed", 0, function_name = "get_data_validation_report")
     },
-    
+
     get_raw_data = function() {
       "Get raw records from memory.
       If there is not data in memory, an error is raised.
       Use load_data() to refresh the cache.
       "
-      
+
       if (!"raw_records" %in% ls(all = T, envir = .self$.__cache))
         stop("no data in memory. use load_data to load cache")
       .self$log("raw data accessed", 0, function_name = "get_raw_data")
       .self$.__cache$raw_records
     },
-    
+
     get_fully_cleaned_data = function() {
       "Get fully cleaned records from memory"
-      
+
       if (!"full_clean_records" %in% ls(all = T, envir = .self$.__cache))
         .self$fully_clean_records()
       .self$log("fully cleaned data accessed", 0, function_name = "get_fully_cleaned_data")
       .self$.__cache$full_clean_records
     },
-    
+
     get_partially_cleaned_data = function() {
       "Get partially cleaned records from memory"
-      
+
       if (!"part_clean_records" %in% ls(all = T, envir = .self$.__cache))
         .self$partially_clean_records()
       .self$log("partially cleaned data accessed", 0, function_name = "get_partially_cleaned_data")
       .self$.__cache$part_clean_records
     },
-    
-    get_formatted_data = function() { 
+
+    get_formatted_data = function() {
       "Get formatted records from memory"
-      
+
       if (!"fmt_records" %in% ls(all = T, envir = .self$.__cache))
         .self$format_records()
       .self$log("formatted data accessed", 0, function_name = "get_formatted_data")
       .self$.__cache$fmt_records
     },
-    
+
     get_metadata = function() {
       "Get raw metadata from memory"
-      
+
       if (!"raw_meta" %in% ls(all = T, envir = .self$.__cache))
         .self$load_metadata()
       .self$log("metadata accessed", 0, function_name = "get_metadata")
       .self$.__cache$raw_meta
     },
-    
+
     log = function(message, level = 0, function_name = "") {
       "Log events <internal use>"
-      
+
       tmp = if (level == 0) {
         "info"
       } else if (level == 1) {
@@ -488,10 +488,10 @@ Redcap = setRefClass(
       if (level == 2)
         stop(sQuote(message), call. = FALSE)
     },
-    
+
     get_negative_char = function() {
       "Get negative character for metaprogramming for checkbox levels with negative levels  <internal use>"
-      
+
       if (!".negative_char" %in% ls(.self$.__cache, all.names=T)) {
         if ("major" %in% names(.self$version))
           if (.self$version$major > 5 | .self$version$major==" . ")
@@ -550,7 +550,8 @@ redcap_project = function(...,
                           configs_location,
                           custom_code_location = NA,
                           updates_location = NA,
-                          exclusion_pattern = NA_character_) {
+                          exclusion_pattern = NA_character_
+                          ) {
   opts = list()
   if (missing(configs_location)) {
     configs_data <- list(...)
@@ -576,11 +577,11 @@ redcap_project = function(...,
       value = Reduce(c, configs_data[names(configs_data)!="ids_to_pull"]),
       type = get_config_type_from_variable(Reduce(c, configs_data[names(configs_data)!="ids_to_pull"])),
       stringsAsFactors = T)
-    
+
     id.cnf=configs_data[names(configs_data)=="ids_to_pull"]
-    id.cnf=data.frame(key='ids_to_pull',value=paste0(id.cnf, collapse = ",") ,type="string") 
-    configs_data= as.data.frame(rbind(other.cnfs, id.cnf),)
-    
+    id.cnf=data.frame(key='ids_to_pull',value=paste0(id.cnf, collapse = ",") ,type="string")
+    configs_data= as.data.frame(rbind(other.cnfs, id.cnf))
+
     # configs_data = data.frame(
     #   key = names(configs_data),
     #   value = Reduce(c, configs_data),
