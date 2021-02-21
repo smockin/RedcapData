@@ -215,16 +215,16 @@ get_redcap_data = function(api,
                            fields = NULL,
                            ids_to_pull = NULL) {
   fun_env = environment()
-  if (!RCurl::url.exists(gsub("/api/", "", api), .opts = list(ssl.verifypeer = verifySSL)))
-    stop("invalid api url")
+  if(!grepl("/api(/)?$", api)){
+    api<- paste0(api, "/api/")
+  }
   opts = list(
     uri = api,
     token = token,
-    type = "flat",
-    format = "csv",
-    content = content,
-    rawOrLabel = "raw",
-    .opts = RCurl::curlOptions(ssl.verifypeer = verifySSL)
+    content=content,
+    format='csv',
+    returnFormat='csv',
+    .opts =RCurl::curlOptions(ssl.verifypeer = verifySSL)
   )
   if (!is.null(forms))
     opts$forms = paste0(forms, collapse = ",")
