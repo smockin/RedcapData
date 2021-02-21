@@ -18,7 +18,8 @@ Imports:
     purrr,
     compiler,
     doFuture,
-    parallel
+    parallel,
+    foreach
 URL: https://github.com/smockin/RedcapData
 Collate:
     'data_types.R'

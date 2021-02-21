@@ -140,7 +140,7 @@ get_chunked_redcap_data = function(api,
       registerDoFuture()
 
       message("Exporting records in parallel(multisession plan)...\n")
-      plan(multisession,workers=100)
+      plan(multisession,workers=25)
       time=system.time(data_list<- foreach(ids = ids_list) %dopar% {
         get_redcap_data(
           api = api, token = token, local = local, fields = fields, forms = forms, ids_to_pull = ids, verifySSL = verifySSL
@@ -1514,7 +1514,9 @@ prepare_metadata_for_code_generation = function(metadata) {
 #'
 
 get_redcap_version <- function(url = "http://localhost/redcap", ssl.verify=F) {
-  if (!url.exists(url,  .opts = list(ssl.verifypeer = ssl.verify)) || !grepl("/redcap(/)?", url))
+  if (!url.exists(url,  .opts = list(ssl.verifypeer = ssl.verify))
+      #|| !grepl("/redcap(/)?", url)
+      )
     stop(sprintf("invalid redcap url %s", sQuote(url)))
   pattern <- "REDCap([[:space:][:alpha:]\\-])+[[:digit:]]+.[[:digit:]]+.[[:digit:]]"
 

@@ -162,10 +162,10 @@ RedcapConfig = setRefClass(
           .self$configs$local = TRUE
         }
       }
-      if (!grepl("/api/$", .self$configs$api_url)) {
-        msg = c(msg, "api_url invalid. ???<must end with \"/api/\">???")
-        valid = FALSE
-      }
+      # if (!grepl("/api/$", .self$configs$api_url)) {
+      #   msg = c(msg, "api_url invalid. ???<must end with \"/api/\">???")
+      #   valid = FALSE
+      # }
       if (length(.self$configs$api_url) > 1L) {
         warning("api_url is of length > 1, taking first element")
         .self$configs$api_url = .self$configs$api_url[1L]
