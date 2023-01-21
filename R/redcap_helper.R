@@ -641,13 +641,23 @@ generate_formatting_code = function(metadata, dataset_name = "data", negative_ch
     value 
         }
        }                       
-    } else if (tolower(x[, field_type]) == "yesno" & x[, select_choices_or_calculations]!="") {
+    } else if (tolower(x[, field_type]) == "yesno" &
+               x[, select_choices_or_calculations]!="") {
       variable = x[, field_name]
      label = gsub("\n", "", remove_html_tags(x[, field_label]))
       if (length(label) == 0)
         label = NA_character_
       levels = "c(0, 1)"
       labels_levels = "c(\"No\", \"Yes\")"
+      
+  value = data.table::data.table(
+        Variable = variable,
+        Label = label, 
+        Levels = levels, 
+        Label_Levels = labels_levels
+      )
+      value
+      
     } else {
       variable = x[, field_name]
       label = gsub("\n", "", remove_html_tags(x[, field_label]))
@@ -655,13 +665,17 @@ generate_formatting_code = function(metadata, dataset_name = "data", negative_ch
         label = NA_character_
       levels = NA_character_
       labels_levels = NA_character_
+      
+  value = data.table::data.table(
+        Variable = variable,
+        Label = label, 
+        Levels = levels, 
+        Label_Levels = labels_levels
+      )
+      value
     }
 
-    value = data.table::data.table(
-      Variable = variable, Label = label, Levels = levels, Label_Levels = labels_levels
-    )
-    value
-  }
+   }
 }
   labels_hash_table = metadata[, reshape_labels(.SD), by = key]
   labels_f_hash_table = labels_hash_table[!is.na(Levels),]
