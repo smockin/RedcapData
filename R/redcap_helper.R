@@ -592,6 +592,7 @@ generate_formatting_code = function(metadata, dataset_name = "data", negative_ch
   to_remove = paste0(unique(metadata[, form_name]),"_complete")
   metadata = metadata[!field_name %in% to_remove]
   reshape_labels = function(x) {
+    if(!(tolower(x[, field_type]) %in% c("descriptive"))){
     if (tolower(x[, field_type]) %in% c("checkbox", "dropdown", "radio")) {
       choices =  t(sapply(unlist(strsplit(x[, select_choices_or_calculations], "\\|")),
                           function(ch) {
@@ -599,7 +600,7 @@ generate_formatting_code = function(metadata, dataset_name = "data", negative_ch
                             names(ch_ls) = c("level", "label")
                             ch_ls
                           }))
-      if (x[, field_type] == "checkbox") {
+      if (x[, field_type] == "checkbox" & x[, select_choices_or_calculations]!="") {
         tmp = sapply(choices[, 1], function(x)
           gsub("\\-|\\.", negative_char, x))
         variable = tolower(paste0(x[, field_name], "___", tmp))
@@ -608,21 +609,39 @@ generate_formatting_code = function(metadata, dataset_name = "data", negative_ch
           label = NA_character_
         levels = rep("c(0, 1)", length(choices[, 2]))
         labels_levels = rep("c(\"No\", \"Yes\")", length(choices[, 2]))
+           value = data.table::data.table(
+      Variable = variable, Label = label, Levels = levels, Label_Levels = labels_levels
+    )
+    value           
       } else {
+         if(x[, select_choices_or_calculations]!=""){
         variable = x[, field_name]
         label = gsub("\n", "", remove_html_tags(x[, field_label]))
         if (length(label) == 0)
           label = NA_character_
         choices[, 2] = sapply(choices[, 2L], function(x)
           paste0("\"", x, "\""))
-        levels = paste0("c(", paste0(unique(choices[, 1L]), collapse = ", "), ")")
-        labels_levels = paste0("c(", paste0(unique(choices[, 2L]), collapse = ", "), ")")
-        if(length(unique(choices[, 1L]))!=length(unique(choices[, 2L]))){
-          dups=(gsub("\"", '', (choices[, 2L]) ))
-        labels_levels = paste0("c(", paste0(handleDuplicatedLevels(dups), collapse = ", "), ")")
-          }
+      #levels = paste0("c(", paste0(unique(choices[, 1L]), collapse = ", "), ")")
+                 levels <- paste0("c(", paste0(
+            gsub("L", "", #unique
+                 (choices[, 1L])) %>% sapply(function(x){
+                   paste0("'", stringr::str_trim(x), "'")
+                 })
+            
+            , collapse = ", "), ")")                       
+        labels_levels = paste0("c(", paste0(#unique
+                                            (choices[, 2L]), collapse = ", "), ")")
+        #if(length(unique(choices[, 1L]))!=length(unique(choices[, 2L]))){
+         # dups=(gsub("\"", '', (choices[, 2L]) ))
+        #labels_levels = paste0("c(", paste0(handleDuplicatedLevels(dups), collapse = ", "), ")")
+         # }
+      value = data.table::data.table(
+      Variable = variable, Label = label, Levels = levels, Label_Levels = labels_levels
+    )
+    value 
         }
-    } else if (tolower(x[, field_type]) == "yesno") {
+       }                       
+    } else if (tolower(x[, field_type]) == "yesno" & x[, select_choices_or_calculations]!="") {
       variable = x[, field_name]
      label = gsub("\n", "", remove_html_tags(x[, field_label]))
       if (length(label) == 0)
@@ -643,7 +662,7 @@ generate_formatting_code = function(metadata, dataset_name = "data", negative_ch
     )
     value
   }
-
+}
   labels_hash_table = metadata[, reshape_labels(.SD), by = key]
   labels_f_hash_table = labels_hash_table[!is.na(Levels),]
 
