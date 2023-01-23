@@ -641,8 +641,8 @@ generate_formatting_code = function(metadata, dataset_name = "data", negative_ch
     value 
         }
        }                       
-    } else if (tolower(x[, field_type]) == "yesno" &
-               x[, select_choices_or_calculations]!="") {
+    } else if (tolower(x[, field_type]) == "yesno"
+              ) {
       variable = x[, field_name]
      label = gsub("\n", "", remove_html_tags(x[, field_label]))
       if (length(label) == 0)
