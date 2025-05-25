@@ -256,6 +256,16 @@ Timestamp  														Level										Message
 ```
 
 ----
+## Formatting branching logics to R parlance 
+### Code
+```
+skip_logic<- "[age_less_than_24hrs] = '2' and [age_recorded] = '1'"
+RedcapData:::convert_redcap2r(skip_logic)
+```
+### Output
+```
+"age_less_than_24hrs == 2 & age_recorded == 1"
+```
 
 ## Data Cleaning
 
