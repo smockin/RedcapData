@@ -183,23 +183,23 @@ xtend_chb_names <- function(x) {
   #pad <- '___'
   # pattern_match <- regexpr("\\([0-9]{1,}\\)", x)
   # pattern_start_pos <- as.numeric(pattern_match) + 1
-   #pattern_start_pos_bckp <- as.numeric(pattern_match)
-   #pattern_len <- attr(pattern_match, "match.length") - 3
-   #pattern_len <- pattern_len + pattern_start_pos
-   #pattern_len_bckp <-
-     #pattern_start_pos_bckp + attr(pattern_match, "match.length")
-   #x <- rep(x, length(pattern_start_pos))
-   #replace_numeric_match <- function(a, b, c) {
-     #value <- substr(a, b, c)
-     #if (!is.na(as.integer(value))) {
-      # value <- paste0(pad, value)
-      # substr(a, pattern_start_pos_bckp, pattern_len_bckp) <- value
-     #}
-    # return(a)
-   #}
-   #mapply(replace_numeric_match, x, pattern_start_pos, pattern_len)
- #
-   gsub("(\\w+)\\(([0-9]+)\\)", "\\1___\\2", x)
+  #pattern_start_pos_bckp <- as.numeric(pattern_match)
+  #pattern_len <- attr(pattern_match, "match.length") - 3
+  #pattern_len <- pattern_len + pattern_start_pos
+  #pattern_len_bckp <-
+  #pattern_start_pos_bckp + attr(pattern_match, "match.length")
+  #x <- rep(x, length(pattern_start_pos))
+  #replace_numeric_match <- function(a, b, c) {
+  #value <- substr(a, b, c)
+  #if (!is.na(as.integer(value))) {
+  # value <- paste0(pad, value)
+  # substr(a, pattern_start_pos_bckp, pattern_len_bckp) <- value
+  #}
+  # return(a)
+  #}
+  #mapply(replace_numeric_match, x, pattern_start_pos, pattern_len)
+  #
+  gsub("(\\w+)\\(([0-9]+)\\)", "\\1___\\2", x)
 }
 
 #' @rdname ConvertSpacesToTabs
@@ -330,6 +330,8 @@ toproper <- function(x, all = FALSE) {
 
 convert_redcap2r <- function(x) {
   if (!is.na(x)) {
+
+    x <- gsub('"([^"]*)"', "'\\1'", x)
     x <- convert_dates_red2r(x)
     x <- gsub("\\[|\\]", "", x)
     x <- gsub("[ \t]+((AND)|(and))[ \t]+", " & ", x)

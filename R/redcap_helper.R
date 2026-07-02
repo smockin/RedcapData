@@ -132,9 +132,9 @@ get_chunked_redcap_data = function(api,
     message(paste0("downloading data from redcap... (", data_size, " rows!)"))
     counter = chunksize
 
-   if(is.null(parallel)){
-     parallel<-F
-   }
+    if(is.null(parallel)){
+      parallel<-F
+    }
     if(parallel){
       library(doFuture)
       registerDoFuture()
@@ -247,7 +247,7 @@ get_redcap_data = function(api,
     stop(paste0("data could not be downloaded [details: ", msg, "]"))
   } else {
     value = try(data.frame(read.csv(textConnection(redcap_conn), stringsAsFactors = FALSE)), silent = T)
-    }
+  }
   if(class(value)!='try-error'){
     value
   }
@@ -593,90 +593,90 @@ generate_formatting_code = function(metadata, dataset_name = "data", negative_ch
   metadata = metadata[!field_name %in% to_remove]
   reshape_labels = function(x) {
     if(!(tolower(x[, field_type]) %in% c("descriptive"))){
-    if (tolower(x[, field_type]) %in% c("checkbox", "dropdown", "radio")) {
-      choices =  t(sapply(unlist(strsplit(x[, select_choices_or_calculations], "\\|")),
-                          function(ch) {
-                            ch_ls = stringr::str_trim(unlist(regmatches(ch, regexpr(",", ch), invert = TRUE)))
-                            names(ch_ls) = c("level", "label")
-                            ch_ls
-                          }))
-      if (x[, field_type] == "checkbox" & x[, select_choices_or_calculations]!="") {
-        tmp = sapply(choices[, 1], function(x)
-          gsub("\\-|\\.", negative_char, x))
-        variable = tolower(paste0(x[, field_name], "___", tmp))
-        label = paste0(gsub("\n", "", remove_html_tags(x[, field_label])), "(", choices[, 2], ")")
-        if (length(label) == 0)
-          label = NA_character_
-        levels = rep("c(0, 1)", length(choices[, 2]))
-        labels_levels = rep("c(\"No\", \"Yes\")", length(choices[, 2]))
-           value = data.table::data.table(
-      Variable = variable, Label = label, Levels = levels, Label_Levels = labels_levels
-    )
-    value           
-      } else {
-         if(x[, select_choices_or_calculations]!=""){
+      if (tolower(x[, field_type]) %in% c("checkbox", "dropdown", "radio")) {
+        choices =  t(sapply(unlist(strsplit(x[, select_choices_or_calculations], "\\|")),
+                            function(ch) {
+                              ch_ls = stringr::str_trim(unlist(regmatches(ch, regexpr(",", ch), invert = TRUE)))
+                              names(ch_ls) = c("level", "label")
+                              ch_ls
+                            }))
+        if (x[, field_type] == "checkbox" & x[, select_choices_or_calculations]!="") {
+          tmp = sapply(choices[, 1], function(x)
+            gsub("\\-|\\.", negative_char, x))
+          variable = tolower(paste0(x[, field_name], "___", tmp))
+          label = paste0(gsub("\n", "", remove_html_tags(x[, field_label])), "(", choices[, 2], ")")
+          if (length(label) == 0)
+            label = NA_character_
+          levels = rep("c(0, 1)", length(choices[, 2]))
+          labels_levels = rep("c(\"No\", \"Yes\")", length(choices[, 2]))
+          value = data.table::data.table(
+            Variable = variable, Label = label, Levels = levels, Label_Levels = labels_levels
+          )
+          value
+        } else {
+          if(x[, select_choices_or_calculations]!=""){
+            variable = x[, field_name]
+            label = gsub("\n", "", remove_html_tags(x[, field_label]))
+            if (length(label) == 0)
+              label = NA_character_
+            choices[, 2] = sapply(choices[, 2L], function(x)
+              paste0("\"", x, "\""))
+            #levels = paste0("c(", paste0(unique(choices[, 1L]), collapse = ", "), ")")
+            levels <- paste0("c(", paste0(
+              gsub("L", "", #unique
+                   (choices[, 1L])) %>% sapply(function(x){
+                     paste0("'", stringr::str_trim(x), "'")
+                   })
+
+              , collapse = ", "), ")")
+            labels_levels = paste0("c(", paste0(#unique
+              (choices[, 2L]), collapse = ", "), ")")
+            #if(length(unique(choices[, 1L]))!=length(unique(choices[, 2L]))){
+            # dups=(gsub("\"", '', (choices[, 2L]) ))
+            #labels_levels = paste0("c(", paste0(handleDuplicatedLevels(dups), collapse = ", "), ")")
+            # }
+            value = data.table::data.table(
+              Variable = variable, Label = label, Levels = levels, Label_Levels = labels_levels
+            )
+            value
+          }
+        }
+      } else if (tolower(x[, field_type]) == "yesno"
+      ) {
         variable = x[, field_name]
         label = gsub("\n", "", remove_html_tags(x[, field_label]))
         if (length(label) == 0)
           label = NA_character_
-        choices[, 2] = sapply(choices[, 2L], function(x)
-          paste0("\"", x, "\""))
-      #levels = paste0("c(", paste0(unique(choices[, 1L]), collapse = ", "), ")")
-                 levels <- paste0("c(", paste0(
-            gsub("L", "", #unique
-                 (choices[, 1L])) %>% sapply(function(x){
-                   paste0("'", stringr::str_trim(x), "'")
-                 })
-            
-            , collapse = ", "), ")")                       
-        labels_levels = paste0("c(", paste0(#unique
-                                            (choices[, 2L]), collapse = ", "), ")")
-        #if(length(unique(choices[, 1L]))!=length(unique(choices[, 2L]))){
-         # dups=(gsub("\"", '', (choices[, 2L]) ))
-        #labels_levels = paste0("c(", paste0(handleDuplicatedLevels(dups), collapse = ", "), ")")
-         # }
-      value = data.table::data.table(
-      Variable = variable, Label = label, Levels = levels, Label_Levels = labels_levels
-    )
-    value 
-        }
-       }                       
-    } else if (tolower(x[, field_type]) == "yesno"
-              ) {
-      variable = x[, field_name]
-     label = gsub("\n", "", remove_html_tags(x[, field_label]))
-      if (length(label) == 0)
-        label = NA_character_
-      levels = "c(0, 1)"
-      labels_levels = "c(\"No\", \"Yes\")"
-      
-  value = data.table::data.table(
-        Variable = variable,
-        Label = label, 
-        Levels = levels, 
-        Label_Levels = labels_levels
-      )
-      value
-      
-    } else {
-      variable = x[, field_name]
-      label = gsub("\n", "", remove_html_tags(x[, field_label]))
-      if (length(label) == 0)
-        label = NA_character_
-      levels = NA_character_
-      labels_levels = NA_character_
-      
-  value = data.table::data.table(
-        Variable = variable,
-        Label = label, 
-        Levels = levels, 
-        Label_Levels = labels_levels
-      )
-      value
-    }
+        levels = "c(0, 1)"
+        labels_levels = "c(\"No\", \"Yes\")"
 
-   }
-}
+        value = data.table::data.table(
+          Variable = variable,
+          Label = label,
+          Levels = levels,
+          Label_Levels = labels_levels
+        )
+        value
+
+      } else {
+        variable = x[, field_name]
+        label = gsub("\n", "", remove_html_tags(x[, field_label]))
+        if (length(label) == 0)
+          label = NA_character_
+        levels = NA_character_
+        labels_levels = NA_character_
+
+        value = data.table::data.table(
+          Variable = variable,
+          Label = label,
+          Levels = levels,
+          Label_Levels = labels_levels
+        )
+        value
+      }
+
+    }
+  }
   labels_hash_table = metadata[, reshape_labels(.SD), by = key]
   labels_f_hash_table = labels_hash_table[!is.na(Levels),]
 
@@ -697,14 +697,14 @@ handleDuplicatedLevels<- function(dups){
   dups<- as.character(dups)
   nm=names(which(table(dups)>1))
   tx=max(table(dups))
- touse= as.character(sapply(1:tx, function(xx){
+  touse= as.character(sapply(1:tx, function(xx){
     paste0(nm,paste0(rep(" ", xx), collapse = ""))
   }))
- dups[grep(nm, dups)]<-touse
- retV=sapply(dups, function(x)
-   paste0("\"", x, "\""))
- names(retV)<- dupsnames
- retV
+  dups[grep(nm, dups)]<-touse
+  retV=sapply(dups, function(x)
+    paste0("\"", x, "\""))
+  names(retV)<- dupsnames
+  retV
 }
 
 #' @rdname GenerateCodeForDataEntryValidation
@@ -742,14 +742,14 @@ handleDuplicatedLevels<- function(dups){
 #' @include expand_branching_logic.R
 
 generate_data_validation_code = function(
-  metadata,
-  date_var,
-  hosp_var,
-  surrogate_id_var,
-  custom_code = NA,
-  updates = NULL,
-  updates_envir_depth = 1,
-  negative_char="_") {
+    metadata,
+    date_var,
+    hosp_var,
+    surrogate_id_var,
+    custom_code = NA,
+    updates = NULL,
+    updates_envir_depth = 1,
+    negative_char="_") {
   metadata = prepare_metadata_for_code_generation(metadata)
   reset_tab()
   id_var = unlist(metadata[1, .SD, .SDcols = 1])[1]
@@ -769,11 +769,11 @@ generate_data_validation_code = function(
   add_tab()
   tmp = c(tmp, paste0(get_tab(), "stop(\"input must have only one row\")"))
   remove_tab()
-  tmp = c(tmp, paste0(get_tab(), "while (\"data_row\" %in% search())"))
-  add_tab()
-  tmp = c(tmp, paste0(get_tab(), "detach(data_row)"))
-  remove_tab()
-  tmp = c(tmp, paste0(get_tab(), "attach(data_row)"))
+  tmp = c(tmp, paste0(get_tab(), "# <PERF>: list2env() binds all fields of data_row as local variables directly"))
+  tmp = c(tmp, paste0(get_tab(), "# in this call's own environment. This replaces attach()/detach(), which was"))
+  tmp = c(tmp, paste0(get_tab(), "# ~2-160x slower per call (cost grows with column count) and left `data_row`"))
+  tmp = c(tmp, paste0(get_tab(), "# stuck on the search path if the function errored before reaching detach()."))
+  tmp = c(tmp, paste0(get_tab(), "list2env(data_row, envir = environment())"))
   tmp = c(tmp, paste0(get_tab(), "form__x2014cin = character()"))
   tmp = c(tmp, paste0(get_tab(), "sect__x2014cin = character()"))
   tmp = c(tmp, paste0(get_tab(), "name__x2014cin = character()"))
@@ -889,6 +889,17 @@ generate_data_validation_code = function(
     } else {
       stringr::str_trim(logic_x2014cin)
     }
+    # <BUGFIX>: logic_x2014cin is spliced verbatim into several generated string literals
+    # below (as an is_hidden() argument, and as the Logic column's value). Branching logic
+    # containing a date comparison gets converted to as.Date("...") by convert_dates_red2r()
+    # -- note the *double* quotes -- so logic_x2014cin can itself contain literal '"'
+    # characters. Splicing that unescaped into another double-quoted string prematurely
+    # closed the outer string and produced invalid R (this broke code generation for every
+    # field whose branching logic referenced a date). Only this escaped copy is used where
+    # logic_x2014cin is embedded as *string content* below; the raw logic_x2014cin is still
+    # used, unescaped, everywhere it's spliced in as literal R code (e.g. inside
+    # `if (isTRUE(...))`), and the runtime accumulator variable of the same name is untouched.
+    logic_x2014cin_esc = if (is.na(logic_x2014cin)) NA_character_ else gsub('"', '\\"', logic_x2014cin, fixed = TRUE)
     req_x2014cin = stringr::str_trim(meta_r[, required_field])
     req_x2014cin = if (isTRUE(any(
       is.na(req_x2014cin), stringr::str_trim(req_x2014cin) == ""
@@ -1026,7 +1037,7 @@ generate_data_validation_code = function(
       }else{
         cmd_r = c(
           cmd_r, paste0(
-            get_tab(), "logic_x2014cin = c(logic_x2014cin, \"", logic_x2014cin, "\" )"
+            get_tab(), "logic_x2014cin = c(logic_x2014cin, \"", logic_x2014cin_esc, "\" )"
           )
         )
       }
@@ -1048,7 +1059,7 @@ generate_data_validation_code = function(
       }
       cmd_r = c(cmd_r, paste0(
         get_tab(), "if (isTRUE(
-    !is_hidden(\"",logic_x2014cin,"\",'",vname_x2014cin,"',metadata )
+    !is_hidden(\"",logic_x2014cin_esc,"\",'",vname_x2014cin,"',metadata )
       ) & ! isTRUE(data_missing(", vname_x2014cin, "))) {"
       ))
       add_tab()
@@ -1069,7 +1080,7 @@ generate_data_validation_code = function(
       if (isTRUE(tolower(vtype_val_x2014cin) == "date_ymd")) {
         cmd_r = c(cmd_r, paste0(
           get_tab(), "if (isTRUE(
-    !is_hidden(\"",logic_x2014cin,"\",'",vname_x2014cin,"',metadata )
+    !is_hidden(\"",logic_x2014cin_esc,"\",'",vname_x2014cin,"',metadata )
         ) & ! isTRUE(is_date(", vname_x2014cin, "))) {"
         ))
         add_tab()
@@ -1112,7 +1123,7 @@ generate_data_validation_code = function(
         }else{
           cmd_r = c(
             cmd_r, paste0(
-              get_tab(), "logic_x2014cin = c(logic_x2014cin, \"", logic_x2014cin, "\" )"
+              get_tab(), "logic_x2014cin = c(logic_x2014cin, \"", logic_x2014cin_esc, "\" )"
             )
           )
         }
@@ -1122,7 +1133,7 @@ generate_data_validation_code = function(
       else if (isTRUE(tolower(vtype_val_x2014cin) == "number")) {
         cmd_r = c(cmd_r, paste0(
           get_tab(), "if (isTRUE(
-    !is_hidden(\"",logic_x2014cin,"\",'",vname_x2014cin,"',metadata )
+    !is_hidden(\"",logic_x2014cin_esc,"\",'",vname_x2014cin,"',metadata )
         ) & ! isTRUE(is_number(", vname_x2014cin, "))) {"
         ))
         add_tab()
@@ -1165,7 +1176,7 @@ generate_data_validation_code = function(
         }else{
           cmd_r = c(
             cmd_r, paste0(
-              get_tab(), "logic_x2014cin = c(logic_x2014cin, \"", logic_x2014cin, "\" )"
+              get_tab(), "logic_x2014cin = c(logic_x2014cin, \"", logic_x2014cin_esc, "\" )"
             )
           )
         }
@@ -1217,7 +1228,7 @@ generate_data_validation_code = function(
         }else{
           cmd_r = c(
             cmd_r, paste0(
-              get_tab(), "logic_x2014cin = c(logic_x2014cin, \"", logic_x2014cin, "\" )"
+              get_tab(), "logic_x2014cin = c(logic_x2014cin, \"", logic_x2014cin_esc, "\" )"
             )
           )
         }
@@ -1253,7 +1264,7 @@ generate_data_validation_code = function(
       }
       if (!is.na(logic_x2014cin)) {
         cmd_r = c(cmd_r, paste0(get_tab(), "if (isTRUE(
-    !is_hidden(\"",logic_x2014cin,"\",'",vname_x2014cin,"',metadata )
+    !is_hidden(\"",logic_x2014cin_esc,"\",'",vname_x2014cin,"',metadata )
         ) & isTRUE(", logic_x2014cin, ")) {"))
         add_tab()
       }
@@ -1315,19 +1326,19 @@ generate_data_validation_code = function(
           get_tab(), "msg__x2014cin = c(msg__x2014cin, \"'", vlabel_x2014cin, "' is out of range!\")"
         )
       )
-    if(is.na(logic_x2014cin)){
-      cmd_r = c(
-        cmd_r, paste0(
-          get_tab(), "logic_x2014cin = c(logic_x2014cin,", logic_x2014cin, ")"
+      if(is.na(logic_x2014cin)){
+        cmd_r = c(
+          cmd_r, paste0(
+            get_tab(), "logic_x2014cin = c(logic_x2014cin,", logic_x2014cin, ")"
+          )
         )
-      )
-    }else{
-      cmd_r = c(
-        cmd_r, paste0(
-          get_tab(), "logic_x2014cin = c(logic_x2014cin, \"", logic_x2014cin, "\" )"
+      }else{
+        cmd_r = c(
+          cmd_r, paste0(
+            get_tab(), "logic_x2014cin = c(logic_x2014cin, \"", logic_x2014cin_esc, "\" )"
+          )
         )
-      )
-    }
+      }
 
       remove_tab()
       cmd_r = c(cmd_r, paste0(get_tab(), "}"))
@@ -1423,7 +1434,6 @@ generate_data_validation_code = function(
   tmp = c(tmp, paste0(get_tab(), "value_x2014cin = data.table::data.table()"))
   remove_tab()
   tmp = c(tmp, paste0(get_tab(), "}"))
-  tmp = c(tmp, paste0(get_tab(), "detach(data_row)"))
   tmp = c(tmp, paste0(get_tab(), "value_x2014cin"))
   remove_tab()
   tmp = c(tmp, paste0(get_tab(), "}"))
@@ -1549,7 +1559,7 @@ prepare_metadata_for_code_generation = function(metadata) {
 get_redcap_version <- function(url = "http://localhost/redcap", ssl.verify=F) {
   if (!url.exists(url,  .opts = list(ssl.verifypeer = ssl.verify))
       #|| !grepl("/redcap(/)?", url)
-      )
+  )
     stop(sprintf("invalid redcap url %s", sQuote(url)))
   pattern <- "REDCap([[:space:][:alpha:]\\-])+[[:digit:]]+.[[:digit:]]+.[[:digit:]]"
 

@@ -2,6 +2,7 @@
 #' @import stringr
 #' @import RCurl
 #' @import methods
+#' @import openxlsx
 NULL
 
 

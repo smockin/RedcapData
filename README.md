@@ -1,4 +1,3 @@
-
 ## RedcapData : A data management utility package to interface with REDCap data
 
 ----
@@ -9,7 +8,7 @@
 
 > REDCap exposes metadata on its projects through a standardized .csv file called the data dictionary. This document defines the underlying data schematics of the repository from the data capture workflow to the variable names and their respective data types. In addition to this, REDCap provides an API for interacting with the repository external to the application hence it is easy to pull and push data and files in and out of the repository. This makes data exchange and interaction with other software applications easier.
 
-> This is an R package developed to abstract some of the data management utility tasks when using a REDCap data repository. Some of these tasks include data input, data formatting, data cleaning and error report generation.
+> This is an R package developed to abstract some of the data management utility tasks when using a REDCap data repository. Some of these tasks include data input, data formatting, data cleaning, error report generation and data quality assessment.
 
 ---
 
@@ -35,6 +34,7 @@
 * Data formatting
 * Data cleaning
 * Error report
+* Data quality report
 
 ## Installation
 
@@ -449,7 +449,7 @@ test
 
 
 Instance:
-A remote redcap instance running at ‘http://10.0.10.188/redcap’
+A remote redcap instance running at ‘http://*.*.*.*/redcap’
 
 Memory status:
 Cache contains 11 items
@@ -488,3 +488,54 @@ Timestamp  														Level										Message
 
 
 ```
+
+---
+
+## Data Quality Report
+
+> Data validation (above) reports row-level logic errors. It doesn't, on its own, answer two questions data managers ask constantly: *how complete is each variable*, and *are the values that were entered actually plausible*? The ```get_data_quality_report``` member function answers both in a single Excel workbook.
+
+> Completeness is judged against the right denominator for each field. A field that only appears in the data capture form under certain conditions (branching logic) — for example, fever duration only being asked when fever was answered "Yes" — is only judged against the records where it should actually have been shown, not the whole dataset. The branching logic for every field is evaluated directly from the data dictionary, the same way REDCap itself decides whether to show a field.
+
+> Implausibility flags values that fall outside a field's declared valid range (```Text Validation Min```/```Max``` in the data dictionary) — this applies to any numeric or date field with a range set, not just a hand-picked list.
+
+> Coded-missing values (```-1```, ```-3```, ```Empty```, ```empty```, blank/whitespace) are treated as missing rather than as data, consistent with the convention used elsewhere in the package (see Data Cleaning, above). This is configurable via the ```missing_codes``` argument if a project uses different codes.
+
+### Code
+
+```r
+test$get_data_quality_report(pop = TRUE)
+```
+
+> As with ```get_error_report```, if ```pop = TRUE``` the workbook is opened directly using the OS's default application once it's ready. If ```output_path``` isn't supplied, it's derived from the same ```report_location``` config used for the error report, with a ```_data_quality.xlsx``` suffix.
+
+### Output
+
+```
+Computing completeness...
+Computing implausibility...
+```
+
+> Unlike ```get_formatted_data()```, ```get_partially_cleaned_data()``` etc., the data quality report is not cached in the object — every call recomputes it from whatever is currently in ```get_raw_data()```/```get_metadata()```, so it always reflects the latest data pulled with ```load_data()```.
+
+> The resulting workbook has five sheets:
+
+* **Overview** — record count, number of fields assessed, average completeness, count of fields with implausible values, and any branching logic conditions that couldn't be evaluated.
+* **Completeness** — one row per field: how many records were eligible to answer it (per branching logic), how many actually did, and the resulting percentage.
+* **Implausibility Summary** — one row per range-validated field: how many eligible, non-missing values were checked and how many fell outside range.
+* **Implausibility Detail** — one row per out-of-range value found, with the record, the value, and the valid range, for tracing back to source.
+* **Notes** — any branching logic condition that couldn't be evaluated against the data (e.g. it references a field not present in the export). Those fields are conservatively treated as eligible for every record rather than silently excluded, and are listed here so nothing is hidden.
+
+> ```get_data_quality_report``` also works as a standalone function, ```generate_data_quality_report()```, if you want to run it against data/metadata that isn't attached to a ```Redcap``` object:
+
+### Code
+
+```r
+generate_data_quality_report(
+  data = my_raw_data,
+  metadata = my_metadata,
+  output_path = "data_quality_report.xlsx"
+)
+```
+
+> For the completeness and implausibility numbers directly, without writing an Excel file, use ```compute_completeness()``` and ```compute_implausibility()``` — both are exported and documented individually (```?compute_completeness```, ```?compute_implausibility```).

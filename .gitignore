@@ -5,3 +5,4 @@
 *.pptx
 *.csv
 .RDataTmp
+.positai

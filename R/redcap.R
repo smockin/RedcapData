@@ -1,6 +1,9 @@
 #' @include redcap_helper.R
 NULL
 
+#' @include data_quality_report.R
+NULL
+
 #' @include redcap_config.R
 NULL
 
@@ -70,7 +73,7 @@ Redcap = setRefClass(
       }
       msg = c(msg, paste0("Events:", get_status(ls(.self$.__cache), pretty = TRUE)))
       if (.self$opts$configs$verbose && length(.self$.__log) > 0)
-          msg = c(msg, paste0("Log:\n", .self$.__log, "\n"))
+        msg = c(msg, paste0("Log:\n", .self$.__log, "\n"))
       msg = paste0(msg, collapse = "\n")
       msg = paste0(msg, "\n")
       cat(msg)
@@ -410,6 +413,54 @@ Redcap = setRefClass(
       .self$log("data validation report accessed", 0, function_name = "get_data_validation_report")
     },
 
+    get_data_quality_report = function(pop = FALSE, output_path = NA_character_,
+                                       missing_codes = c("-1", "-3", "Empty", "empty"),
+                                       max_detail_rows = 50000) {
+      "Generate the Data Quality Excel report (completeness + implausibility) from the raw data.
+
+      Completeness is judged with denominators adjusted for branching logic, so a field
+      that only appears for a subset of records isn't penalised for records where it was
+      never meant to be shown. Implausibility flags values outside each field's declared
+      valid range in the data dictionary.
+
+      If output_path is not supplied, it is derived from the report_location config
+      (same base name/directory as the data validation report, with a
+      '_data_quality.xlsx' suffix).
+      "
+
+      if (is.na(output_path)) {
+        base = gsub("\\\\", "/", .self$opts$configs$report_location)
+        base = tools::file_path_sans_ext(base)
+        output_path = paste0(base, "_data_quality.xlsx")
+      }
+      tryCatch({
+        tmpdir = dirname(output_path)
+        if (!file.exists(tmpdir))
+          dir.create(tmpdir, recursive = TRUE)
+        generate_data_quality_report(
+          data = .self$get_raw_data(),
+          metadata = .self$get_metadata(),
+          output_path = output_path,
+          missing_codes = missing_codes,
+          negative_char = .self$get_negative_char(),
+          max_detail_rows = max_detail_rows
+        )
+        if (pop)
+          open_using_default_app(output_path)
+        else
+          message(paste0("Data quality report saved to ", sQuote(output_path)))
+      },
+      warning = function(w) {
+        .self$log(w$message, 1, function_name = "get_data_quality_report")
+        stop(w$message)
+      },
+      error = function(e) {
+        .self$log(e$message, 2, function_name = "get_data_quality_report")
+        stop(e$message)
+      })
+      .self$log("data quality report generated", 0, function_name = "get_data_quality_report")
+    },
+
     get_raw_data = function() {
       "Get raw records from memory.
       If there is not data in memory, an error is raised.
@@ -496,13 +547,63 @@ Redcap = setRefClass(
         if ("major" %in% names(.self$version))
           if (.self$version$major > 5 | .self$version$major==" . ")
             .self$.__cache$.negative_char = "_"
-          else
-            .self$.__cache$.negative_char = "."
+        else
+          .self$.__cache$.negative_char = "."
       }
       return(.self$.__cache$.negative_char)
     }
   )
 )
+
+#' @rdname get_data_quality_report
+#'
+#' @name get_data_quality_report
+#'
+#' @title Generate the Data Quality Excel report (Redcap method)
+#'
+#' @description Method on a \code{\link{Redcap}} object. Generates the completeness +
+#' implausibility Excel report described in \code{\link{generate_data_quality_report}},
+#' using the project's own raw data and metadata (pulling them into the cache first via
+#' \code{load_data()}/\code{load_metadata()} if they aren't already cached).
+#'
+#' @details This is a thin wrapper: \code{redcap_obj$get_data_quality_report(...)} calls
+#' \code{\link{generate_data_quality_report}} with \code{data = redcap_obj$get_raw_data()}
+#' and \code{metadata = redcap_obj$get_metadata()}. Call \code{\link{generate_data_quality_report}}
+#' directly if you want to supply your own data/metadata instead of a \code{Redcap} object's.
+#'
+#' If \code{output_path} is not supplied, it is derived from the \code{report_location}
+#' config (same base name/directory as \code{get_data_validation_report()}'s output, with a
+#' \code{"_data_quality.xlsx"} suffix instead of the configured extension).
+#'
+#' @section Usage:
+#' \preformatted{
+#' redcap_obj$get_data_quality_report(
+#'   pop = FALSE,
+#'   output_path = NA_character_,
+#'   missing_codes = c("-1", "-3", "Empty", "empty"),
+#'   max_detail_rows = 50000
+#' )
+#' }
+#'
+#' @param pop Logical. If \code{TRUE}, opens the generated file after writing instead of
+#' just printing its location
+#' @param output_path Path to write the .xlsx report to. If \code{NA} (the default), derived
+#' from \code{opts$configs$report_location}
+#' @param missing_codes Character vector of raw values treated as coded missing data. See
+#' \code{\link{generate_data_quality_report}}
+#' @param max_detail_rows Safety cap on rows written to the Implausibility Detail sheet
+#'
+#' @return Invisible; writes the report to disk (or opens it if \code{pop = TRUE}) as a
+#' side effect
+#'
+#' @seealso \code{\link{Redcap}}, \code{\link{generate_data_quality_report}}
+#'
+#' @examples
+#' \dontrun{
+#' redcap_obj <- redcap_project(configs_location = "configs.csv")
+#' redcap_obj$get_data_quality_report(pop = TRUE)
+#' }
+NULL
 
 #' @rdname RedcapProject
 #'
@@ -551,7 +652,7 @@ redcap_project = function(...,
                           custom_code_location = NA,
                           updates_location = NA,
                           exclusion_pattern = NA_character_
-                          ) {
+) {
   opts = list()
   if (missing(configs_location)) {
     configs_data <- list(...)

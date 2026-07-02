@@ -1,6 +1,5 @@
-
 cellHasNoData <- compiler::cmpfun(function(x) {
-  is.null(x) || is.na(x) || str_trim(x) == "" 
+  is.null(x) || is.na(x) || str_trim(x) == ""
 })
 
 vectorHasNoData <- compiler::cmpfun(function(x) {
@@ -14,7 +13,7 @@ vectorHasNoData <- compiler::cmpfun(function(x) {
 #'
 #' @name validate_data_in_branching_logic
 #'
-#' @title Generate custom codes and evaluate based on branching logics 
+#' @title Generate custom codes and evaluate based on branching logics
 #'
 #' @description This is a utility function that uses branching logic to validate data entry workflow for errors of omission.
 #'
@@ -26,11 +25,11 @@ vectorHasNoData <- compiler::cmpfun(function(x) {
 #' @param ipno_var Name of variable for patient IP Number
 #' @param dateOfEntry_var Name of variable that captures the date of entry
 #' @param recordID_var Name of variable that uniquely identifies records
-#' @param hospitalID_var Name of variable that holds the hospital code 
-#' @param individual.vars A \emph{character} name of the object containing variables to be validated individually     
-#' @param group.names A vector of \emph{character} names of the objects containing variables to be validated as a group     
+#' @param hospitalID_var Name of variable that holds the hospital code
+#' @param individual.vars A \emph{character} name of the object containing variables to be validated individually
+#' @param group.names A vector of \emph{character} names of the objects containing variables to be validated as a group
 #' @param n.groups Numebr of groups provided in \strong{group.names}
-#' @param validateTreatmentDates Logical. If FALSE, treatment dates will not be validated 
+#' @param validateTreatmentDates Logical. If FALSE, treatment dates will not be validated
 #' @param treatmentFormName  Name of the treatment section in the metadata. This is required if \strong{validateTreatmentDates} is TRUE
 #' @param dischargeDateVar Name of variable that holds the date of discharge. This is required if \strong{validateTreatmentDates} is TRUE
 #' @param dischargeDateVar Name of variable that holds the date of admission. This is required if \strong{validateTreatmentDates} is TRUE
@@ -62,7 +61,7 @@ validate_data_in_branching_logic<- compiler::cmpfun(function(rec
   force(dateOfEntry_var)
   force(recordID_var)
   force(hospitalID_var)
-  
+
   if(validateTreatmentDates){
     if((is_null(dischargeDateVar) ||
         is_null(admissionDateVar))){
@@ -71,8 +70,8 @@ validate_data_in_branching_logic<- compiler::cmpfun(function(rec
     if(is_null(treatmentFormName)){
       stop("Provide form name for treatment section in the metadata")
     }
-  }  
-  
+  }
+
   enV_<- environment()
   records<- try(get(dataName
                     , envir = globalenv())
@@ -80,7 +79,7 @@ validate_data_in_branching_logic<- compiler::cmpfun(function(rec
   metadata<- try(get(metadataName
                      , envir = globalenv())
                  , silent=T)
-  
+
   if(any(
     is.element('try-error'
                , c(class(records)
@@ -89,20 +88,20 @@ validate_data_in_branching_logic<- compiler::cmpfun(function(rec
     )
   )){
     stop(paste0(dataName,
-                ' or ' 
+                ' or '
                 ,metadataName,
                 ' is not defined')
     )
   }else{
     records<- as.data.table(records)
     metadata<- as.data.table(metadata)
-    
+
   }
-  
+
   if(!is_null(n.groups) || !is_null(group.names)){
     if(isTRUE(n.groups != length(group.names))){
       stop('Number of groups of variables must be equal to `n.groups`')
-    } else { 
+    } else {
       group.names=group.names[which(lapply(group.names, function(x){
         length(eval(parse(text=x)))})!=0)]
       if(length(group.names)!=0L){
@@ -117,7 +116,7 @@ validate_data_in_branching_logic<- compiler::cmpfun(function(rec
         if(
           !all(c(is_empty(grp.ds)
                  , is_empty(ind.ds)
-                 
+
           )
           )
         ){
@@ -126,7 +125,7 @@ validate_data_in_branching_logic<- compiler::cmpfun(function(rec
           return(
             rbindlist(list(grp.ds
                            , ind.ds
-                           
+
             )
             )
           )
@@ -152,7 +151,7 @@ validate_data_in_branching_logic<- compiler::cmpfun(function(rec
 })
 
 
-# Generate errors 
+# Generate errors
 #____________________________________________________________
 
 get_errors<- compiler::cmpfun(function(listOfVariables=NA
@@ -166,16 +165,16 @@ get_errors<- compiler::cmpfun(function(listOfVariables=NA
   dischargeDateVar=get('dischargeDateVar',
                        envir = parent.frame()
   )
-  
+
   admissionDateVar=get('admissionDateVar',
                        envir = parent.frame()
   )
-  
+
   treatmentFormName=get('treatmentFormName',
                         envir = parent.frame()
   )
   validateTreatmentDates=get("validateTreatmentDates", envir = parent.frame())
-  
+
   ipn_=rec[,ipno_var, with=F][[1L]]
   id_=rec[,recordID_var, with=F][[1L]]
   datetoday=rec[, dateOfEntry_var, with=F][[1L]]
@@ -183,7 +182,7 @@ get_errors<- compiler::cmpfun(function(listOfVariables=NA
   msg=NA_character_
   Entry<<-NA_character_
   Type<<-NA_character_
-  
+
   if(all(!is.na(
     GroupVariable
   )
@@ -191,18 +190,18 @@ get_errors<- compiler::cmpfun(function(listOfVariables=NA
     xx=variable_toCheck=GroupVariable
     cond_=metadata[is.element(field_name, xx)
                    , f.branching_logic]
-    
+
     form_=lab_=metadata[is.element(field_name, xx)
                         , form_name][1L]
     cellValue=paste("c(",paste0(
       'rec[',cond_,'
       ,', variable_toCheck,
       ']'
-      , collapse = ","), ")") %>% 
+      , collapse = ","), ")") %>%
       parse(text=.) %>%
       eval()
-    
-    if(length(cellValue)!=0 && !is_empty(cellValue) 
+
+    if(length(cellValue)!=0 && !is_empty(cellValue)
     ){
       if(
         isTRUE(
@@ -226,15 +225,15 @@ get_errors<- compiler::cmpfun(function(listOfVariables=NA
                            ,Entry=Entry
                            ,Message=remove_html_tags(msg)
                            ,Logic=NA_character_
-                           
+
       )
       Entry<<-NA_character_
       return(err.ds)
-      
+
     }
   }else{
-    listOfVariables %>% 
-      map(function(xx){ 
+    listOfVariables %>%
+      map(function(xx){
         cond_=metadata[field_name==xx
                        , f.branching_logic]
         form_=metadata[field_name==xx
@@ -243,31 +242,31 @@ get_errors<- compiler::cmpfun(function(listOfVariables=NA
                       , field_label]
         sect_=metadata[field_name==xx
                        , section_header]
-        
+
         # Redacap v7+ : hide field functionality
         #__________________________________________________
-        
+
         has.hidden.fun<- grepl("hidden"
                                , metadata[field_name==xx
                                           , field_annotation]
                                , ignore.case = T)
-        
+
         type_<-metadata[field_name==xx
                         , field_type]
         isCheckbox<- type_=="checkbox"
         date_=metadata[field_name==xx
                        , text_validation_type_or_show_slider_number]
         isDate=(date_=='date_ymd')
-        
+
         msg=NA_character_
         if(isCheckbox){
           Checkbox=grep(xx,
                         names(rec)
                         , v=T)
-          
+
           # validate Checkbox returns
           #_______________________________________
-          
+
           checkbox_xtended<- paste0(xx
                                     ,str_extract_all(Checkbox
                                                      , regex("[_]{2,}[0-9]+$"
@@ -284,21 +283,21 @@ get_errors<- compiler::cmpfun(function(listOfVariables=NA
           ){
             checkbox_xtended<-checkbox_xtended[
               which(
-                !(checkbox_xtended 
+                !(checkbox_xtended
                   %in%
                     metadata[,field_name ]
                 )
               )]
           }
-          
+
           variable_toCheck<-checkbox_xtended
         }else{
           variable_toCheck<-xx
         }
-        
+
         #field not hidden
         #_______________________________________
-        
+
         if(
           isTRUE(
             !is_hidden(cond_,xx,metadata )
@@ -318,17 +317,17 @@ get_errors<- compiler::cmpfun(function(listOfVariables=NA
                                ,Entry=Entry
                                ,Message=remove_html_tags(msg)
                                ,Logic=cond_
-                               
+
           )
           Entry<<-NA_character_
           return(err.ds)
-          
+
         }
-      }) %>% 
+      }) %>%
       do.call(rbind,.)
   }
-  
-  
+
+
 })
 
 # detertermine if field is hidden: no data expected
@@ -347,72 +346,93 @@ get_errors<- compiler::cmpfun(function(listOfVariables=NA
 #' @param metadata REDCap metadata
 #'
 #' @export
-#' 
+#'
 #' @family RedcapToR
-#' @return TRUE if the fieldname is hidden in REDCap 
+#' @return TRUE if the fieldname is hidden in REDCap
+# <PERF>: is_hidden()'s result depends only on (b.logic, fieldname, metadata) --
+# never on the record being validated -- yet the generated validator (see
+# generate_data_validation_code()) calls it once per validated field PER RECORD.
+# Recomputing the same answer for every record (including a full data.table scan
+# of the metadata table via metadata[field_name==fieldname, field_annotation],
+# plus branching-logic string parsing) was the single largest cost in
+# validate_data() -- far larger than any per-record work actually needed here.
+# We memoize on (identity of metadata object, b.logic, fieldname): the first
+# record pays for the computation for each field, every subsequent record for
+# the same field is an O(1) environment lookup. If a *different* metadata
+# object is ever passed in (different memory address), its results are cached
+# separately, so this is safe even if is_hidden() is reused across projects/
+# metadata reloads within the same R session.
+.__is_hidden_cache = new.env(parent = emptyenv())
+
 is_hidden<-compiler::cmpfun(
   function(b.logic, fieldname=NA_character_, metadata){
-    has.hidden.fun<- grepl("hidden"
-                           , metadata[field_name==fieldname
-                                      , field_annotation]
-                           , ignore.case = T)
-     if(has.hidden.fun) {
-      return(T)  
-    }else{
-      if(grepl("&", b.logic)){
-        toformat_<-str_split(b.logic,
-                             "&") %>%
-          unlist() %>%
-          str_trim() %>% 
-          gsub("\\(|\\)", "", .) %>%
-          vapply(function(x_){
-            gsub("[ \t]", "",x_)
-          }, character(1L)) %>% as.character()
-        
-        if(length(toformat_)>1L){
-          logic_ds<- toformat_ %>% 
-            vapply(function(fmt){
-              str_split(fmt, "==") %>% 
-                unlist()-> splts
-              vr=splts[1]
-              vl=splts[2]
-              data.table(rbind(vr, vl))
-            }, data.table(tst="")) %>% 
-            do.call(rbind, .) %>% as.data.table(keep.rownames = F) %>% 
-            setnames(c("f.name", "f.value"))
-          
-          # get all duplicates: locally hidden
-          #____________________________________
-          
-          keepAllDup <- function (value)
-          {
-            duplicated(value) | duplicated(value
-                                           , fromLast = TRUE)
-          }
-          dups<-logic_ds[keepAllDup(logic_ds$f.name),]
-          if(nrow(dups)!=0){
-            if(length(
-              unique(dups$f.value)
-            )!=1L
-            ){
-              return(T)
-            }else return(F)
+    .cache_key = paste(data.table::address(metadata), b.logic, fieldname, sep = "||")
+    if (exists(.cache_key, envir = .__is_hidden_cache, inherits = FALSE))
+      return(get(.cache_key, envir = .__is_hidden_cache, inherits = FALSE))
+    .result = local({
+      has.hidden.fun<- grepl("hidden"
+                             , metadata[["field_annotation"]][match(fieldname, metadata[["field_name"]])]
+                             , ignore.case = T)
+      if(isTRUE(has.hidden.fun)) {
+        return(T)
+      }else{
+        if(grepl("&", b.logic)){
+          toformat_<-str_split(b.logic,
+                               "&") %>%
+            unlist() %>%
+            str_trim() %>%
+            gsub("\\(|\\)", "", .) %>%
+            vapply(function(x_){
+              gsub("[ \t]", "",x_)
+            }, character(1L)) %>% as.character()
+
+          if(length(toformat_)>1L){
+            logic_ds<- toformat_ %>%
+              vapply(function(fmt){
+                str_split(fmt, "==") %>%
+                  unlist()-> splts
+                vr=splts[1]
+                vl=splts[2]
+                data.table(rbind(vr, vl))
+              }, data.table(tst="")) %>%
+              do.call(rbind, .) %>% as.data.table(keep.rownames = F) %>%
+              setnames(c("f.name", "f.value"))
+
+            # get all duplicates: locally hidden
+            #____________________________________
+
+            keepAllDup <- function (value)
+            {
+              duplicated(value) | duplicated(value
+                                             , fromLast = TRUE)
+            }
+            dups<-logic_ds[keepAllDup(logic_ds$f.name),]
+            if(nrow(dups)!=0){
+              if(length(
+                unique(dups$f.value)
+              )!=1L
+              ){
+                return(T)
+              }else return(F)
+            }else{
+              return(F)
+            }
           }else{
             return(F)
           }
         }else{
           return(F)
         }
-      }else{
-        return(F)
       }
-    }
+    })
+    assign(.cache_key, .result, envir = .__is_hidden_cache)
+    .result
   })
 
 # Assess if cell has data
 #____________________________________
 
-determine_if_cell_has_value<- compiler::cmpfun(function(){ 
+determine_if_cell_has_value<- compiler::cmpfun(function(){
   isCheckbox=get('isCheckbox', envir = parent.frame())
   variable_toCheck=get('variable_toCheck', envir = parent.frame())
   cond_=get('cond_', envir = parent.frame())
@@ -420,19 +440,19 @@ determine_if_cell_has_value<- compiler::cmpfun(function(){
   rec=get("rec", envir = parent.frame())
   xx=get("xx", envir = parent.frame())
   validateTreatmentDates=get("validateTreatmentDates", envir = parent.frame())
-  
+
   dischargeDateVar=get('dischargeDateVar',
                        envir = parent.frame()
   )
-  
+
   admissionDateVar=get('admissionDateVar',
                        envir = parent.frame()
   )
-  
+
   treatmentFormName=get('treatmentFormName',
                         envir = parent.frame()
   )
-  
+
   metadata=get("metadata", envir = parent.frame())
   if(isCheckbox) {
     cellValue=
@@ -440,10 +460,10 @@ determine_if_cell_has_value<- compiler::cmpfun(function(){
         'rec[',cond_,'
         , variable_toCheck
         , with=F]'
-      ) %>% 
+      ) %>%
       parse(text=.) %>%
       eval()
-    
+
     if(nrow(cellValue)!=0 &&
        !is_empty(cellValue)){
       if(
@@ -463,7 +483,7 @@ determine_if_cell_has_value<- compiler::cmpfun(function(){
         '(
         rec[',cond_,',', variable_toCheck,']
       )') %>%
-               parse(text=.) %>%
+        parse(text=.) %>%
         eval(), silent = T)
     if(class(cellValue)!="try-error"){
       if(length(cellValue)!=0 &&
@@ -480,14 +500,14 @@ determine_if_cell_has_value<- compiler::cmpfun(function(){
           isDate=get("isDate"
                      , envir = parent.frame())
           if(isDate){
-            
+
             msg=get_logical_dates()
             return(msg)
           }
         }
-      } 
+      }
     }
-    
+
   }
 })
 
@@ -498,25 +518,25 @@ get_logical_dates<- function(){
   dischargeDateVar=try(get('dischargeDateVar',
                            envir = parent.frame()
   ), silent = T)
-  
+
   admissionDateVar=try(get('admissionDateVar',
                            envir = parent.frame()
   ), silent=T)
-  
+
   treatmentFormName=try(get('treatmentFormName',
                             envir = parent.frame()
   ), silent = T)
-  
-  
+
+
   cellValue=get('cellValue',
                 envir = parent.frame()
   )
-  
+
   xx=get('xx',
          envir = parent.frame()
   )
-  
-  
+
+
   metadata=get('metadata',
                envir = parent.frame()
   )
@@ -535,7 +555,7 @@ get_logical_dates<- function(){
     dateAdmitted=rec[, admissionDateVar, with=F]
     if(isTRUE(
       as.character(dateDischarged) !='' &&
-      !is.na(as.character(dateDischarged)) && 
+      !is.na(as.character(dateDischarged)) &&
       isTRUE(
         any(
           (try(as.Date.character(cellValue),silent=T) > try(as.Date.character(dateDischarged), silent = T) &
@@ -564,18 +584,18 @@ get_logical_dates<- function(){
           }
         }
       }
-      
-    }else if( !is.na(as.character(dateAdmitted)) && 
+
+    }else if( !is.na(as.character(dateAdmitted)) &&
               as.character(dateAdmitted) !='' &&
-              !is.na(as.character(dateDischarged)) && 
+              !is.na(as.character(dateDischarged)) &&
               as.character(dateDischarged) !='' &&
-             isTRUE(
-               any(try(as.Date.character(dateAdmitted), silent=T)> Sys.Date() |
-                   (try(as.Date.character(dateDischarged), silent=T)> as.Date.character("1950-01-01") &&
-                    try(as.Date.character(dateAdmitted), silent=T)> as.Date.character("1950-01-01") &&
-                    try(as.Date.character(dateAdmitted), silent = T) > try(as.Date.character(dateDischarged), silent = T))
-               )
-             )
+              isTRUE(
+                any(try(as.Date.character(dateAdmitted), silent=T)> Sys.Date() |
+                    (try(as.Date.character(dateDischarged), silent=T)> as.Date.character("1950-01-01") &&
+                     try(as.Date.character(dateAdmitted), silent=T)> as.Date.character("1950-01-01") &&
+                     try(as.Date.character(dateAdmitted), silent = T) > try(as.Date.character(dateDischarged), silent = T))
+                )
+              )
     ){
       msg<- paste0("Admission Date cannot be in the future or ealier than date of discharge!")
       Entry<<-dateAdmitted
@@ -599,6 +619,6 @@ get_logical_dates<- function(){
         Type<<-"Invalid date"
         return(msg)
       }
-    } 
+    }
   }
 }

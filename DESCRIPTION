@@ -19,12 +19,14 @@ Imports:
     compiler,
     doFuture,
     parallel,
-    foreach
+    foreach,
+    openxlsx
 URL: https://github.com/smockin/RedcapData
 Collate:
     'data_types.R'
     'branching_logic.R'
     'data_checks.R'
+    'data_quality_report.R'
     'expand_branching_logic.R'
     'generic_helper.R'
     'redcap_config.R'
@@ -32,6 +34,7 @@ Collate:
     'script.R'
     'redcap_helper.R'
     'redcap.R'
+    'import_2_redcap.R'
     'validate_fields_without_ranges.R'
     'zzz.R'
 RoxygenNote: 6.0.1

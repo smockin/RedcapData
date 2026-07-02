@@ -1,4 +1,13 @@
+#' @include branching_logic.R
+NULL
 
+#' @include redcap.R
+NULL
+
+# checkbox is a data.table column referenced via NSE inside expand_checkboxes_fast()
+# (checkboxes.ds[checkbox == xs]), not an undefined global -- see the equivalent note
+# in data_quality_report.R.
+utils::globalVariables("checkbox")
 
 #' @rdname ExpandBranchingLogic
 #'
@@ -8,7 +17,16 @@
 #'
 #' @description This is a utility function that helps prepare the data to be imported based on the target redcap project.
 #'
-#' @details
+#' @details Reshapes raw REDCap-style data to satisfy a destination project's own field
+#' rules before import: drops descriptive fields, expands checkbox choices into
+#' \code{field___choice} columns (see \code{\link{expand_checkboxes_fast}}), casts values
+#' according to each field's \code{text_validation_type_or_show_slider_number} (dates,
+#' integers, numbers, 1-decimal-place numbers, times), blanks dropdown/radio/yesno values
+#' that aren't among the field's valid choices, and blanks any field (or checkbox choice)
+#' whose branching logic isn't satisfied for that record -- matching how REDCap itself
+#' would render the field as hidden. Does not enforce numeric/date range validation
+#' (\code{text_validation_min}/\code{max}); REDCap's own import API still rejects
+#' out-of-range values even after this function runs.
 #'
 #' @param metadata REDCap metadata
 #' @param data Data to be imported to Redcap. Should be associated with metadata
@@ -26,10 +44,10 @@ exportdataMeta2r<- function(token, url){
 
 
   facilityproject <- redcap_project(api_url = url,
-                                       token = token,
-                                       chunked = T,
-                                       chunksize = 500,
-                                       local = FALSE
+                                    token = token,
+                                    chunked = T,
+                                    chunksize = 500,
+                                    local = FALSE
   )
 
   metadata<-facilityproject$get_metadata()
@@ -161,10 +179,67 @@ varsToAdd<- NULL
 checkboxes.ds<- data.table()
 require(stringr)
 
+#' @rdname ExpandCheckboxesFast
+#'
+#' @name expand_checkboxes_fast
+#'
+#' @title Vectorized checkbox expansion for import preparation
+#'
+#' @description Populates the expanded checkbox__choice columns of \code{dataToImport.2}
+#' from the raw, comma-separated checkbox values in \code{dataToImport}.
+#'
+#' @details This replaces a nested loop that called \code{eval(parse())} once per selected
+#' choice per record with a small number of vectorized \code{data.table::set()} calls per
+#' checkbox field, and derives each choice's row position directly from its position in the
+#' original data instead of an incrementing counter -- so it cannot drift out of alignment
+#' the way the original loop could when it encountered malformed values (see notes at the
+#' call site in \code{prepareDatatoImport}).
+#'
+#' @param dataToImport Raw data (as passed in to \code{prepareDatatoImport})
+#' @param dataToImport.2 Working data.table already containing zero-filled expanded checkbox
+#' columns (one integer column per checkbox choice) and a `key` column of row indices
+#' @param checkboxes Character vector of checkbox field names present in \code{dataToImport}
+#' @param checkboxes.ds data.table with columns `checkbox`, `choices`, `fieldName` mapping
+#' each (checkbox field, choice code) pair to its expanded column name
+#'
+#' @return A list with `data` (the updated \code{dataToImport.2}) and `notfound` (a character
+#' vector of raw choice values that did not match any known choice for their field, if any)
+#'
+#' @export expand_checkboxes_fast
+#'
+expand_checkboxes_fast <- function(dataToImport, dataToImport.2, checkboxes, checkboxes.ds) {
+  checkbox.data.notfound <- character(0)
+  for (xs in checkboxes) {
+    vals <- as.character(dataToImport[[xs]])
+    vals[is.na(vals)] <- ""
+    split_vals <- strsplit(vals, ",", fixed = TRUE)
+    lens <- lengths(split_vals)
+    row_idx <- rep(seq_along(vals), lens)
+    choice_vals <- str_trim(unlist(split_vals, use.names = FALSE))
+    keep <- choice_vals != ""
+    row_idx <- row_idx[keep]
+    choice_vals <- choice_vals[keep]
+    if (!length(row_idx))
+      next
+    lut <- checkboxes.ds[checkbox == xs]
+    fmap <- stats::setNames(lut$fieldName, lut$choices)
+    fnames <- unname(fmap[choice_vals])
+    ok <- !is.na(fnames)
+    if (any(!ok))
+      checkbox.data.notfound <- c(checkbox.data.notfound, unique(choice_vals[!ok]))
+    if (!any(ok))
+      next
+    by_field <- split(row_idx[ok], fnames[ok])
+    for (fn in names(by_field))
+      set(dataToImport.2, i = by_field[[fn]], j = fn, value = 1L)
+  }
+  list(data = dataToImport.2, notfound = checkbox.data.notfound)
+}
+
 prepareDatatoImport<- function(
     metadata=stop('Provide metadata for the redcap project to import to')
-         ,dataToImport=stop('Provide raw data to import to redcap')
-    ){
+    ,dataToImport=stop('Provide raw data to import to redcap')
+){
   require(data.table)
   setDT(metadata)
   setDT(dataToImport)
@@ -225,52 +300,25 @@ prepareDatatoImport<- function(
   dataToImport[, key:=.I]
 
 
-  checkbox.data.notfound<-NULL
-
-  idx<- NULL
+  # <PERF+CORRECTNESS>: the original checkbox-expansion loop below called eval(parse())
+  # once per selected choice per record (O(records x checkboxes x choices) parses+evals),
+  # and tracked "which row am I on" with a manually incremented `idx` counter that was only
+  # advanced inside the comma/single-value branches. Any record whose raw checkbox value
+  # didn't match the expected format (e.g. contained "__", tripping the `grepl("_{2,}", x)`
+  # branch) silently failed to advance `idx` -- silently shifting every assignment for every
+  # SUBSEQUENT record in that column by one row for the rest of the dataset. See
+  # expand_checkboxes_fast() below, which replaces this with a vectorized implementation that
+  # derives each choice's row position directly (so it can't drift), and is orders of
+  # magnitude faster since it uses a handful of vectorized data.table set() calls instead of
+  # one parsed-and-evaluated expression per selected choice per record.
   checkboxes<- checkboxes[is.element(checkboxes ,names(dataToImport))]
-  lapply(checkboxes,
-         function(xs){
-           idx<- 1L
-           dataToImport[, xs, with=F] %>%
-             unlist() %>%
-             as.character() %>%
-             lapply(function(x){
-
-               if(grepl("_{2,}", x)){
-                 last_group_underscores <- regmatches(x, regexpr("_{2,}", x))
-                 underscore_count <- nchar(last_group_underscores)
-                 if(underscore_count>=2){
-                   if(nrow(checkboxes.ds[fieldName==x,])==0){
-                     checkbox.data.notfound<<- c(checkbox.data.notfound, x)
-                   }else{
-
-                   }
-                 }else{
-
-                 }
-               }else{
-                 if(grepl("\\,", x)){
-                   split_result <- strsplit(x, ",")
-                   # Convert the result to a vector for easier access
-                   split_parts <- unlist(split_result)
-                   lapply(split_parts, function(x){
-                     toPickfrom<- copy(checkboxes.ds[checkbox==xs & choices==x,])
-                     txt=paste0('dataToImport.2[key==',idx, ',toPickfrom$fieldName:=1L]')
-                     eval(parse(text=txt))
-                     dataToImport.2<<- dataToImport.2
-                   })
-                   idx<<- idx+1
-                 }else{
-                   toPickfrom<- copy(checkboxes.ds[checkbox==xs & choices==x,])
-                   txt=paste0('dataToImport.2[key==',idx, ',toPickfrom$fieldName:=1L]')
-                   eval(parse(text=txt))
-                   dataToImport.2<<- dataToImport.2
-                   idx<<- idx+1
-                 }
-               }
-             })
-         })
+  expansion_result <- expand_checkboxes_fast(dataToImport, dataToImport.2, checkboxes, checkboxes.ds)
+  dataToImport.2 <- expansion_result$data
+  checkbox.data.notfound <- expansion_result$notfound
+  if (length(checkbox.data.notfound) > 0) {
+    cat("Note: found", length(unique(checkbox.data.notfound)), "checkbox choice value(s) that did not match any known choice (left unset):\n")
+    cat(" ", paste(unique(checkbox.data.notfound), collapse = ", "), "\n")
+  }
 
   cat("Expanded checkbox fields added to dataset...\n")
 
@@ -403,6 +451,3 @@ prepareDatatoImport<- function(
 
   return(dataToImport.2)
 }
-
-
-
